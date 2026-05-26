@@ -320,50 +320,50 @@ pub struct Database {           // src-tauri/src/database/mod.rs:76
 - JSON → SQLite 迁移路径（`migration.rs`）支持从旧版本平滑升级
 - 数据库备份功能（`backup.rs`）支持导出/导入 SQL 快照
 - 变更钩子（`src-tauri/src/database/mod.rs:80`）自动触发 WebDAV 同步
-
-**关键设计决策 — `is_additive_mode()`**（`src-tauri/src/app_config.rs:373`）：
-
+### 3.2 error.rs — 错误模型（3.5KB）
+**接口**：统一的错误类型 `AppError`（`src-tauri/src/error.rs:6`），所有后端函数都用它。
+**实现**：
 ```rust
-impl AppType {
-    pub fn is_additive_mode(&self) -> bool {  // src-tauri/src/app_config.rs:373
-        matches!(self,
-            AppType::OpenCode | AppType::OpenClaw | AppType::Hermes
-        )
-    }
+#[derive(Debug, thiserror::Error)]  // src-tauri/src/error.rs:6
+pub enum AppError {
+    #[error("Config error: {0}")]    // src-tauri/src/error.rs:8
+    Config(String),
+    #[error("IO error for {path}: {source}")]  // src-tauri/src/error.rs:11
+    Io { path: String, source: std::io::Error },
+    #[error("JSON error for {path}: {source}")]  // src-tauri/src/error.rs:14
+    Json { path: String, source: serde_json::Error },
+    #[error("TOML error: {0}")]     // src-tauri/src/error.rs:17
+    Toml(#[from] toml::de::Error),
+    #[error("Lock poisoned: {0}")]  // src-tauri/src/error.rs:20
+    Lock(String),
+    #[error("Database error: {0}")]  // src-tauri/src/error.rs:23
+    Database(String),
+    #[error("All providers circuit open")]  // src-tauri/src/error.rs:26
+    AllProvidersCircuitOpen,
+    #[error("Localized: {zh}")]     // src-tauri/src/error.rs:29
+    Localized { zh: String, en: String },
 }
 ```
-```
-
-这个分类影响整个架构：
-- Switch 模式（4 个工具）：同一时间只有一个 provider 生效，切换 = 覆盖写入
-- Additive 模式（3 个工具）：所有 provider 同时写入，切换 = 更新 enabled 状态
-
-**其他重要类型**：
-- `McpApps`（`src-tauri/src/app_config.rs:9`）— 哪些工具支持 MCP server 配置
-- `SkillApps`（`src-tauri/src/app_config.rs:78`）— 哪些工具支持 skills
-- `CommonConfigSnippets`（`src-tauri/src/app_config.rs:419`）— 跨工具共享的配置片段
-
+**亮点**：
+- `Localized` 变体支持中英双语错误消息，前端可以根据语言选择显示
+- `Io` 变体包含文件路径，方便调试
 **陷阱**：
-- 这个文件 41KB 太大了，包含了太多职责（类型定义 + 工具特性查询 + 配置片段管理）
-- `AppType` 的 match 到处都是（`McpApps:24`, `VisibleApps:66`, `CommonConfigSnippets:441`），加新工具需要改很多地方
-
-### 3.4 provider.rs — 核心数据模型（40.6KB）
-**接口**：Provider 是 cc-switch 的核心数据单元（`src-tauri/src/provider.rs:10`）。
-**Provider 结构体**（`src-tauri/src/provider.rs:10-43`）：
+- `Config(String)` 太宽泛，很多不同类型的错误都往这里塞
+- 错误消息不一致，有的用英文有的用中文
+### 3.3 app_config.rs — 多应用配置模型（41KB）
+**接口**：定义 cc-switch 管理的 7 个 AI 工具的抽象（`src-tauri/src/app_config.rs:338`）。
+**核心类型**：
 ```rust
-pub struct Provider {          // src-tauri/src/provider.rs:10
-    pub id: String,                    // 唯一标识
-    pub name: String,                  // 显示名称
-    pub settings_config: Value,        // JSON 格式的配置（API key、base URL 等）
-    pub website_url: Option<String>,   // 官网地址
-    pub category: Option<String>,      // 分类
-    pub created_at: Option<i64>,       // 创建时间
-    pub sort_index: Option<usize>,     // 排序索引
-    pub notes: Option<String>,         // 备注
-    pub meta: Option<ProviderMeta>,    // 元数据
-    pub icon: Option<String>,          // 图标
-    pub icon_color: Option<String>,    // 图标颜色
-    pub in_failover_queue: bool,       // 是否在故障转移队列中
+pub enum AppType {            // src-tauri/src/app_config.rs:341
+    Claude,        // Claude Code (CLI)
+    ClaudeDesktop, // Claude Desktop (GUI)
+    Codex,         // OpenAI Codex CLI
+    Gemini,        // Gemini CLI
+    OpenCode,      // OpenCode
+    OpenClaw,      // OpenClaw
+    Hermes,        // Hermes
+}
+```
 }
 ```
 **ProviderMeta**（`src-tauri/src/provider.rs`）：
