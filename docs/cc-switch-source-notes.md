@@ -624,30 +624,30 @@ log::info!(code = SRV_START, "Proxy server started on port {}", port);
 前端是 React + TypeScript，通过 Tauri IPC 与 Rust 后端通信。前端代码在 `src/` 目录下。
 ### 5.1 App.tsx — 14 个视图的路由机制
 **App.tsx**（1605 行）是前端的"上帝文件"（`src/App.tsx`）。
-  mutationFn: (providerId: string) =>
-    invoke("switch_claude_provider", { providerId }),
-  onSuccess: () => {
-    queryClient.invalidateQueries(["providers"]);
-  },
-});
-// 添加 provider
-const addMutation = useMutation({
-  mutationFn: (data: CreateProviderInput) =>
-    invoke("add_provider", { appType: currentApp, ...data }),
-  onSuccess: () => {
-    queryClient.invalidateQueries(["providers"]);
-  },
-});
-// 删除 provider
-const deleteMutation = useMutation({
-  mutationFn: (providerId: string) =>
-    invoke("delete_provider", { providerId }),
-  onSuccess: () => {
-    queryClient.invalidateQueries(["providers"]);
-  },
-});
+**视图切换实现细节**：
+```typescript
+// src/App.tsx
+const [currentView, setCurrentView] = useState(
+  localStorage.getItem("currentView") || "providers"
+);
+// 切换视图时更新 localStorage
+const handleViewChange = (view: string) => {
+  setCurrentView(view);
+  localStorage.setItem("currentView", view);
+};
+// 14 个视图
+switch (currentView) {
+  case "providers":    return <ProviderList />;
+  case "settings":     return <Settings />;
+  case "proxy":        return <ProxyStatus />;
+  // ... 其他 11 个视图
+}
 ```
-**useSettings 详解**（`src/hooks/useSettings.ts`）：
+**视图切换问题**：
+- 没有 URL 路由，无法通过 URL 直接访问特定视图
+- 没有浏览器前进/后退支持
+- 所有视图都在一个文件里，难以维护
+- 没有代码分割，首屏加载慢
 - 封装了 `get_settings` 和 `save_settings` Tauri 命令
 - 使用 React Query 缓存设置数据
 - 提供 `mutateSettings` 方法用于修改设置
