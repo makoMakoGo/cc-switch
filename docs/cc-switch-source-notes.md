@@ -482,35 +482,35 @@ impl ProviderService {
 3. `build_live_config()` — 构建当前生效的配置
 4. `switch_provider()` — 切换 provider 的核心逻辑
 5. `import_from_live()` — 从工具的 live 配置导入 provider
-│   ├── gemini/         # Gemini API 格式
-│   └── ...
-├── transform_*.rs      # API 格式转换（58-78KB 每个）
-├── types.rs            # 共享类型定义
-└── log_codes.rs        # 日志代码常量
+**config 模块代码模式**：
+```rust
+// 读取配置文件
+pub fn read_xxx_config() -> Result<Value, AppError> {
+    let path = get_xxx_config_path();
+    read_json_file(&path)
+}
+// 写入配置文件
+pub fn write_xxx_config(config: &Value) -> Result<(), AppError> {
+    let path = get_xxx_config_path();
+    write_json_file(&path, config)
+}
+// 构建 live 配置
+pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
+    let mut config = read_xxx_config()?;
+    // 合并 provider 配置
+    config["apiKey"] = json!(provider.settings_config["apiKey"]);
+    config["baseUrl"] = json!(provider.settings_config["baseUrl"]);
+    Ok(config)
+}
 ```
 ## 第 4 章：本地代理子系统
 这是项目里最复杂的部分，单独拎出来。代理子系统实现了本地 HTTP 代理，支持 API 格式转换（Anthropic ↔ OpenAI ↔ Gemini）、多 provider 路由、故障转移和熔断。
 ### 4.1 proxy/ 目录结构
-**ProxyState**（`src-tauri/src/proxy/server.rs:34`）：
-    pub config: Arc<RwLock<ProxyConfig>>,
-    pub status: Arc<RwLock<ProxyStatus>>,
-    pub provider_router: Arc<ProviderRouter>,
-    pub gemini_shadow: Arc<GeminiShadowStore>,
-    pub codex_chat_history: Arc<CodexChatHistoryStore>,
-    pub failover_manager: Arc<FailoverSwitchManager>,
-}
-```
 **ProxyServer**（`src-tauri/src/proxy/server.rs:54`）：
 - `ProxyServer::new()` 创建 `ProxyState` 并初始化所有共享组件
 - `ProxyServer::start()` 绑定端口、启动 Axum 路由
 - `ProxyServer::stop()` 发送 shutdown 信号、等待服务器关闭
 **技术栈**：
-- Axum — HTTP 框架（`src-tauri/src/proxy/server.rs`）
-- Tower — 中间件层（`src-tauri/src/proxy/server.rs`）
-- Hyper — 底层 HTTP 实现（`src-tauri/src/proxy/server.rs`）
-- Tokio — 异步运行时（`src-tauri/src/proxy/server.rs`）
-**Tower 中间件**：
-- `tower::ServiceBuilder` 用于组合多个中间件
 - 中间件按添加顺序执行（请求从外到内，响应从内到外）
 - 常用中间件：`tower_http::cors::CorsLayer`（CORS）、`tower_http::trace::TraceLayer`（日志）
 **Axum 路由**（`src-tauri/src/proxy/server.rs`）：
