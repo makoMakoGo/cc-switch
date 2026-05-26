@@ -711,6 +711,13 @@ return () => unlisten();
 这是你重构的弹药库。这些模式不是"代码风格偏好"，而是实实在在的维护负担。
 ### 6.1 代码膨胀模式
 **过大的单文件**：
+- `lib.rs`（1826 行）— 模块声明 + 插件注册 + 命令注册 + 初始化逻辑全混在一起
+- `App.tsx`（1605 行）— 14 个视图 + 事件处理 + 状态管理全在一个文件
+- `forwarder.rs`（~3000 行）— 请求转发 + 格式转换 + 错误处理全在一起
+- `codex_config.rs`（~1600 行）— 配置读写 + 迁移 + 验证全在一起
+- `claude_desktop_config.rs`（~1500 行）— 同上
+- `proxy.rs`（services，3910 行）— `ProxyService` 的所有方法全在一个文件
+- `provider/mod.rs`（services，~2600 行）— `ProviderService` 的所有方法全在一个文件
 **复制粘贴的 config 模块**：
 - 7 个工具的 config 模块结构几乎一样，但没有抽取公共函数
 - 每个都自己实现了一遍 `read → parse → modify → write` 流程
@@ -722,6 +729,9 @@ return () => unlisten();
 - 每个 config 模块都自己实现了一遍文件读取错误处理
 - 每个 service 都自己实现了一遍数据库错误处理
 - 应该抽取公共的错误处理宏或函数
+**冗余的 match 分支**：
+- `AppType` 的 match 在 `McpApps`（`src-tauri/src/app_config.rs:24`）、`VisibleApps`（`src-tauri/src/settings.rs:66`）、`CommonConfigSnippets`（`src-tauri/src/app_config.rs:441`）里重复出现
+- 每次加新工具都要改 10+ 个 match
 ### 6.2 过度抽象模式
 **为了"未来可能需要"而加的抽象**：
 - `CommonConfigSnippets`（`src-tauri/src/app_config.rs:419`）— 理论上是跨工具共享的配置片段，但实际使用率不高
@@ -750,16 +760,6 @@ return () => unlisten();
 - `cleanup_before_exit()`（`src-tauri/src/lib.rs:1513`）是代理相关的逻辑，但放在 lib.rs
 - `restore_proxy_state_on_startup()`（`src-tauri/src/lib.rs:1558`）同理
 - `is_chinese_locale()`（`src-tauri/src/lib.rs:1685`）是通用工具函数，但放在 lib.rs
-| `lib.rs:1601-1678` | `initialize_common_config_snippets()` 放在 lib.rs | 移到 `services/config.rs` |
-| `lib.rs:1685-1691` | `is_chinese_locale()` 放在 lib.rs | 移到 `config.rs` 或 `utils/` |
-| `App.tsx:1-1605` | 14 个视图在 switch 里 | 用 React Router 或状态机库 |
-| `codex_config.rs` 全文 | 66.5KB 太大 | 拆分成 `codex/` 目录（read.rs, write.rs, migrate.rs） |
-| `claude_desktop_config.rs` 全文 | 61.5KB 太大 | 同上 |
-| `services/proxy.rs:55` | `ProxyService` 3910 行 | 拆分成 takeover.rs, hot_switch.rs, config.rs |
-| 7 个 config 模块 | 重复的读写逻辑 | 抽取 `ToolConfig` trait |
-| 7 个 preset 文件 | 287KB TypeScript 数据 | 移到 JSON 文件，运行时加载 |
-| `provider.rs:14` | `settings_config: Value` 动态类型 | 考虑用强类型 enum |
-| `app_config.rs:24,66,441` | `AppType` match 重复 10+ 处 | 用 trait 或 visitor 模式统一 |
 | `error.rs:8` | `Config(String)` 太宽泛 | 拆分成更具体的变体 |
 | `settings.rs:5` | `OnceLock<RwLock<>>` + `unwrap()` | 用 `parking_lot::RwLock` 避免 poisoned panic |
 **删除死代码**：
