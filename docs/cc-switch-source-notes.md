@@ -602,21 +602,21 @@ Closed 或 Open
 - 所有视图都在一个 switch 里，没有用路由库（React Router）
 - 大量内联的事件处理逻辑，应该抽取到 hooks
 - 没有代码分割（code splitting），所有视图都打包在一个 chunk 里
-| `useProxyStatus` | `src/hooks/useProxyStatus.ts` | 代理状态实时同步 |
-| `useTauriEvent` | `src/hooks/useTauriEvent.ts` | 监听 Tauri 后端事件 |
-| `useAutoCompact` | `src/hooks/useAutoCompact.ts` | 自动压缩对话 |
-| `useUsageCacheBridge` | `src/hooks/useUsageCacheBridge.ts` | 用量缓存桥接 |
-| `useDragSort` | `src/hooks/useDragSort.ts` | 拖拽排序 |
-| `useStreamCheck` | `src/hooks/useStreamCheck.ts` | 流式检查 |
-| `useDarkMode` | `src/hooks/useDarkMode.ts` | 暗色模式 |
-**useProviderActions 详解**（`src/hooks/useProviderActions.ts`）：
-这是最核心的 hooks，封装了所有 Provider 的 CRUD 操作：
-```typescript
-// src/hooks/useProviderActions.ts
-const switchMutation = useMutation({
-  mutationFn: (providerId: string) =>
-    invoke("switch_claude_provider", { providerId }),  // 调用 Tauri 命令
-  onSuccess: () => {
+**14 个视图详解**：
+- `providers` — Provider 管理（列表、添加、编辑、删除、排序）
+- `settings` — 全局设置（代理配置、UI 偏好、WebDAV 同步）
+- `proxy` — 代理状态（状态显示、启停控制、故障转移配置）
+- `mcp` — MCP 配置（服务器列表、添加、编辑、删除）
+- `skills` — Skills 管理（列表、安装、卸载、更新）
+- `prompts` — Prompt 管理（列表、添加、编辑、删除）
+- `usage` — 用量统计（图表、筛选、导出）
+- `sync` — WebDAV 同步（配置、测试、上传、下载）
+- `env` — 环境变量检查（冲突检测、修复）
+- `subscription` — 订阅管理（余额、配额）
+- `omo` — OMO 集成（配置、状态）
+- `coding-plan` — Coding Plan（配置、状态）
+- `import-export` — 导入导出（配置、文件）
+- `about` — 关于页面（版本、更新日志）
     queryClient.invalidateQueries(["providers"]);     // 刷新缓存
     // 发射事件通知其他组件
   },
