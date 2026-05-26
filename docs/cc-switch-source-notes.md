@@ -250,20 +250,21 @@ where
 - 闭包可以捕获外部变量，函数不能
 - 闭包可以作为参数传递，更灵活
 - cc-switch 里大部分配置修改都用闭包
+**Rust 字符串在 cc-switch 中的使用**：
 - `vec![]` — 创建 Vec
-- `format!()` — 格式化字符串
-- `println!()` — 打印到标准输出
-- `json!()` — 创建 JSON 值（serde_json）
-**Rust derive 宏**：
-- `#[derive(Debug)]` — 自动派生 Debug trait，允许 `{:?}` 打印
-- `#[derive(Clone)]` — 自动派生 Clone trait，允许 `.clone()`
-- `#[derive(Serialize, Deserialize)]` — 自动派生 serde 序列化
-- `#[derive(PartialEq, Eq)]` — 自动派生比较操作
-- `#[derive(Hash)]` — 自动派生 Hash trait，允许用作 HashMap 键
-**cc-switch 中的 derive 使用**：
-- `Provider` 使用 `Debug, Clone, Serialize, Deserialize`（`src-tauri/src/provider.rs:9`）
-- `AppType` 使用 `Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize`（`src-tauri/src/app_config.rs:339`）
-- `AppError` 使用 `Debug, Error`（通过 thiserror）（`src-tauri/src/error.rs:6`）
+```rust
+// String vs &str
+// String 是堆分配的，可变的；&str 是借用的，不可变的
+let owned: String = String::from("hello");  // 堆分配
+let borrowed: &str = "hello";               // 字符串字面量
+// cc-switch 里大部分用 String，因为需要修改和传递所有权
+let app_type: String = "claude".to_string();
+let name: String = provider.name.clone();
+// format! 宏创建字符串
+let path = format!("{}/settings.json", home_dir);
+// 字符串拼接
+let full_name = format!("{} - {}", provider.name, provider.id);
+```
 - `CircuitState` 使用 `Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize`（`src-tauri/src/proxy/circuit_breaker.rs:14`）
 **Rust enum 在 cc-switch 中的使用**：
 - `AppType` — 7 个 AI 工具的枚举（`src-tauri/src/app_config.rs:341`）
