@@ -443,19 +443,19 @@ pub struct VisibleApps {       // src-tauri/src/settings.rs:28
 - `env_checker.rs` / `env_manager.rs` — 环境变量检查和管理
 - `model_fetch.rs` — 模型列表获取
 - `speedtest.rs` — 端点速度测试
+**SkillService 详解**（`src-tauri/src/services/skill.rs`）：
+- Skills 是 cc-switch 的扩展系统
+- 每个 Skill 是一个目录，包含 `SKILL.md` 描述文件
+- 支持安装、卸载、更新、备份
+- 支持多应用共享（SSOT 模式）
+**SkillService 方法列表**：
+- `get_installed_skills()` — 获取已安装的 Skills
+- `install_skill_unified()` — 安装 Skill
+- `uninstall_skill_unified()` — 卸载 Skill
+- `restore_skill_backup()` — 恢复 Skill 备份
+- `toggle_skill_app()` — 切换 Skill 的应用启用状态
+- `scan_unmanaged_skills()` — 扫描未管理的 Skills
 **UsageStatsService 详解**（`src-tauri/src/services/usage_stats.rs`）：
-- 这是用量统计的核心服务
-- 从代理层收集请求日志
-- 按 provider、model、时间维度聚合数据
-- 提供 `get_usage_summary()`、`get_usage_trends()` 等方法
-**UsageStatsService 方法列表**：
-- `get_usage_summary()` — 获取用量摘要
-- `get_usage_summary_by_app()` — 按应用获取用量
-- `get_usage_trends()` — 获取用量趋势
-- `get_provider_stats()` — 获取 provider 统计
-- `get_model_stats()` — 获取模型统计
-- `get_request_logs()` — 获取请求日志
-**services 层的职责**：
         // 从数据库获取 providers
         self.db.get_providers(app_type)
     }
