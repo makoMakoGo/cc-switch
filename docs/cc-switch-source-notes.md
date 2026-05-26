@@ -583,24 +583,24 @@ pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
 - **故障转移**：多个 provider 之间的切换
 - 两者配合使用，实现高可用
 **代理日志系统**（`src-tauri/src/proxy/log_codes.rs`）：
-   - 更新 `PROXY_MANAGED` 占位符
-6. 发射 Tauri 事件通知前端
-7. 释放 `SwitchLock`
+- 定义了所有日志代码常量
+- 每个日志代码对应一个特定的事件或错误
+- 方便过滤和分析日志
+- 支持结构化日志（JSON 格式）
+**日志代码示例**：
+- `SRV_START` — 服务器启动
+- `SRV_STOP` — 服务器停止
+- `REQ_FORWARD` — 请求转发
+- `REQ_ERROR` — 请求错误
+- `CB_STATE_CHANGE` — 熔断器状态变化
+- `FAILOVER_SWITCH` — 故障转移切换
+- `TAKEOVER_ENABLE` — 接管启用
+- `TAKEOVER_DISABLE` — 接管禁用
 **热切换 vs 冷切换**：
-- **热切换**：代理运行时切换 provider，不需要重启代理
-- **冷切换**：停止代理 → 切换 provider → 重新启动代理
-- cc-switch 默认使用热切换，用户体验更好
-**恢复流程**（`src-tauri/src/lib.rs:1513`）：
-- 应用退出时，`cleanup_before_exit()` 恢复 live 配置
-- 使用 `stop_with_restore_keep_state()` 保留代理状态
-- 下次启动时自动恢复代理接管状态（`restore_proxy_state_on_startup()`，`lib.rs:1558`）
 ## 第 5 章：前端架构
 前端是 React + TypeScript，通过 Tauri IPC 与 Rust 后端通信。前端代码在 `src/` 目录下。
 ### 5.1 App.tsx — 14 个视图的路由机制
 **App.tsx**（1605 行）是前端的"上帝文件"（`src/App.tsx`）。
-**视图切换机制**（`src/App.tsx`）：
-- 所有视图都在一个 switch 里，没有用路由库（React Router）
-- 大量内联的事件处理逻辑，应该抽取到 hooks
 - 没有代码分割（code splitting），所有视图都打包在一个 chunk 里
 **视图切换实现**：
 ```typescript
