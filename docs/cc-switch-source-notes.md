@@ -496,16 +496,19 @@ pub struct ProxyState {       // src-tauri/src/proxy/server.rs:34
 - Tower — 中间件层
 - Hyper — 底层 HTTP 实现
 - Tokio — 异步运行时
-
-**多 provider 路由逻辑**：
+**API 格式转换**（`src-tauri/src/proxy/`）：
+- `transform_codex_chat.rs`（71KB）— OpenAI Codex Chat API ↔ 内部格式
+- `transform_gemini.rs`（78KB）— Gemini API ↔ 内部格式
+- `providers/claude/` — Anthropic API 格式处理
+- `providers/codex/` — OpenAI API 格式处理
+- `providers/gemini/` — Gemini API 格式处理
+**多 provider 路由逻辑**（`src-tauri/src/proxy/provider_router.rs`）：
 - 每个 provider 有自己的 API key
 - 代理服务器根据请求中的 API key 判断转发到哪个 provider
 - 支持故障转移：主 provider 挂了自动切换到备选
-
+- `ProviderRouter` 持有熔断器状态，跨请求保持
 ### 4.3 故障转移和熔断
-
 **CircuitBreaker**（`src-tauri/src/proxy/circuit_breaker.rs:76`）：
-
 ```rust
 pub struct CircuitBreaker {    // src-tauri/src/proxy/circuit_breaker.rs:76
     state: Arc<RwLock<CircuitState>>,          // Closed/Open/HalfOpen
@@ -518,36 +521,44 @@ pub struct CircuitBreaker {    // src-tauri/src/proxy/circuit_breaker.rs:76
 }
 ```
 **CircuitBreakerConfig**（`src-tauri/src/proxy/circuit_breaker.rs:38`）：
+```rust
+pub struct CircuitBreakerConfig {  // src-tauri/src/proxy/circuit_breaker.rs:38
+    pub failure_threshold: u32,     // 连续失败多少次后打开熔断器
+    pub success_threshold: u32,     // 半开状态下成功多少次后关闭
+    pub timeout_seconds: u64,       // 熔断器打开后多久尝试半开
+    pub error_rate_threshold: f64,  // 错误率阈值 (0.0-1.0)
+    pub min_requests: u32,          // 计算错误率前的最小请求数
+}
+```
 **状态转换**：
-
 ```text
 Closed（正常）
-  │ 连续失败 >= failure_threshold
+  │ 连续失败 >= failure_threshold（默认 4）
   ▼
 Open（熔断）
-  │ 等待 timeout_seconds
+  │ 等待 timeout_seconds（默认 60 秒）
   ▼
 HalfOpen（半开）
-  │ 连续成功 >= success_threshold → 回到 Closed
+  │ 连续成功 >= success_threshold（默认 2）→ 回到 Closed
   │ 任何失败 → 回到 Open
   ▼
 Closed 或 Open
 ```
-
 **FailoverQueue**（数据库中的 `failover_queue` 表）：
 - 存储备选 provider 列表
 - 当主 provider 熔断时，按优先级尝试备选
 - 所有备选都失败时，返回 `AllProvidersCircuitOpen` 错误（`src-tauri/src/error.rs:26`）
-
+**FailoverSwitchManager**（`src-tauri/src/proxy/failover_switch.rs`）：
+- 管理故障转移切换逻辑
+- 与数据库交互，读取/更新 failover_queue
+- 发射 Tauri 事件通知前端
 **陷阱**：
 - `forwarder.rs`（122KB）太大，包含了太多职责
 - 熔断器状态是内存中的，重启后重置（`src-tauri/src/proxy/circuit_breaker.rs:78`）
 - 并发切换时需要 `SwitchLock` 保护（`src-tauri/src/proxy/switch_lock.rs`）
-
----
-
+- 没有持久化熔断器状态，重启后所有 provider 都是 Closed 状态
 ## 第 5 章：前端架构
-前端是 React + TypeScript，通过 Tauri IPC 与 Rust 后端通信。
+前端是 React + TypeScript，通过 Tauri IPC 与 Rust 后端通信。前端代码在 `src/` 目录下。
 ### 5.1 App.tsx — 14 个视图的路由机制
 **App.tsx**（1605 行）是前端的"上帝文件"（`src/App.tsx`）。
 **视图切换机制**（`src/App.tsx`）：
@@ -558,17 +569,6 @@ const [currentView, setCurrentView] = useState(
 );
 // 14 个视图
 switch (currentView) {
-  case "providers":    return <ProviderList />;     // Provider 管理
-  case "settings":     return <Settings />;          // 全局设置
-  case "proxy":        return <ProxyStatus />;       // 代理状态
-  case "mcp":          return <McpConfig />;         // MCP 服务器配置
-  case "skills":       return <Skills />;            // Skills 管理
-  case "prompts":      return <Prompts />;           // Prompt 管理
-  case "usage":        return <UsageStats />;        // 用量统计
-  case "sync":         return <WebDAVSync />;        // WebDAV 同步
-  case "env":          return <EnvChecker />;        // 环境变量检查
-  case "subscription": return <Subscription />;      // 订阅管理
-  case "omo":          return <Omo />;               // OMO 集成
   case "coding-plan":  return <CodingPlan />;        // Coding Plan
   case "import-export":return <ImportExport />;      // 导入导出
   case "about":        return <About />;             // 关于页面
