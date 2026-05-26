@@ -531,28 +531,28 @@ pub fn get_failover_queue(&self, app_type: &str) -> Result<Vec<FailoverQueueItem
 }
 ```
 **SpeedtestService 详解**（`src-tauri/src/services/speedtest.rs`）：
+**DAO 会话模式**：
+```rust
+// 获取会话列表
+pub fn list_sessions(&self, app_type: &str) -> Result<Vec<Session>, AppError> {
+    let conn = lock_conn!(self.conn);
+    let mut stmt = conn.prepare("SELECT * FROM sessions WHERE app_type = ?1 ORDER BY created_at DESC")?;
+    let sessions = stmt.query_map([app_type], |row| {
+        Ok(Session {
+            id: row.get(0)?,
+            app_type: row.get(1)?,
+            created_at: row.get(2)?,
+            // ... 其他字段
+        })
+    })?.collect();
+    Ok(sessions)
+}
+```
 **ModelFetchService 详解**（`src-tauri/src/services/model_fetch.rs`）：
-- 从 AI 工具的 API 获取可用模型列表
-- 支持 OpenAI 兼容的 `/v1/models` 端点
-- 返回模型名称、ID、能力等信息
-**ModelFetchService 方法列表**：
-- `fetch_models_for_config()` — 获取模型列表
-- 支持缓存，避免频繁请求
-- 支持超时和重试
 ## 第 4 章：本地代理子系统
 这是项目里最复杂的部分，单独拎出来。代理子系统实现了本地 HTTP 代理，支持 API 格式转换（Anthropic ↔ OpenAI ↔ Gemini）、多 provider 路由、故障转移和熔断。
 ### 4.1 proxy/ 目录结构
 **ProxyServer**（`src-tauri/src/proxy/server.rs:54`）：
-1. 从请求头提取 `Authorization: Bearer <api_key>`
-2. 在数据库中查找匹配的 provider
-3. 检查 provider 的熔断器状态
-4. 如果熔断器打开，尝试故障转移
-5. 转发到 provider 的 base URL
-  - 等待响应
-  - 转换响应格式（如果需要）
-  - 返回给客户端
-**forwarder 设计问题**：
-- 122KB 太大，包含了太多职责
 **路由问题**：
 - API key 匹配是线性扫描，没有索引
 - 没有缓存路由结果，每次请求都查数据库
