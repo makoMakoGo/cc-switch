@@ -547,60 +547,60 @@ Closed 或 Open
 ---
 
 ## 第 5 章：前端架构
-
+前端是 React + TypeScript，通过 Tauri IPC 与 Rust 后端通信。
 ### 5.1 App.tsx — 14 个视图的路由机制
-
-**App.tsx**（1605 行）是前端的"上帝文件"。
-
-**视图切换机制**：
-
+**App.tsx**（1605 行）是前端的"上帝文件"（`src/App.tsx`）。
+**视图切换机制**（`src/App.tsx`）：
 ```typescript
 // localStorage 持久化当前视图
 const [currentView, setCurrentView] = useState(
-  localStorage.getItem("currentView") || "providers"
+  localStorage.getItem("currentView") || "providers"  // 默认显示 provider 列表
 );
-
 // 14 个视图
 switch (currentView) {
-  case "providers":    return <ProviderList />;
-  case "settings":     return <Settings />;
-  case "proxy":        return <ProxyStatus />;
-  case "mcp":          return <McpConfig />;
-  case "skills":       return <Skills />;
-  case "prompts":      return <Prompts />;
-  case "usage":        return <UsageStats />;
-  case "sync":         return <WebDAVSync />;
-  case "env":          return <EnvChecker />;
-  case "subscription": return <Subscription />;
-  case "omo":          return <Omo />;
-  case "coding-plan":  return <CodingPlan />;
-  case "import-export":return <ImportExport />;
-  case "about":        return <About />;
+  case "providers":    return <ProviderList />;     // Provider 管理
+  case "settings":     return <Settings />;          // 全局设置
+  case "proxy":        return <ProxyStatus />;       // 代理状态
+  case "mcp":          return <McpConfig />;         // MCP 服务器配置
+  case "skills":       return <Skills />;            // Skills 管理
+  case "prompts":      return <Prompts />;           // Prompt 管理
+  case "usage":        return <UsageStats />;        // 用量统计
+  case "sync":         return <WebDAVSync />;        // WebDAV 同步
+  case "env":          return <EnvChecker />;        // 环境变量检查
+  case "subscription": return <Subscription />;      // 订阅管理
+  case "omo":          return <Omo />;               // OMO 集成
+  case "coding-plan":  return <CodingPlan />;        // Coding Plan
+  case "import-export":return <ImportExport />;      // 导入导出
+  case "about":        return <About />;             // 关于页面
 }
 ```
-
-**App 切换机制**：
-
+**App 切换机制**（`src/App.tsx`）：
 ```typescript
 // 切换当前管理的 AI 工具
 const [currentApp, setCurrentApp] = useState<AppType>(
-  localStorage.getItem("currentApp") || "Claude"
+  localStorage.getItem("currentApp") || "Claude"  // 默认管理 Claude
 );
 ```
-
 **AI Slop 特征**：
 - 1605 行的单文件，应该拆分
-- 所有视图都在一个 switch 里，没有用路由库
-- 大量内联的事件处理逻辑
-
+- 所有视图都在一个 switch 里，没有用路由库（React Router）
+- 大量内联的事件处理逻辑，应该抽取到 hooks
+- 没有代码分割（code splitting），所有视图都打包在一个 chunk 里
 ### 5.2 hooks/ — 状态管理层
-
-**核心 hooks**：
-
-| Hook | 职责 |
-|------|------|
-| `useProviderActions` | Provider 的 CRUD 操作（React Query mutations） |
-| `useSettings` / `useSettingsForm` | 设置的读写和表单状态 |
+**核心 hooks**（`src/hooks/`）：
+| Hook | 文件 | 职责 |
+|------|------|------|
+| `useProviderActions` | `src/hooks/useProviderActions.ts` | Provider 的 CRUD 操作（React Query mutations） |
+| `useSettings` | `src/hooks/useSettings.ts` | 设置的读写 |
+| `useSettingsForm` | `src/hooks/useSettingsForm.ts` | 设置表单状态管理 |
+| `useDirectorySettings` | `src/hooks/useDirectorySettings.ts` | 工具目录配置 |
+| `useProxyStatus` | `src/hooks/useProxyStatus.ts` | 代理状态实时同步 |
+| `useTauriEvent` | `src/hooks/useTauriEvent.ts` | 监听 Tauri 后端事件 |
+| `useAutoCompact` | `src/hooks/useAutoCompact.ts` | 自动压缩对话 |
+| `useUsageCacheBridge` | `src/hooks/useUsageCacheBridge.ts` | 用量缓存桥接 |
+| `useDragSort` | `src/hooks/useDragSort.ts` | 拖拽排序 |
+| `useStreamCheck` | `src/hooks/useStreamCheck.ts` | 流式检查 |
+| `useDarkMode` | `src/hooks/useDarkMode.ts` | 暗色模式 |
 | `useDirectorySettings` | 工具目录配置 |
 | `useProxyStatus` | 代理状态实时同步 |
 | `useTauriEvent` | 监听 Tauri 后端事件 |
