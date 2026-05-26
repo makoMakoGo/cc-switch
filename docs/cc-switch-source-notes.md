@@ -505,20 +505,20 @@ impl ProviderService {
 - `ProxyServer::start()` 绑定端口、启动 Axum 路由
 - `ProxyServer::stop()` 发送 shutdown 信号、等待服务器关闭
 **技术栈**：
-- Axum — HTTP 框架
-- Tower — 中间件层
-- Hyper — 底层 HTTP 实现
-- Tokio — 异步运行时
+- Axum — HTTP 框架（`src-tauri/src/proxy/server.rs`）
+- Tower — 中间件层（`src-tauri/src/proxy/server.rs`）
+- Hyper — 底层 HTTP 实现（`src-tauri/src/proxy/server.rs`）
+- Tokio — 异步运行时（`src-tauri/src/proxy/server.rs`）
+**Tower 中间件**：
+- `tower::ServiceBuilder` 用于组合多个中间件
+- 中间件按添加顺序执行（请求从外到内，响应从内到外）
+- 常用中间件：`tower_http::cors::CorsLayer`（CORS）、`tower_http::trace::TraceLayer`（日志）
+**Axum 路由**（`src-tauri/src/proxy/server.rs`）：
+- `Router::new()` 创建路由
+- `.route("/v1/chat/completions", post(handler))` 注册路由
+- `.route("/v1/messages", post(handler))` 注册路由
+- `.layer(middleware)` 添加中间件
 **API 格式转换**（`src-tauri/src/proxy/`）：
-- `transform_codex_chat.rs`（71KB）— OpenAI Codex Chat API ↔ 内部格式
-- `transform_gemini.rs`（78KB）— Gemini API ↔ 内部格式
-- `providers/claude/` — Anthropic API 格式处理
-- `providers/codex/` — OpenAI API 格式处理
-- `providers/gemini/` — Gemini API 格式处理
-**多 provider 路由逻辑**（`src-tauri/src/proxy/provider_router.rs`）：
-- 每个 provider 有自己的 API key
-- 代理服务器根据请求中的 API key 判断转发到哪个 provider
-- 支持故障转移：主 provider 挂了自动切换到备选
 - `ProviderRouter` 持有熔断器状态，跨请求保持
 **请求处理流程**：
 ```text
