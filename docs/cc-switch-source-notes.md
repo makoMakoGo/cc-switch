@@ -315,6 +315,16 @@ async fn my_command(state: tauri::State<'_, AppState>) -> Result<String, AppErro
     Ok(result)
 }
 ```
+**错误处理最佳实践**：
+- 使用 `?` 操作符传播错误，不要手动 match
+- 使用 `map_err` 转换错误类型，保留上下文
+- 使用 `unwrap_or_default` 提供默认值，避免 panic
+- Tauri 命令返回 `Result<T, AppError>`，自动转为 JS reject
+**错误处理反模式**：
+- 使用 `unwrap()` 可能 panic
+- 使用 `expect()` 可能 panic
+- 忽略错误（`let _ = ...`）
+- 返回 `String` 错误而不是 `AppError`
 ## 第 3 章：后端核心模块
 按依赖顺序读，不是按文件大小。先读底层工具模块，再读业务模块。
 ### 3.1 config.rs — 路径解析和文件 I/O（14KB）
@@ -328,16 +338,6 @@ async fn my_command(state: tauri::State<'_, AppState>) -> Result<String, AppErro
 - `write_json_file<T>(path, data)` → 序列化并原子写入
 - `atomic_write(path, content)` → 临时文件 + rename 的安全写入
 **实现亮点**：
-- 所有路径函数都支持环境变量覆盖，方便测试（`CC_SWITCH_TEST_HOME`）
-- `atomic_write` 用 `write_to_tmp + rename` 避免写入中断导致文件损坏
-- 文件读写统一用 `AppError::io()` 和 `AppError::json()` 包装错误
-**陷阱**：
-- `get_home_dir()` 在某些环境下可能返回 None，导致 panic
-- 路径硬编码了 `~/.claude` 等，如果用户自定义了 Claude 的配置目录会出问题
-- 没有文件锁保护，并发写入可能冲突
-### 3.1.5 database/ — 数据持久化（SQLite）
-**接口**：SQLite 数据库的初始化、迁移、DAO 操作（`src-tauri/src/database/mod.rs`）。
-**核心结构**：
 ```rust
 pub struct Database {           // src-tauri/src/database/mod.rs:76
     pub(crate) conn: Mutex<Connection>,  // SQLite 连接（Mutex 包装）
