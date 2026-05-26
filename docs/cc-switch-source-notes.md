@@ -390,22 +390,22 @@ impl Database {
 - `get_settings()` — 获取设置
 - `set_setting()` — 设置单个配置项
 **Schema 迁移示例**（`src-tauri/src/database/schema.rs`）：
-- 支持压缩（可选）
-**备份触发时机**：
-- 手动备份（用户点击"创建备份"按钮）
-- 自动备份（应用升级前）
-- WebDAV 同步前（可选）
-    let mut settings = APP_SETTINGS.get().unwrap().write().unwrap();
-    f(&mut settings);
-    write_settings_to_file(&settings)?;
+```rust
+// 迁移逻辑示例
+fn migrate_v9_to_v10(conn: &Connection) -> Result<(), AppError> {
+    // 添加新列
+    conn.execute("ALTER TABLE providers ADD COLUMN notes TEXT", [])?;
+    // 更新版本号
+    conn.execute("PRAGMA user_version = 10", [])?;
     Ok(())
 }
 ```
-**AppSettings 包含**（`src-tauri/src/settings.rs`）：
-- 代理端口、监听地址
-- 每个工具的代理配置（是否启用、超时时间等）
-- WebDAV 同步配置（`src-tauri/src/settings.rs:82`）
-- UI 主题、语言偏好
+**Schema 版本控制**：
+- 当前版本 `SCHEMA_VERSION = 10`（`src-tauri/src/database/mod.rs:52`）
+- 每次修改表结构时递增版本号
+- 迁移逻辑在 `schema.rs` 中，按版本顺序执行
+- 支持从 JSON 配置文件迁移到 SQLite（`migration.rs`）
+**备份触发时机**：
 - 可见应用列表（`VisibleApps`，`src-tauri/src/settings.rs:28`）
 - 自动启动、静默启动等偏好
 **VisibleApps**（`src-tauri/src/settings.rs:28`）：
