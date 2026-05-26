@@ -464,6 +464,11 @@ pub struct VisibleApps {       // src-tauri/src/settings.rs:28
 ### 4.1 proxy/ 目录结构
 ```text
 src-tauri/src/proxy/
+├── server.rs           # HTTP 服务器（Axum）— src-tauri/src/proxy/server.rs:34
+├── forwarder.rs        # 请求转发（122KB，最大）
+├── circuit_breaker.rs  # 熔断器（496 行）— src-tauri/src/proxy/circuit_breaker.rs:76
+├── provider_router.rs  # 多 provider 路由
+├── failover_switch.rs  # 故障转移切换
 ├── switch_lock.rs      # 切换锁（防止并发切换）
 ├── handlers/           # 请求处理器
 ├── providers/          # 格式转换器
@@ -507,31 +512,26 @@ pub struct ProxyState {       // src-tauri/src/proxy/server.rs:34
 - 代理服务器根据请求中的 API key 判断转发到哪个 provider
 - 支持故障转移：主 provider 挂了自动切换到备选
 - `ProviderRouter` 持有熔断器状态，跨请求保持
-### 4.3 故障转移和熔断
-**CircuitBreaker**（`src-tauri/src/proxy/circuit_breaker.rs:76`）：
-```rust
-pub struct CircuitBreaker {    // src-tauri/src/proxy/circuit_breaker.rs:76
-    state: Arc<RwLock<CircuitState>>,          // Closed/Open/HalfOpen
-    consecutive_failures: Arc<AtomicU32>,       // 连续失败计数
-    consecutive_successes: Arc<AtomicU32>,      // 连续成功计数
-    total_requests: Arc<AtomicU32>,             // 总请求数
-    total_failures: Arc<AtomicU32>,             // 总失败数
-    last_failure_time: Arc<RwLock<Option<Instant>>>,
-    config: CircuitBreakerConfig,
-}
-```
-**CircuitBreakerConfig**（`src-tauri/src/proxy/circuit_breaker.rs:38`）：
-```rust
-pub struct CircuitBreakerConfig {  // src-tauri/src/proxy/circuit_breaker.rs:38
-    pub failure_threshold: u32,     // 连续失败多少次后打开熔断器
-    pub success_threshold: u32,     // 半开状态下成功多少次后关闭
-    pub timeout_seconds: u64,       // 熔断器打开后多久尝试半开
-    pub error_rate_threshold: f64,  // 错误率阈值 (0.0-1.0)
-    pub min_requests: u32,          // 计算错误率前的最小请求数
-}
-```
-**状态转换**：
+**请求处理流程**：
 ```text
+客户端请求 → Axum 路由 → handlers/ → ProviderRouter
+  ├─ 解析请求头，提取 API key
+  ├─ 匹配到对应的 provider
+  ├─ 检查熔断器状态
+  │    ├─ Closed → 正常转发
+  │    ├─ Open → 拒绝，返回 503
+  │    └─ HalfOpen → 尝试转发，成功则关闭熔断
+  ├─ 转发到 provider 的 base URL
+  ├─ 等待响应
+  ├─ 转换响应格式（如果需要）
+  └─ 返回给客户端
+```
+**Gemini Shadow Store**（`src-tauri/src/proxy/providers/gemini_shadow.rs`）：
+- 用于 thoughtSignature / tool call 回放
+- 存储 Gemini API 的中间状态，支持流式响应
+**Codex Chat History Store**（`src-tauri/src/proxy/providers/codex_chat_history.rs`）：
+- 用于恢复 previous_response_id 指向的 tool call
+- 存储 Codex Chat API 的历史记录
 Closed（正常）
   │ 连续失败 >= failure_threshold（默认 4）
   ▼
