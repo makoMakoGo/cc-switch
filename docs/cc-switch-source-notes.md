@@ -451,33 +451,33 @@ pub fn delete_provider(&self, id: &str) -> Result<(), AppError> {
     Ok(())
 }
 ```
+**DAO 插入模式**：
+```rust
+// 插入设置
+pub fn set_setting(&self, key: &str, value: &str) -> Result<(), AppError> {
+    let conn = lock_conn!(self.conn);
+    conn.execute(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES (?1, ?2)",
+        rusqlite::params![key, value],
+    )?;
+    Ok(())
+}
+```
+**DAO 批量操作**：
+```rust
+// 批量插入 providers
+pub fn add_providers(&self, providers: &[Provider]) -> Result<(), AppError> {
+    let conn = lock_conn!(self.conn);
+    for provider in providers {
+        conn.execute(
+            "INSERT INTO providers (id, name, app_type, settings_config) VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params![provider.id, provider.name, provider.app_type, to_json_string(&provider.settings_config)?],
+        )?;
+    }
+    Ok(())
+}
+```
 - `skill.rs`（~2600 行）— SkillService（Skills 管理）
-- `webdav.rs` / `webdav_sync.rs` / `webdav_auto_sync.rs` — WebDAV 同步
-- `session_usage.rs` / `session_usage_codex.rs` / `session_usage_gemini.rs` — 会话用量同步
-- `balance.rs` — 余额查询
-- `subscription.rs` — 订阅管理
-- `coding_plan.rs` — Coding Plan 管理
-- `env_checker.rs` / `env_manager.rs` — 环境变量检查和管理
-- `model_fetch.rs` — 模型列表获取
-- `speedtest.rs` — 端点速度测试
-**WebDAV 同步模块详解**：
-- `webdav.rs` — WebDAV 客户端实现
-- `webdav_sync.rs` — 同步逻辑（上传、下载、冲突解决）
-- `webdav_auto_sync.rs` — 自动同步（数据库变更时触发）
-**WebDAV 同步流程**：
-1. 用户配置 WebDAV 服务器地址和凭据
-2. 点击"同步"按钮
-3. `webdav_sync.rs` 比较本地和远程版本
-4. 如果远程更新，下载并合并
-5. 如果本地更新，上传到远程
-6. 解决冲突（本地优先或远程优先）
-**WebDAV 自动同步**：
-- 监听数据库变更钩子（`src-tauri/src/database/mod.rs:80`）
-- 数据库变更时自动触发同步
-- 支持防抖（避免频繁同步）
-- `import_default_config()` — 导入默认配置
-- `export_config()` — 导出配置
-- `import_config()` — 导入配置
 **陷阱**：
 - `provider/mod.rs`（~2600 行）和 `proxy.rs`（3910 行）太大，应该拆分
 - 有些逻辑直接放在 `commands/` 里，没有经过 services 层
