@@ -617,35 +617,35 @@ pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
 - `coding-plan` — Coding Plan（配置、状态）
 - `import-export` — 导入导出（配置、文件）
 - `about` — 关于页面（版本、更新日志）
-    queryClient.invalidateQueries(["providers"]);     // 刷新缓存
-    // 发射事件通知其他组件
+**useProviderActions 详解**（`src/hooks/useProviderActions.ts`）：
+这是最核心的 hooks，封装了所有 Provider 的 CRUD 操作：
+```typescript
+// src/hooks/useProviderActions.ts
+// 切换 provider
+const switchMutation = useMutation({
+  mutationFn: (providerId: string) =>
+    invoke("switch_claude_provider", { providerId }),
+  onSuccess: () => {
+    queryClient.invalidateQueries(["providers"]);
+  },
+});
+// 添加 provider
+const addMutation = useMutation({
+  mutationFn: (data: CreateProviderInput) =>
+    invoke("add_provider", { appType: currentApp, ...data }),
+  onSuccess: () => {
+    queryClient.invalidateQueries(["providers"]);
+  },
+});
+// 删除 provider
+const deleteMutation = useMutation({
+  mutationFn: (providerId: string) =>
+    invoke("delete_provider", { providerId }),
+  onSuccess: () => {
+    queryClient.invalidateQueries(["providers"]);
   },
 });
 ```
-**useSettings 详解**（`src/hooks/useSettings.ts`）：
-- 封装了 `get_settings` 和 `save_settings` Tauri 命令
-- 使用 React Query 缓存设置数据
-- 提供 `mutateSettings` 方法用于修改设置
-**useProxyStatus 详解**（`src/hooks/useProxyStatus.ts`）：
-- 轮询代理服务器状态（每 2 秒）
-- 提供 `isRunning`, `currentProviders`, `uptime` 等状态
-- 使用 `useTauriEvent` 监听代理状态变化事件
-**前端 → 后端调用模式**：
-```typescript
-// 标准模式：invoke + React Query
-const { data: providers } = useQuery(
-  ["providers", currentApp],
-  () => invoke("get_providers", { appType: currentApp })
-);
-// 事件监听模式
-useTauriEvent("provider-changed", (event) => {
-  queryClient.invalidateQueries(["providers"]);
-});
-```
-**useTauriEvent 详解**（`src/hooks/useTauriEvent.ts`）：
-```typescript
-// src/hooks/useTauriEvent.ts
-export function useTauriEvent<T>(event: string, handler: (payload: T) => void) {
   useEffect(() => {
     const unlisten = listen(event, (e) => handler(e.payload));
     return () => { unlisten.then(fn => fn()); };
