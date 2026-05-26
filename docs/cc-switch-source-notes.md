@@ -448,30 +448,30 @@ pub struct VisibleApps {       // src-tauri/src/settings.rs:28
 - 与数据库交互，读取/更新数据
 - 与配置文件交互，读写各工具的配置
 - 管理代理服务器的生命周期
+**services 层示例**（`src-tauri/src/services/provider/mod.rs`）：
+```rust
+// ProviderService 示例
+pub struct ProviderService {
+    db: Arc<Database>,
+}
+impl ProviderService {
+    pub fn get_providers(&self, app_type: &str) -> Result<Vec<Provider>, AppError> {
+        // 从数据库获取 providers
+        self.db.get_providers(app_type)
+    }
+    pub fn switch_provider(&self, app_type: &str, provider_id: &str) -> Result<(), AppError> {
+        // 切换 provider 的业务逻辑
+        // 1. 验证 provider 是否存在
+        // 2. 更新数据库中的 current_provider
+        // 3. 写入目标工具的配置文件
+        Ok(())
+    }
+}
+```
 **陷阱**：
 - `provider/mod.rs`（~2600 行）和 `proxy.rs`（3910 行）太大，应该拆分
 - 有些逻辑直接放在 `commands/` 里，没有经过 services 层
 - 没有统一的 service trait 或接口
-### 3.6 各工具 config 模块对比
-**各工具配置文件路径**：
-- Claude Code: `~/.claude/settings.json`
-- Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`（macOS）
-- Codex CLI: `~/.codex/config.json` + `~/.codex/auth.json`
-- Gemini CLI: `~/.gemini/settings.json`
-- OpenCode: `~/.opencode/config.json`
-- 每个模块都自己处理了边界情况（文件不存在、JSON 格式错误等）
-- OpenClaw: `~/.openclaw/config.json`
-- 配置文件格式不统一（有的用 JSON，有的用 TOML，有的用 YAML）
-- Hermes: `~/.hermes/config.yaml`
-**对比分析**：
-**配置文件格式差异**：
-- Switch 模式工具（Claude、Codex、Gemini）的 config 模块更简单，因为只需要覆盖写入
-- Claude Code: JSON，支持 `env` 字段设置环境变量
-- Additive 模式工具（OpenCode、OpenClaw、Hermes）的 config 模块更复杂，需要管理多个 provider 的 enabled 状态
-- Claude Desktop: JSON，支持 MCP 服务器配置
-- Claude Desktop 的 config 模块最大（61.5KB），因为它需要处理 MCP 服务器配置
-- Codex CLI: JSON，支持 OAuth 认证和 Copilot 集成
-- Codex 的 config 模块最大（66.5KB），因为它需要处理 OAuth 认证和 Copilot 集成
 - Gemini CLI: JSON，支持模型配置
 - OpenCode: JSON，支持多 provider 配置
 - OpenClaw: JSON，支持多 provider 配置
