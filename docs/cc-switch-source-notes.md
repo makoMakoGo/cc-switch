@@ -294,22 +294,22 @@ match app_type {
     _ => "unknown",
 }
 ```
-**serde 枚举序列化**：
+**Rust 模式匹配进阶**：
 ```rust
-#[serde(rename_all = "lowercase")]
-enum AppType {
-    Claude,    // 序列化为 "claude"
-    Codex,     // 序列化为 "codex"
+// 解构结构体
+let Provider { id, name, .. } = provider;
+// 解构枚举
+match error {
+    AppError::Io { path, source } => println!("IO error at {}: {}", path, source),
+    AppError::Config(msg) => println!("Config error: {}", msg),
+    _ => println!("Other error"),
+}
+// matches! 宏
+if matches!(app_type, AppType::OpenCode | AppType::OpenClaw | AppType::Hermes) {
+    // additive mode
 }
 ```
-    .map_err(|e| AppError::Lock(e.to_string()))?;
-// 使用 unwrap_or_default 提供默认值
-let settings = APP_SETTINGS.read().unwrap_or_default();
-```
-**Tauri 命令错误处理**：
-```rust
-#[tauri::command]
-async fn my_command(state: tauri::State<'_, AppState>) -> Result<String, AppError> {
+**serde 枚举序列化**：
     // 错误会自动转换为 JS 的 reject
     let result = do_something()?;
     Ok(result)
