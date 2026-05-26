@@ -482,19 +482,19 @@ impl ProviderService {
 - `provider/mod.rs`（~2600 行）和 `proxy.rs`（3910 行）太大，应该拆分
 - 有些逻辑直接放在 `commands/` 里，没有经过 services 层
 - 没有统一的 service trait 或接口
+**ConfigService**（`src-tauri/src/services/config.rs`）：
+- 负责配置文件的读写
+- 封装了 `read_json_file` 和 `write_json_file`
+- 提供 `read_xxx_config()` 和 `write_xxx_config()` 方法
+- 与数据库交互，读取/更新配置
+**ConfigService 方法列表**：
+- `read_claude_config()` — 读取 Claude 配置
+- `write_claude_config()` — 写入 Claude 配置
+- `read_codex_config()` — 读取 Codex 配置
+- `write_codex_config()` — 写入 Codex 配置
+- `read_gemini_config()` — 读取 Gemini 配置
+- `write_gemini_config()` — 写入 Gemini 配置
 **config 模块代码模式**：
-```rust
-// 读取配置文件
-pub fn read_xxx_config() -> Result<Value, AppError> {
-    let path = get_xxx_config_path();
-    read_json_file(&path)
-}
-// 写入配置文件
-pub fn write_xxx_config(config: &Value) -> Result<(), AppError> {
-    let path = get_xxx_config_path();
-    write_json_file(&path, config)
-}
-// 构建 live 配置
 pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
     let mut config = read_xxx_config()?;
     // 合并 provider 配置
