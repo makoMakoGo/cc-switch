@@ -502,39 +502,39 @@ pub fn set_settings(&self, settings: &[(String, String)]) -> Result<(), AppError
     Ok(())
 }
 ```
+**DAO 代理配置模式**：
+```rust
+// 获取代理配置
+pub async fn get_proxy_config_for_app(&self, app_type: &str) -> Result<ProxyConfig, AppError> {
+    let conn = lock_conn!(self.conn);
+    let mut stmt = conn.prepare("SELECT config FROM proxy_config WHERE app_type = ?1")?;
+    let mut rows = stmt.query_map([app_type], |row| {
+        let config_str: String = row.get(0)?;
+        serde_json::from_str(&config_str).map_err(|e| AppError::Json(e.to_string()))
+    })?;
+    Ok(rows.next().transpose()?.unwrap_or_default())
+}
+```
+**DAO 故障转移队列模式**：
+```rust
+// 获取故障转移队列
+pub fn get_failover_queue(&self, app_type: &str) -> Result<Vec<FailoverQueueItem>, AppError> {
+    let conn = lock_conn!(self.conn);
+    let mut stmt = conn.prepare("SELECT * FROM failover_queue WHERE app_type = ?1 ORDER BY priority")?;
+    let items = stmt.query_map([app_type], |row| {
+        Ok(FailoverQueueItem {
+            provider_id: row.get(0)?,
+            priority: row.get(1)?,
+        })
+    })?.collect();
+    Ok(items)
+}
+```
 **SpeedtestService 详解**（`src-tauri/src/services/speedtest.rs`）：
-**EnvChecker 详解**（`src-tauri/src/services/env_checker.rs`）：
-- 检查环境变量冲突
-- 检测 AI 工具的环境变量设置
-- 提供修复建议
-**EnvChecker 方法列表**：
-- `check_env_conflicts()` — 检查环境变量冲突
-- `delete_env_vars()` — 删除环境变量
-- `restore_env_backup()` — 恢复环境变量备份
-**EnvManager 详解**（`src-tauri/src/services/env_manager.rs`）：
-- 管理环境变量的设置和恢复
-- 支持备份和恢复
-- 支持批量操作
 ## 第 4 章：本地代理子系统
 这是项目里最复杂的部分，单独拎出来。代理子系统实现了本地 HTTP 代理，支持 API 格式转换（Anthropic ↔ OpenAI ↔ Gemini）、多 provider 路由、故障转移和熔断。
 ### 4.1 proxy/ 目录结构
 **ProxyServer**（`src-tauri/src/proxy/server.rs:54`）：
-- `transform_codex_chat.rs`（71KB）— OpenAI Codex Chat API ↔ 内部格式
-- `transform_gemini.rs`（78KB）— Gemini API ↔ 内部格式
-- `providers/claude/` — Anthropic API 格式处理
-- `providers/codex/` — OpenAI API 格式处理
-- `providers/gemini/` — Gemini API 格式处理
-**代理支持的 Provider 类型**：
-- **Anthropic**（Claude）— 使用 `/v1/messages` 端点
-- **OpenAI**（Codex）— 使用 `/v1/chat/completions` 端点
-- **Google**（Gemini）— 使用 `/v1beta/models/` 端点
-- **GitHub Copilot** — 使用 OAuth 认证，特殊处理
-- **自定义端点** — 用户可以配置自己的 API 端点
-**Provider 类型检测**：
-- 通过 `provider_type()` 方法判断（`src-tauri/src/provider.rs:69`）
-- `is_codex_oauth()` — 检测是否为 Codex OAuth
-- `is_github_copilot()` — 检测是否为 GitHub Copilot
-- `uses_managed_account_auth()` — 检测是否使用托管账户认证
 5. 接收响应，转换回统一格式
 6. 返回给客户端
 **多 provider 路由逻辑**（`src-tauri/src/proxy/provider_router.rs`）：
