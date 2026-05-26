@@ -671,29 +671,29 @@ export function useSettings() {
 - 没有乐观更新，修改设置后需要等待服务器响应
 - 没有错误处理，失败时没有提示
 - 设置结构是动态的，没有类型检查
-});
-```
-**React Query 配置**：
-- `staleTime`: 数据过期时间（默认 0，立即重新获取）
-- `cacheTime`: 缓存时间（默认 5 分钟）
-- `refetchOnWindowFocus`: 窗口聚焦时重新获取（默认 true）
-- `retry`: 失败重试次数（默认 3）
-**React Query 最佳实践**：
-- 使用 `queryKey` 数组作为缓存键
-- 使用 `invalidateQueries` 刷新相关缓存
-- 使用 `setQueryData` 乐观更新
-- 使用 `onSuccess` / `onError` 处理副作用
-**前端错误处理**：
-- Tauri 命令返回 `Result<T, String>`，前端通过 `try/catch` 捕获
-- React Query 的 `error` 状态用于显示错误信息
-- 没有统一的错误处理组件，每个组件自己处理错误
-];
-- `src/config/codingPlanProviders.ts`（2.6KB）— Coding Plan provider 列表
-```
-### 5.4 前端 → 后端的调用模式
-**invoke 封装**（没有统一封装，直接用 Tauri 的 `invoke`）：
+**useProxyStatus 详解**（`src/hooks/useProxyStatus.ts`）：
+- 轮询代理服务器状态（每 2 秒）
+- 提供 `isRunning`, `currentProviders`, `uptime` 等状态
+- 使用 `useTauriEvent` 监听代理状态变化事件
+**useProxyStatus 代码示例**：
 ```typescript
-import { invoke } from "@tauri-apps/api/core";
+// src/hooks/useProxyStatus.ts
+export function useProxyStatus() {
+  const [status, setStatus] = useState<ProxyStatus | null>(null);
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const s = await invoke("get_proxy_status");
+      setStatus(s);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+  return status;
+}
+```
+**useProxyStatus 问题**：
+- 使用 `setInterval` 轮询，不是事件驱动
+- 没有错误处理，invoke 失败时没有提示
+- 没有缓存，每次轮询都调用 Tauri 命令
 // 直接调用
 const result = await invoke("command_name", { arg1, arg2 });
 ```
