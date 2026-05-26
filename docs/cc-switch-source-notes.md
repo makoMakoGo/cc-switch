@@ -348,11 +348,8 @@ impl AppType {
 - `AppType` 的 match 到处都是（`McpApps:24`, `VisibleApps:66`, `CommonConfigSnippets:441`），加新工具需要改很多地方
 
 ### 3.4 provider.rs — 核心数据模型（40.6KB）
-
 **接口**：Provider 是 cc-switch 的核心数据单元（`src-tauri/src/provider.rs:10`）。
-
 **Provider 结构体**（`src-tauri/src/provider.rs:10-43`）：
-
 ```rust
 pub struct Provider {          // src-tauri/src/provider.rs:10
     pub id: String,                    // 唯一标识
@@ -369,25 +366,28 @@ pub struct Provider {          // src-tauri/src/provider.rs:10
     pub in_failover_queue: bool,       // 是否在故障转移队列中
 }
 ```
-- 与数据库交互
-
-**UniversalProvider**：
+**ProviderMeta**（`src-tauri/src/provider.rs`）：
+- 存储 provider 的元数据（是否默认、排序、自定义端点等）
+- 不写入 live 配置，仅存于 `~/.cc-switch/config.json`
+- 包含 `custom_endpoints` 字段，用于自定义 API 端点
+**ProviderManager**（`src-tauri/src/provider.rs`）：
+- 管理 provider 的 CRUD 操作
+- 与数据库交互，读取/更新 provider 数据
+- 提供 `get_providers()`, `add_provider()`, `update_provider()`, `delete_provider()` 等方法
+**UniversalProvider**（`src-tauri/src/provider.rs`）：
 - 跨应用共享的 provider 配置
 - 一次配置，多个工具复用
-
+- 通过 `sync_universal_provider` 命令同步到各工具
 **陷阱**：
 - `settings_config` 是 `serde_json::Value`（动态类型），不是强类型的，容易出错
 - Provider 和 AppType 的关系是 N:1，但代码里很多地方假设 1:1
-
-### 3.5 settings.rs — 设置管理（28.9KB）
-**接口**：全局应用设置的读写（`src-tauri/src/settings.rs:5`），包括代理配置、UI 偏好、WebDAV 同步等。
-**实现**：
-```rust
-static APP_SETTINGS: OnceLock<RwLock<AppSettings>> = OnceLock::new();  // src-tauri/src/settings.rs:5
-pub fn read_settings() -> AppSettings {
-    let settings = APP_SETTINGS.get_or_init(|| {
-        let file_settings = read_settings_from_file();
-        RwLock::new(file_settings)
+- 没有版本控制，并发修改可能丢失
+- `ProviderMeta` 的类型定义很深（`ProviderMeta` → `ProviderMetaInner` → ...），阅读困难
+**亮点**：
+- Provider 支持 `in_failover_queue` 标记，可以加入故障转移队列
+- 支持 `icon` 和 `icon_color` 自定义，前端可以显示彩色图标
+- 支持 `notes` 字段，用户可以添加备注
+- 支持 `category` 字段，可以按分类筛选 provider
     });
     settings.read().unwrap().clone()
 }
