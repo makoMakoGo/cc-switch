@@ -263,32 +263,32 @@ async fn my_command(state: tauri::State<'_, AppState>) -> Result<String, AppErro
     Ok(result)
 }
 ```
-**所有权和借用模式**：
+**tokio::spawn 异步任务**：
 ```rust
-// Arc<T> 共享所有权
-let db = Arc::new(Database::init()?);  // 创建 Arc
-let db_clone = db.clone();             // 克隆 Arc（增加引用计数）
-// db 和 db_clone 指向同一个 Database
-// Mutex<T> 内部可变性
-let conn = self.conn.lock()?;          // 获取锁
-// conn 是 MutexGuard，离开作用域时自动释放锁
-// RwLock<T> 读写锁
-let settings = APP_SETTINGS.read()?;   // 读锁（多读单写）
-let mut settings = APP_SETTINGS.write()?; // 写锁（独占）
+// 启动后台任务
+tokio::spawn(async move {
+    // 后台执行的代码
+    loop {
+        tokio::time::sleep(Duration::from_secs(60)).await;
+        // 定期执行的任务
+    }
+});
+// 在 cc-switch 中的使用：
+- 代理服务器启动（`src-tauri/src/proxy/server.rs`）
+- 后台会话用量同步（`src-tauri/src/lib.rs:1000`）
+- 定期检查代理状态
 ```
-**Option 和 Result 模式**：
+**异步错误处理**：
 ```rust
-// Option 处理
-let icon: Option<String> = provider.icon;
-match icon {
-    Some(icon) => println!("Icon: {}", icon),
-    None => println!("No icon"),
+// 异步函数中的错误传播
+async fn fetch_data() -> Result<Data, AppError> {
+    let response = reqwest::get(url).await
+        .map_err(|e| AppError::Http(e.to_string()))?;
+    let data = response.json().await
+        .map_err(|e| AppError::Json(e.to_string()))?;
+    Ok(data)
 }
-// 或者用 unwrap_or
-let icon = provider.icon.unwrap_or("default".to_string());
-// Result 处理
-let config = read_json_file(path)?;  // 提前返回错误
-let config = read_json_file(path).unwrap_or_default();  // 用默认值
+```
 ```
 **错误处理模式**：
 ```rust
