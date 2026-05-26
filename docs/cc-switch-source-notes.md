@@ -597,18 +597,18 @@ pub fn set_settings(&self, settings: &[(String, String)]) -> Result<(), AppError
 - `TAKEOVER_ENABLE` — 接管启用
 - `TAKEOVER_DISABLE` — 接管禁用
 **热切换 vs 冷切换**：
+**会话用量同步**（`src-tauri/src/services/session_usage.rs`）：
+- 从 Claude Code 的会话日志中提取用量数据
+- 从 Codex 的会话日志中提取用量数据
+- 从 Gemini 的会话日志中提取用量数据
+- 定期同步到数据库
+**会话用量同步流程**：
+1. 读取工具的会话日志文件
+2. 解析日志，提取 token 用量、请求次数等
+3. 按 provider、model、时间维度聚合
+4. 写入数据库的 `request_logs` 表
+5. 更新用量统计缓存
 **SwitchLock 详解**（`src-tauri/src/proxy/switch_lock.rs`）：
-- 防止并发切换 provider
-- 使用 `tokio::sync::Mutex` 保护切换操作
-- 每个应用类型有独立的锁
-- 切换时获取锁，完成后释放
-**SwitchLock 代码示例**：
-```rust
-// src-tauri/src/proxy/switch_lock.rs
-pub struct SwitchLockManager {
-    locks: HashMap<String, Arc<Mutex<()>>>,
-}
-impl SwitchLockManager {
     pub async fn acquire(&self, app_type: &str) -> MutexGuard<()> {
         let lock = self.locks.get(app_type).unwrap();
         lock.lock().await
