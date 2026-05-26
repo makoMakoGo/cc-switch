@@ -736,28 +736,28 @@ export function useStreamCheck() {
   return { handleDragStart, handleDragOver, handleDrop };
 }
 ```
+**useSubscription 详解**（`src/hooks/useSubscription.ts`）：
+- 查询 AI 工具的订阅状态
+- 返回订阅类型、到期时间、使用量等
+- 支持多种认证方式
+**useSubscription 代码示例**：
+```typescript
+// src/hooks/useSubscription.ts
+export function useSubscription() {
+  const { data: subscription, isLoading } = useQuery(
+    ["subscription"],
+    () => invoke("get_subscription_quota")
+  );
+  return { subscription, isLoading };
+}
+```
 // 直接调用
 ## 第 6 章：AI Slop 特征模式识别
 这是你重构的弹药库。这些模式不是"代码风格偏好"，而是实实在在的维护负担。
 ### 6.1 代码膨胀模式
 **过大的单文件**：
-**复制粘贴的 config 模块**：
-- 7 个工具的 config 模块结构几乎一样，但没有抽取公共函数
-- 一些 trait 定义了接口但只有一个实现
-**深层嵌套的类型定义**：
-- `Provider`（`src-tauri/src/provider.rs:10`）→ `ProviderMeta` → `ProviderMetaInner` → ...
-- 层级太深，阅读困难
-**动态类型滥用**：
-- `Provider.settings_config: Value`（`src-tauri/src/provider.rs:14`）是 `serde_json::Value`，不是强类型
-- 运行时才知道配置是否合法，编译器帮不上忙
-- 对比：如果用 `enum ProviderSettings { Anthropic(AnthropicConfig), OpenAI(OpenAIConfig), ... }` 会更安全
 **过度的 Option 包装**：
 - `Provider` 结构体里很多字段都是 `Option<T>`（`src-tauri/src/provider.rs:15-38`）
-- 有些字段（如 `icon`、`icon_color`）实际上总是有值的，不应该用 Option
-- 增加了运行时的 None 检查负担
-### 6.3 命名和组织问题
-**不一致的命名约定**：
-- 有的用 `xxx_config`，有的用 `xxx_settings`
 - 有的函数叫 `get_xxx`，有的叫 `read_xxx`，有的叫 `fetch_xxx`
 - 错误消息有的中文有的英文（`src-tauri/src/error.rs:29` 的 `Localized` 变体试图解决这个问题，但不彻底）
 **模糊的模块边界**：
