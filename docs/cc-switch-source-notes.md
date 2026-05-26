@@ -425,45 +425,45 @@ pub struct VisibleApps {       // src-tauri/src/settings.rs:28
 - 写入失败时内存缓存和文件可能不一致
 - 没有版本控制，并发修改可能丢失
 ### 3.6 各工具 config 模块对比
-| 模块 | 大小 | 职责 |
-|------|------|------|
-| `hermes_config.rs` | 35.2KB | Hermes 的配置读写 |
-
+| 模块 | 文件 | 大小 | 职责 |
+|------|------|------|------|
+| Claude Code | `src-tauri/src/claude_config.rs` | 27.7KB | Claude Code CLI 的配置读写 |
+| Claude Desktop | `src-tauri/src/claude_desktop_config.rs` | 61.5KB | Claude Desktop GUI 的配置读写 |
+| Codex CLI | `src-tauri/src/codex_config.rs` | 66.5KB | OpenAI Codex CLI 的配置读写 |
+| Gemini CLI | `src-tauri/src/gemini_config.rs` | 20.4KB | Gemini CLI 的配置读写 |
+| OpenCode | `src-tauri/src/opencode_config.rs` | 42.6KB | OpenCode 的配置读写 |
+| OpenClaw | `src-tauri/src/openclaw_config.rs` | 52.4KB | OpenClaw 的配置读写 |
+| Hermes | `src-tauri/src/hermes_config.rs` | 35.2KB | Hermes 的配置读写 |
 **共同模式（每个模块都有）**：
-1. `read_xxx_config()` — 读取工具的配置文件
+1. `read_xxx_config()` — 读取工具的配置文件（如 `~/.claude/settings.json`）
 2. `write_xxx_config()` — 写入工具的配置文件
-3. `build_live_config()` — 构建当前生效的配置
+3. `build_live_config()` — 构建当前生效的配置（合并 provider + 公共配置）
 4. `switch_provider()` — 切换 provider 的核心逻辑
-
+5. `import_from_live()` — 从工具的 live 配置导入 provider
 **AI Slop 特征**：
 - 每个模块的 `switch_provider()` 逻辑高度相似，但没有抽取公共函数
 - 配置文件格式不同导致代码差异大，但"读文件 → 解析 → 修改 → 写文件"的骨架是一样的
 - `codex_config.rs`（66.5KB）和 `claude_desktop_config.rs`（61.5KB）明显过大
-
+- 每个模块都自己实现了一遍 JSON merge 逻辑
 **设计好的地方**：
 - 每个模块独立，不互相依赖
 - 错误处理一致（都用 `AppError`）
-
+- 配置文件路径都通过 `config.rs` 的函数获取，不硬编码
 **屎山特征**：
-- 大量重复的文件读写代码
-- 每个模块都自己实现了一遍 JSON merge 逻辑
+- 大量重复的文件读写代码（每个模块 100-200 行几乎一样）
 - 没有统一的 config trait 或接口
-
----
-
+- 每个模块都自己处理了边界情况（文件不存在、JSON 格式错误等）
+- 配置文件格式不统一（有的用 JSON，有的用 TOML，有的用 YAML）
+**对比分析**：
+- Switch 模式工具（Claude、Codex、Gemini）的 config 模块更简单，因为只需要覆盖写入
+- Additive 模式工具（OpenCode、OpenClaw、Hermes）的 config 模块更复杂，需要管理多个 provider 的 enabled 状态
+- Claude Desktop 的 config 模块最大（61.5KB），因为它需要处理 MCP 服务器配置
+- Codex 的 config 模块最大（66.5KB），因为它需要处理 OAuth 认证和 Copilot 集成
 ## 第 4 章：本地代理子系统
-
-这是项目里最复杂的部分，单独拎出来。
-
+这是项目里最复杂的部分，单独拎出来。代理子系统实现了本地 HTTP 代理，支持 API 格式转换（Anthropic ↔ OpenAI ↔ Gemini）、多 provider 路由、故障转移和熔断。
 ### 4.1 proxy/ 目录结构
-
 ```text
 src-tauri/src/proxy/
-├── server.rs           # HTTP 服务器（Axum）
-├── forwarder.rs        # 请求转发（122KB，最大）
-├── circuit_breaker.rs  # 熔断器（496 行）
-├── provider_router.rs  # 多 provider 路由
-├── failover_switch.rs  # 故障转移切换
 ├── switch_lock.rs      # 切换锁（防止并发切换）
 ├── handlers/           # 请求处理器
 ├── providers/          # 格式转换器
