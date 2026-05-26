@@ -478,16 +478,16 @@ pub fn add_providers(&self, providers: &[Provider]) -> Result<(), AppError> {
 }
 ```
 - `skill.rs`（~2600 行）— SkillService（Skills 管理）
+**SpeedtestService 详解**（`src-tauri/src/services/speedtest.rs`）：
+- 测试 API 端点的延迟和可用性
+- 支持批量测试多个端点
+- 返回每个端点的延迟和状态
+**SpeedtestService 方法列表**：
+- `test_api_endpoints()` — 测试 API 端点
+- `get_custom_endpoints()` — 获取自定义端点列表
+- `add_custom_endpoint()` — 添加自定义端点
+- `remove_custom_endpoint()` — 删除自定义端点
 **陷阱**：
-- `provider/mod.rs`（~2600 行）和 `proxy.rs`（3910 行）太大，应该拆分
-- 有些逻辑直接放在 `commands/` 里，没有经过 services 层
-- 没有统一的 service trait 或接口
-**ConfigService**（`src-tauri/src/services/config.rs`）：
-- 负责配置文件的读写
-- 封装了 `read_json_file` 和 `write_json_file`
-- 提供 `read_xxx_config()` 和 `write_xxx_config()` 方法
-- 与数据库交互，读取/更新配置
-**ConfigService 方法列表**：
 - `read_claude_config()` — 读取 Claude 配置
 - `write_claude_config()` — 写入 Claude 配置
 - `read_codex_config()` — 读取 Codex 配置
