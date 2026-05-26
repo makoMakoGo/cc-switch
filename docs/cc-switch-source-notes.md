@@ -694,27 +694,27 @@ export function useProxyStatus() {
 - 使用 `setInterval` 轮询，不是事件驱动
 - 没有错误处理，invoke 失败时没有提示
 - 没有缓存，每次轮询都调用 Tauri 命令
-// 直接调用
-const result = await invoke("command_name", { arg1, arg2 });
-```
-**Tauri event 监听**：
+**useDarkMode 详解**（`src/hooks/useDarkMode.ts`）：
+- 监听系统主题变化
+- 提供 `isDarkMode` 状态
+- 自动切换 CSS 类名
+**useDarkMode 代码示例**：
 ```typescript
-import { listen } from "@tauri-apps/api/event";
-const unlisten = await listen("event-name", (event) => {
-  console.log(event.payload);
-});
-// 组件卸载时取消监听
-return () => unlisten();
+// src/hooks/useDarkMode.ts
+export function useDarkMode() {
+  const [isDark, setIsDark] = useState(
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
+  return isDark;
+}
 ```
-**前端组件结构**（`src/components/`）：
-- `settings/` — 设置页面组件（代理配置、UI 偏好、WebDAV 同步等）
-- `providers/` — Provider 管理组件（列表、添加、编辑、删除、排序等）
-- `proxy/` — 代理状态组件（状态显示、启停控制、故障转移配置等）
-- `mcp/` — MCP 配置组件（服务器列表、添加、编辑、删除等）
-- `skills/` — Skills 管理组件（列表、安装、卸载、更新等）
-- `prompts/` — Prompt 管理组件（列表、添加、编辑、删除等）
-- `usage/` — 用量统计组件（图表、筛选、导出等）
-- `common/` — 通用组件（按钮、输入框、模态框、Toast 等）
+// 直接调用
 **前端组件示例**（`src/components/providers/`）：
 - `ProviderList.tsx` — Provider 列表组件
 - `ProviderCard.tsx` — Provider 卡片组件
