@@ -249,26 +249,26 @@ let conn = lock_conn!(self.conn);
 #[serde(rename = "settingsConfig")]         // 重命名单个字段
 #[serde(alias = "claudeDesktop")]           // 支持多个别名
 ```
-**async/await 模式**（`src-tauri/src/services/`）：
+**serde 实际使用示例**：
 ```rust
-// 异步函数
-async fn some_operation() -> Result<(), AppError> {
-    tokio::time::sleep(Duration::from_secs(1)).await;
-    Ok(())
-}
-// 在 Tauri 命令中使用
-#[tauri::command]
-async fn my_command(state: tauri::State<'_, AppState>) -> Result<String, AppError> {
-    let result = some_operation().await?;
-    Ok(result)
+// Provider 结构体（src-tauri/src/provider.rs:10）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Provider {
+    pub id: String,
+    pub name: String,
+    #[serde(rename = "settingsConfig")]  // JSON 字段用 camelCase
+    pub settings_config: Value,
+    #[serde(skip_serializing_if = "Option::is_none")]  // None 时不序列化
+    pub website_url: Option<String>,
+    #[serde(default)]  // 反序列化时缺失字段用默认值
+    pub in_failover_queue: bool,
 }
 ```
-**tokio::spawn 异步任务**：
-```rust
-// 启动后台任务
-tokio::spawn(async move {
-    // 后台执行的代码
-    loop {
+**serde 常用场景**：
+- JSON 配置文件读写（`read_json_file`, `write_json_file`）
+- Tauri IPC 参数传递（`#[tauri::command]` 自动序列化）
+- 数据库存储（`to_json_string()`）
+- 前端数据传递（`invoke()` 返回值）
         tokio::time::sleep(Duration::from_secs(60)).await;
         // 定期执行的任务
     }
