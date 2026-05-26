@@ -328,7 +328,7 @@ if matches!(app_type, AppType::OpenCode | AppType::OpenClaw | AppType::Hermes) {
 ## 第 3 章：后端核心模块
 按依赖顺序读，不是按文件大小。先读底层工具模块，再读业务模块。
 ### 3.1 config.rs — 路径解析和文件 I/O（14KB）
-**接口**：提供所有模块需要的路径解析和文件读写工具函数（`src-tauri/src/config.rs`）。
+    const [removed] = newItems.splice(dragIndex, 1);
 **核心函数**：
 - `get_home_dir()` → `~` 目录（支持 `CC_SWITCH_TEST_HOME` 测试覆盖）
 - `get_app_config_dir()` → `~/.cc-switch/`（`src-tauri/src/config.rs`）
@@ -714,35 +714,35 @@ export function useDarkMode() {
   return isDark;
 }
 ```
+**useDragSort 详解**（`src/hooks/useDragSort.ts`）：
+- 实现拖拽排序功能
+- 用于 Provider 列表排序
+- 支持触摸和鼠标拖拽
+**useDragSort 代码示例**：
+```typescript
+// src/hooks/useDragSort.ts
+export function useDragSort<T>(items: T[], onReorder: (items: T[]) => void) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const handleDragStart = (index: number) => setDragIndex(index);
+  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
+  const handleDrop = (index: number) => {
+    if (dragIndex === null) return;
+    const newItems = [...items];
+### 6.1 代码膨胀模式
+    newItems.splice(index, 0, removed);
+    onReorder(newItems);
+    setDragIndex(null);
+  };
+  return { handleDragStart, handleDragOver, handleDrop };
+}
+```
 // 直接调用
-**前端组件示例**（`src/components/providers/`）：
-- `ProviderList.tsx` — Provider 列表组件
-- `ProviderCard.tsx` — Provider 卡片组件
-- `ProviderForm.tsx` — Provider 表单组件
-- `ProviderSort.tsx` — Provider 排序组件
-**前端组件设计问题**：
-- 没有统一的组件库，每个组件自己实现样式
-- 没有组件文档，难以复用
-- 没有组件测试，难以验证正确性
-- 组件之间耦合度高，修改一个组件可能影响其他组件
-**前端路由**（`src/App.tsx`）：
 ## 第 6 章：AI Slop 特征模式识别
 这是你重构的弹药库。这些模式不是"代码风格偏好"，而是实实在在的维护负担。
 ### 6.1 代码膨胀模式
-- `lib.rs`（1826 行）— 模块声明 + 插件注册 + 命令注册 + 初始化逻辑全混在一起
-- `App.tsx`（1605 行）— 14 个视图 + 事件处理 + 状态管理全在一个文件
-- `forwarder.rs`（~3000 行）— 请求转发 + 格式转换 + 错误处理全在一起
-- `codex_config.rs`（~1600 行）— 配置读写 + 迁移 + 验证全在一起
-- `claude_desktop_config.rs`（~1500 行）— 同上
-- `proxy.rs`（services，3910 行）— `ProxyService` 的所有方法全在一个文件
-- `provider/mod.rs`（services，~2600 行）— `ProviderService` 的所有方法全在一个文件
+**过大的单文件**：
 **复制粘贴的 config 模块**：
 - 7 个工具的 config 模块结构几乎一样，但没有抽取公共函数
-- `AppType` 的 match 在 `McpApps`（`src-tauri/src/app_config.rs:24`）、`VisibleApps`（`src-tauri/src/settings.rs:66`）、`CommonConfigSnippets`（`src-tauri/src/app_config.rs:441`）里重复出现
-- 每次加新工具都要改 10+ 个 match
-### 6.2 过度抽象模式
-**为了"未来可能需要"而加的抽象**：
-- `CommonConfigSnippets`（`src-tauri/src/app_config.rs:419`）— 理论上是跨工具共享的配置片段，但实际使用率不高
 - 一些 trait 定义了接口但只有一个实现
 **深层嵌套的类型定义**：
 - `Provider`（`src-tauri/src/provider.rs:10`）→ `ProviderMeta` → `ProviderMetaInner` → ...
