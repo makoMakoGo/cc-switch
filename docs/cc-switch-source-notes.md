@@ -597,15 +597,15 @@ pub fn get_failover_queue(&self, app_type: &str) -> Result<Vec<FailoverQueueItem
 - `TAKEOVER_ENABLE` — 接管启用
 - `TAKEOVER_DISABLE` — 接管禁用
 **热切换 vs 冷切换**：
+**余额查询**（`src-tauri/src/services/balance.rs`）：
+- 查询 AI 工具的账户余额
+- 支持多种认证方式（API key、OAuth）
+- 返回余额、额度、过期时间等信息
+**余额查询方法列表**：
+- `get_balance()` — 获取余额
+- `get_subscription_quota()` — 获取订阅配额
+- `get_codex_oauth_quota()` — 获取 Codex OAuth 配额
 **会话用量同步**（`src-tauri/src/services/session_usage.rs`）：
-- 从 Claude Code 的会话日志中提取用量数据
-- 从 Codex 的会话日志中提取用量数据
-- 从 Gemini 的会话日志中提取用量数据
-- 定期同步到数据库
-**会话用量同步流程**：
-1. 读取工具的会话日志文件
-2. 解析日志，提取 token 用量、请求次数等
-3. 按 provider、model、时间维度聚合
 4. 写入数据库的 `request_logs` 表
 5. 更新用量统计缓存
 **SwitchLock 详解**（`src-tauri/src/proxy/switch_lock.rs`）：
