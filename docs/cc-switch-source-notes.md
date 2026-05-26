@@ -801,11 +801,11 @@ impl ToolConfig for ClaudeConfig { ... }
 - 抽取公共的 `useTauriCommand` hook
 ## 第 7 章：重构路线图
 基于前 6 章的理解，制定具体重构计划。按风险从低到高排列。
-### 7.1 低风险清理（先做，1-2 天）
-**删除死代码**：
-- 搜索 `#[allow(dead_code)]` 和未使用的函数
-- 删除注释掉的代码块
-- 删除 `lib.rs:38` 里重复的 `pub use` 导出
+**预期收益**：
+- 减少代码量 10-15%
+- 提高可读性和一致性
+- 为后续重构打下基础
+### 7.2 中等重构（3-5 天）
 **统一命名**：
 - `get_xxx` / `read_xxx` / `fetch_xxx` 统一为 `read_xxx`
 - `xxx_config` / `xxx_settings` 统一为 `xxx_config`
