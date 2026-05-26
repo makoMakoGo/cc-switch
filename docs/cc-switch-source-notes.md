@@ -269,21 +269,21 @@ let conn = lock_conn!(self.conn);
 - Tauri IPC 参数传递（`#[tauri::command]` 自动序列化）
 - 数据库存储（`to_json_string()`）
 - 前端数据传递（`invoke()` 返回值）
-        tokio::time::sleep(Duration::from_secs(60)).await;
-        // 定期执行的任务
-    }
-});
-// 在 cc-switch 中的使用：
-- 代理服务器启动（`src-tauri/src/proxy/server.rs`）
-- 后台会话用量同步（`src-tauri/src/lib.rs:1000`）
-- 定期检查代理状态
-```
-**异步错误处理**：
-```rust
-// 异步函数中的错误传播
-async fn fetch_data() -> Result<Data, AppError> {
-    let response = reqwest::get(url).await
-        .map_err(|e| AppError::Http(e.to_string()))?;
+**Rust 同步原语**：
+- `Mutex<T>` — 互斥锁，同一时间只有一个线程能访问
+- `RwLock<T>` — 读写锁，多读单写
+- `Arc<T>` — 原子引用计数，多线程共享数据
+- `AtomicU32` — 原子计数器，无锁操作
+**cc-switch 中的同步模式**：
+- `Database` 使用 `Mutex<Connection>` 保护 SQLite 连接
+- `APP_SETTINGS` 使用 `OnceLock<RwLock<AppSettings>>` 保护设置缓存
+- `ProxyState` 使用 `Arc<RwLock<>>` 共享代理状态
+- `CircuitBreaker` 使用 `AtomicU32` 跟踪连续失败次数
+**为什么用这些同步原语**：
+- `Mutex` 用于写多读少的场景（数据库连接）
+- `RwLock` 用于读多写少的场景（设置缓存）
+- `Arc` 用于多线程共享数据（代理状态）
+- `AtomicU32` 用于简单的计数器（熔断器）
     let data = response.json().await
         .map_err(|e| AppError::Json(e.to_string()))?;
     Ok(data)
