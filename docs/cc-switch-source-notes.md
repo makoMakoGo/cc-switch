@@ -646,31 +646,31 @@ const deleteMutation = useMutation({
   },
 });
 ```
-  useEffect(() => {
-    const unlisten = listen(event, (e) => handler(e.payload));
-    return () => { unlisten.then(fn => fn()); };
-  }, [event, handler]);
+**useSettings 详解**（`src/hooks/useSettings.ts`）：
+- 封装了 `get_settings` 和 `save_settings` Tauri 命令
+- 使用 React Query 缓存设置数据
+- 提供 `mutateSettings` 方法用于修改设置
+**useSettings 代码示例**：
+```typescript
+// src/hooks/useSettings.ts
+export function useSettings() {
+  const { data: settings, isLoading } = useQuery(
+    ["settings"],
+    () => invoke("get_settings")
+  );
+  const mutation = useMutation({
+    mutationFn: (newSettings) => invoke("save_settings", { settings: newSettings }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["settings"]);
+    },
+  });
+  return { settings, isLoading, mutateSettings: mutation.mutate };
 }
 ```
-**前端 hooks 设计模式总结**：
-- **数据获取**：`useQuery` + `invoke` 组合
-- **数据修改**：`useMutation` + `invoke` 组合
-- **事件监听**：`useTauriEvent` hook
-- **轮询**：`useProxyStatus` 使用 `setInterval`
-- **缓存失效**：`queryClient.invalidateQueries()` 刷新 React Query 缓存
-**React Query 使用模式**：
-```typescript
-// 查询数据
-const { data, isLoading, error } = useQuery(
-  ["key", param],
-  () => invoke("command", { param })
-);
-// 修改数据
-const mutation = useMutation({
-  mutationFn: (data) => invoke("command", { data }),
-  onSuccess: () => {
-    queryClient.invalidateQueries(["key"]);
-  },
+**useSettings 问题**：
+- 没有乐观更新，修改设置后需要等待服务器响应
+- 没有错误处理，失败时没有提示
+- 设置结构是动态的，没有类型检查
 });
 ```
 **React Query 配置**：
