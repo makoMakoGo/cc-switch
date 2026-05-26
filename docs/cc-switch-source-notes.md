@@ -359,28 +359,28 @@ impl Database {
 - 每次修改表结构时递增版本号
 - 迁移逻辑在 `schema.rs` 中，按版本顺序执行
 - 支持从 JSON 配置文件迁移到 SQLite（`migration.rs`）
+**JSON → SQLite 迁移流程**（`src-tauri/src/database/migration.rs`）：
+1. 检测到 `config.json` 存在且 `cc-switch.db` 不存在
+2. 验证 `config.json` 格式是否正确
+3. 创建 SQLite 数据库
+4. 执行 Schema 迁移（创建表结构）
+5. 从 `config.json` 读取数据
+6. 插入到 SQLite 数据库
+7. 归档 `config.json`（重命名为 `config.json.migrated`）
+**Schema 迁移示例**（`src-tauri/src/database/schema.rs`）：
+```rust
+// 迁移逻辑示例
+fn migrate_v9_to_v10(conn: &Connection) -> Result<(), AppError> {
+    // 添加新列
+    conn.execute("ALTER TABLE providers ADD COLUMN notes TEXT", [])?;
+    // 更新版本号
+    conn.execute("PRAGMA user_version = 10", [])?;
+    Ok(())
+}
+```
 **关键设计**：
 - 数据库备份功能（`backup.rs`）支持导出/导入 SQL 快照
 - 变更钩子（`src-tauri/src/database/mod.rs:80`）自动触发 WebDAV 同步
-}
-```
-}
-```
-**ProviderMeta**（`src-tauri/src/provider.rs`）：
-- 存储 provider 的元数据（是否默认、排序、自定义端点等）
-- 不写入 live 配置，仅存于 `~/.cc-switch/config.json`
-- 包含 `custom_endpoints` 字段，用于自定义 API 端点
-**ProviderManager**（`src-tauri/src/provider.rs`）：
-- 管理 provider 的 CRUD 操作
-- 与数据库交互，读取/更新 provider 数据
-- 提供 `get_providers()`, `add_provider()`, `update_provider()`, `delete_provider()` 等方法
-**UniversalProvider**（`src-tauri/src/provider.rs`）：
-- 跨应用共享的 provider 配置
-- 一次配置，多个工具复用
-- 通过 `sync_universal_provider` 命令同步到各工具
-**陷阱**：
-- `settings_config` 是 `serde_json::Value`（动态类型），不是强类型的，容易出错
-- Provider 和 AppType 的关系是 N:1，但代码里很多地方假设 1:1
 - 没有版本控制，并发修改可能丢失
 - `ProviderMeta` 的类型定义很深（`ProviderMeta` → `ProviderMetaInner` → ...），阅读困难
 **亮点**：
