@@ -292,34 +292,34 @@ pub struct Database {           // src-tauri/src/database/mod.rs:76
 }
 ```
 **模块结构**（`src-tauri/src/database/`）：
-}
-```
-
-**亮点**：
-- `Localized` 变体支持中英双语错误消息，前端可以根据语言选择显示
-- `Io` 变体包含文件路径，方便调试
-
+- `mod.rs` — Database 结构体 + 初始化（`src-tauri/src/database/mod.rs:91`）
+- `schema.rs` — 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`src-tauri/src/database/mod.rs:52`）
+- `backup.rs` — SQL 导入导出 + 快照备份
+- `migration.rs` — JSON → SQLite 数据迁移（`src-tauri/src/database/migration.rs`）
+- `dao/` — 数据访问对象
+  - `providers.rs` — Provider CRUD
+  - `mcp.rs` — MCP 服务器配置
+  - `prompts.rs` — Prompt 管理
+  - `skills.rs` — Skills 管理
+  - `settings.rs` — 通用设置存储
+**关键设计**：
+- `lock_conn!` 宏（`src-tauri/src/database/mod.rs:61`）安全获取 Mutex 锁，避免 unwrap panic
+- `to_json_string()`（`src-tauri/src/database/mod.rs:55`）安全序列化 JSON
+- 数据库变更钩子（`src-tauri/src/database/mod.rs:80`）通知 WebDAV 自动同步
+**DAO 模式**：
+- 每个 DAO 模块负责一个表的 CRUD 操作
+- 通过 `impl Database` 添加方法，不暴露内部连接
+- 所有数据库操作都通过 `lock_conn!` 宏获取锁
 **陷阱**：
-- `Config(String)` 太宽泛，很多不同类型的错误都往这里塞
-- 错误消息不一致，有的用英文有的用中文
-
-### 3.3 app_config.rs — 多应用配置模型（41KB）
-
-**接口**：定义 cc-switch 管理的 7 个 AI 工具的抽象（`src-tauri/src/app_config.rs:338`）。
-
-**核心类型**：
-
-```rust
-pub enum AppType {            // src-tauri/src/app_config.rs:341
-    Claude,        // Claude Code (CLI)
-    ClaudeDesktop, // Claude Desktop (GUI)
-    Codex,         // OpenAI Codex CLI
-    Gemini,        // Gemini CLI
-    OpenCode,      // OpenCode
-    OpenClaw,      // OpenClaw
-    Hermes,        // Hermes
-}
-```
+- `Mutex<Connection>` 意味着同一时间只有一个线程能访问数据库，高并发场景可能成为瓶颈
+- Schema 迁移是线性的，如果迁移失败可能导致数据库损坏
+- 没有连接池，每次操作都用同一个连接
+- 没有事务支持，多个相关操作可能部分成功
+**亮点**：
+- Schema 版本控制（`SCHEMA_VERSION`）确保数据库结构与代码同步
+- JSON → SQLite 迁移路径（`migration.rs`）支持从旧版本平滑升级
+- 数据库备份功能（`backup.rs`）支持导出/导入 SQL 快照
+- 变更钩子（`src-tauri/src/database/mod.rs:80`）自动触发 WebDAV 同步
 
 **关键设计决策 — `is_additive_mode()`**（`src-tauri/src/app_config.rs:373`）：
 
