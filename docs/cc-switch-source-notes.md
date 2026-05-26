@@ -173,25 +173,25 @@ App.tsx
 不需要学完整个 Rust，只需要理解这些在 cc-switch 里反复出现的模式。
 
 ### 2.1 你会反复遇到的 Rust 概念
-
 | 概念 | 一句话解释 | cc-switch 里的例子 |
 |------|-----------|-------------------|
-| `Arc<T>` | 原子引用计数，多线程共享数据 | `AppState.db: Arc<Database>` |
-| `Mutex<T>` | 互斥锁，同一时间只有一个线程能访问 | `Database.conn: Mutex<Connection>` |
-| `RwLock<T>` | 读写锁，多读单写 | `settings.rs` 的 `APP_SETTINGS: OnceLock<RwLock<AppSettings>>` |
+| `Arc<T>` | 原子引用计数，多线程共享数据 | `AppState.db: Arc<Database>`（`src-tauri/src/store.rs:3`） |
+| `Mutex<T>` | 互斥锁，同一时间只有一个线程能访问 | `Database.conn: Mutex<Connection>`（`src-tauri/src/database/mod.rs:76`） |
+| `RwLock<T>` | 读写锁，多读单写 | `settings.rs` 的 `APP_SETTINGS: OnceLock<RwLock<AppSettings>>`（`src-tauri/src/settings.rs:5`） |
 | `OnceLock<T>` | 全局只初始化一次的值 | 同上，设置缓存 |
 | `Result<T, E>` | 可能成功(T)也可能失败(E)的返回值 | 几乎所有函数的返回类型 |
-| `?` 操作符 | 提前返回错误的语法糖 | `let config = read_json_file(path)?;` |
-| `#[tauri::command]` | 标记函数为 Tauri IPC 命令 | `commands/` 目录下的所有函数 |
+| `?` 操作符 | 提前返回错误的语法糖 | `let config = read_json_file(path)?;`（`src-tauri/src/config.rs`） |
+| `#[tauri::command]` | 标记函数为 Tauri IPC 命令 | `commands/` 目录下的所有函数（`src-tauri/src/commands/`） |
 | `serde` | 序列化/反序列化框架 | `#[derive(Serialize, Deserialize)]` 到处都是 |
-| `tokio::spawn` | 异步任务 | 代理服务器启动、后台检查等 |
-| `thiserror` | 自动派生 Error trait | `error.rs` 里的 `AppError` |
-| `impl From<X> for Y` | 类型转换 | `CircuitBreakerConfig::from(&AppProxyConfig)` |
-| `#[serde(rename_all)]` | JSON 字段命名风格转换 | `camelCase` vs `snake_case` |
-
+| `tokio::spawn` | 异步任务 | 代理服务器启动（`src-tauri/src/proxy/server.rs`）、后台检查等 |
+| `thiserror` | 自动派生 Error trait | `error.rs` 里的 `AppError`（`src-tauri/src/error.rs:6`） |
+| `impl From<X> for Y` | 类型转换 | `CircuitBreakerConfig::from(&AppProxyConfig)`（`src-tauri/src/proxy/circuit_breaker.rs:51`） |
+| `#[serde(rename_all)]` | JSON 字段命名风格转换 | `camelCase` vs `snake_case`（`src-tauri/src/provider.rs:13`） |
+| `impl Default` | 默认值实现 | `CircuitBreakerConfig::default()`（`src-tauri/src/proxy/circuit_breaker.rs:63`） |
+| `#[serde(skip_serializing_if)]` | 条件序列化 | `Option::is_none` 时不序列化（`src-tauri/src/provider.rs:15`） |
+| `#[serde(alias)]` | 字段别名 | `claude-desktop` 和 `claudeDesktop` 都能反序列化（`src-tauri/src/app_config.rs:344`） |
+| `impl Display` | 格式化输出 | `CircuitState::fmt()`（`src-tauri/src/proxy/circuit_breaker.rs:25`） |
 ### 2.2 你不需要深入的
-
-| 概念 | 说明 |
 |------|------|
 | 生命周期标注 `'a` | cc-switch 里几乎不用，遇到再查 |
 | trait object (`dyn Trait`) | 用得很少 |
