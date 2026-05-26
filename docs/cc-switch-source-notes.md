@@ -707,24 +707,24 @@ const unlisten = await listen("event-name", (event) => {
 return () => unlisten();
 ```
 **前端组件结构**（`src/components/`）：
-- `settings/` — 设置页面组件
-- `providers/` — Provider 管理组件
-- `proxy/` — 代理状态组件
-- `mcp/` — MCP 配置组件
-- `skills/` — Skills 管理组件
-- `prompts/` — Prompt 管理组件
-- `usage/` — 用量统计组件
-- `common/` — 通用组件（按钮、输入框等）
-**国际化（i18n）**（`src/i18n/`）：
-- 支持中文和英文
-- 使用 `react-i18next` 库
-- 翻译文件在 `src/i18n/locales/` 目录下
-- 前端根据系统语言自动选择
-**前端状态管理总结**：
-- React Query 管理服务器状态（provider 列表、设置等）
-- localStorage 管理 UI 状态（当前视图、当前 app）
-- Tauri event 监听后端状态变化
-- 没有使用 Redux 或 Zustand 等全局状态库
+- `settings/` — 设置页面组件（代理配置、UI 偏好、WebDAV 同步等）
+- `providers/` — Provider 管理组件（列表、添加、编辑、删除、排序等）
+- `proxy/` — 代理状态组件（状态显示、启停控制、故障转移配置等）
+- `mcp/` — MCP 配置组件（服务器列表、添加、编辑、删除等）
+- `skills/` — Skills 管理组件（列表、安装、卸载、更新等）
+- `prompts/` — Prompt 管理组件（列表、添加、编辑、删除等）
+- `usage/` — 用量统计组件（图表、筛选、导出等）
+- `common/` — 通用组件（按钮、输入框、模态框、Toast 等）
+**前端组件示例**（`src/components/providers/`）：
+- `ProviderList.tsx` — Provider 列表组件
+- `ProviderCard.tsx` — Provider 卡片组件
+- `ProviderForm.tsx` — Provider 表单组件
+- `ProviderSort.tsx` — Provider 排序组件
+**前端路由**（`src/App.tsx`）：
+- 没有使用 React Router
+- 使用 `localStorage` 持久化当前视图
+- 使用 `switch` 语句切换视图
+- 所有视图都在一个文件里，没有代码分割
 ## 第 6 章：AI Slop 特征模式识别
 这是你重构的弹药库。这些模式不是"代码风格偏好"，而是实实在在的维护负担。
 ### 6.1 代码膨胀模式
