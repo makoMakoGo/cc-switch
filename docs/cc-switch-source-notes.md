@@ -652,11 +652,11 @@ export function useTauriEvent<T>(event: string, handler: (payload: T) => void) {
   }, [event, handler]);
 }
 ```
-**前端状态管理模式总结**：
-- **服务器状态**：React Query 管理（provider 列表、设置、代理状态等）
-- **UI 状态**：localStorage 管理（当前视图、当前 app、窗口位置等）
-- **事件驱动**：Tauri event 监听后端状态变化，触发 UI 更新
-- **轮询**：`useProxyStatus` 每 2 秒轮询代理状态
+**前端 hooks 设计模式总结**：
+- **数据获取**：`useQuery` + `invoke` 组合
+- **数据修改**：`useMutation` + `invoke` 组合
+- **事件监听**：`useTauriEvent` hook
+- **轮询**：`useProxyStatus` 使用 `setInterval`
 - **缓存失效**：`queryClient.invalidateQueries()` 刷新 React Query 缓存
 **React Query 使用模式**：
 ```typescript
