@@ -192,23 +192,23 @@ App.tsx
 | `#[serde(alias)]` | 字段别名 | `claude-desktop` 和 `claudeDesktop` 都能反序列化（`src-tauri/src/app_config.rs:344`） |
 | `impl Display` | 格式化输出 | `CircuitState::fmt()`（`src-tauri/src/proxy/circuit_breaker.rs:25`） |
 ### 2.2 你不需要深入的
+| 概念 | 说明 |
 |------|------|
 | 生命周期标注 `'a` | cc-switch 里几乎不用，遇到再查 |
 | trait object (`dyn Trait`) | 用得很少 |
 | `unsafe` | 搜索了一下，项目里没有 |
 | 泛型约束 (`where T: ...`) | 有但不复杂，跟着类型提示走就行 |
 | 宏 (`macro_rules!`) | 只有 `lock_conn!` 一个自定义宏 |
-
-### 2.3 常见模式速查
-**读取配置文件并处理错误**（`src-tauri/src/config.rs`）：
-```rust
-// config.rs 里的典型模式
-let content = std::fs::read_to_string(&path)
-    .map_err(|e| AppError::io(&path, e))?;
-let config: MyConfig = serde_json::from_str(&content)
-    .map_err(|e| AppError::json(&path, e))?;
-```
-**Tauri 命令的标准签名**（`src-tauri/src/commands/`）：
+**trait 在 cc-switch 中的使用**：
+- `Serialize` / `Deserialize` — serde 自动派生，到处都是
+- `Display` — 格式化输出（`CircuitState::fmt()`）
+- `From` / `Into` — 类型转换（`CircuitBreakerConfig::from()`）
+- `Default` — 默认值（`CircuitBreakerConfig::default()`）
+- `Error` — 错误类型（`AppError` 通过 `thiserror` 派生）
+**为什么 cc-switch 很少用 trait**：
+- 大部分逻辑是具体的，不需要抽象
+- 没有插件系统，不需要 trait object
+- 泛型已经够用，不需要 trait bound
 ```rust
 #[tauri::command]                    // 标记为 Tauri IPC 命令
 async fn get_providers(              // 异步函数
