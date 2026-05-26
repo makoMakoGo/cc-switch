@@ -540,22 +540,22 @@ pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
 **Codex Chat History Store**（`src-tauri/src/proxy/providers/codex_chat_history.rs`）：
 - 用于恢复 previous_response_id 指向的 tool call
 - 存储 Codex Chat API 的历史记录
-Closed（正常）
-  │ 连续失败 >= failure_threshold（默认 4）
-  ▼
-Open（熔断）
-  │ 等待 timeout_seconds（默认 60 秒）
-  ▼
-HalfOpen（半开）
-  │ 连续成功 >= success_threshold（默认 2）→ 回到 Closed
-  │ 任何失败 → 回到 Open
-  ▼
-Closed 或 Open
-```
-**FailoverQueue**（数据库中的 `failover_queue` 表）：
-- 存储备选 provider 列表
-- 当主 provider 熔断时，按优先级尝试备选
-- 所有备选都失败时，返回 `AllProvidersCircuitOpen` 错误（`src-tauri/src/error.rs:26`）
+**forwarder.rs 详解**（`src-tauri/src/proxy/forwarder.rs`，122KB）：
+- 这是代理子系统最大的文件，包含了请求转发的核心逻辑
+- 主要职责：
+  - 接收客户端请求
+  - 解析请求头，提取 API key
+  - 匹配到对应的 provider
+  - 转换请求格式（如果需要）
+  - 转发到 provider 的 base URL
+  - 等待响应
+  - 转换响应格式（如果需要）
+  - 返回给客户端
+**forwarder 设计问题**：
+- 122KB 太大，包含了太多职责
+- 请求转发、格式转换、错误处理全在一起
+- 应该拆分成多个职责单一的模块
+- 没有单元测试，难以验证正确性
 **FailoverSwitchManager**（`src-tauri/src/proxy/failover_switch.rs`）：
 - 管理故障转移切换逻辑
 - 与数据库交互，读取/更新 failover_queue
