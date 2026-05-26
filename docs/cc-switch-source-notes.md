@@ -336,35 +336,35 @@ async fn my_command(state: tauri::State<'_, AppState>) -> Result<String, AppErro
 - 路径硬编码了 `~/.claude` 等，如果用户自定义了 Claude 的配置目录会出问题
 - 没有文件锁保护，并发写入可能冲突
 ### 3.1.5 database/ — 数据持久化（SQLite）
+**接口**：SQLite 数据库的初始化、迁移、DAO 操作（`src-tauri/src/database/mod.rs`）。
+**核心结构**：
+```rust
+pub struct Database {           // src-tauri/src/database/mod.rs:76
+    pub(crate) conn: Mutex<Connection>,  // SQLite 连接（Mutex 包装）
+}
+```
+**模块结构**（`src-tauri/src/database/`）：
+- `mod.rs` — Database 结构体 + 初始化（`src-tauri/src/database/mod.rs:91`）
+- `schema.rs` — 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`src-tauri/src/database/mod.rs:52`）
+- `backup.rs` — SQL 导入导出 + 快照备份
+- `migration.rs` — JSON → SQLite 数据迁移（`src-tauri/src/database/migration.rs`）
+- `dao/` — 数据访问对象
+  - `providers.rs` — Provider CRUD
+  - `mcp.rs` — MCP 服务器配置
+  - `prompts.rs` — Prompt 管理
+  - `skills.rs` — Skills 管理
+  - `settings.rs` — 通用设置存储
+**数据库表结构**（`src-tauri/src/database/schema.rs`）：
+- `providers` — Provider 数据（id, name, app_type, settings_config, meta, icon 等）
+- `mcp_servers` — MCP 服务器配置（id, name, server_config, apps 等）
+- `prompts` — Prompt 管理（id, name, content, app_type 等）
+- `skills` — Skills 管理（id, name, description, app_type 等）
+- `settings` — 通用设置（key, value）
+- `failover_queue` — 故障转移队列（provider_id, app_type, priority）
 - `proxy_config` — 代理配置（app_type, enabled, config）
 - `model_pricing` — 模型定价（model, input_price, output_price）
 - `request_logs` — 请求日志（timestamp, provider, model, status 等）
 **DAO 模式示例**（`src-tauri/src/database/dao/providers.rs`）：
-```rust
-// 通过 impl Database 添加方法
-impl Database {
-    pub fn get_providers(&self, app_type: &str) -> Result<Vec<Provider>, AppError> {
-        let conn = lock_conn!(self.conn);
-        let mut stmt = conn.prepare("SELECT * FROM providers WHERE app_type = ?1")?;
-        let providers = stmt.query_map([app_type], |row| {
-            // 从行数据构建 Provider 结构体
-            Ok(Provider { ... })
-        })?.collect();
-        Ok(providers)
-    }
-}
-```
-**Schema 迁移**（`src-tauri/src/database/schema.rs`）：
-- 当前版本 `SCHEMA_VERSION = 10`（`src-tauri/src/database/mod.rs:52`）
-- 每次修改表结构时递增版本号
-- 迁移逻辑在 `schema.rs` 中，按版本顺序执行
-- 支持从 JSON 配置文件迁移到 SQLite（`migration.rs`）
-**JSON → SQLite 迁移流程**（`src-tauri/src/database/migration.rs`）：
-1. 检测到 `config.json` 存在且 `cc-switch.db` 不存在
-2. 验证 `config.json` 格式是否正确
-3. 创建 SQLite 数据库
-4. 执行 Schema 迁移（创建表结构）
-5. 从 `config.json` 读取数据
 6. 插入到 SQLite 数据库
 7. 归档 `config.json`（重命名为 `config.json.migrated`）
 **Schema 迁移示例**（`src-tauri/src/database/schema.rs`）：
