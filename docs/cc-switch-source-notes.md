@@ -645,36 +645,36 @@ export function useTauriEvent<T>(event: string, handler: (payload: T) => void) {
   }, [event, handler]);
 }
 ```
-### 5.3 config/ — 287KB 的 preset 数据
-```text
-src/config/
-├── claudeProviderPresets.ts         # 35.6KB — Claude Code 官方 provider 列表
-├── claudeDesktopProviderPresets.ts  # 27.0KB — Claude Desktop 官方 provider 列表
-├── codexProviderPresets.ts          # 32.5KB — Codex CLI 官方 provider 列表
-├── geminiProviderPresets.ts         # 9.3KB  — Gemini CLI 官方 provider 列表
-├── opencodeProviderPresets.ts       # 42.6KB — OpenCode 官方 provider 列表
-├── openclawProviderPresets.ts       # 52.4KB — OpenClaw 官方 provider 列表
-├── hermesProviderPresets.ts         # 35.2KB — Hermes 官方 provider 列表
-└── universalProviderPresets.ts      # 3.0KB  — 跨应用共享的 provider 列表
-```
-每个 preset 文件定义了该工具的官方 provider 列表（名称、图标、默认配置等）。
-**Preset 结构**（以 `claudeProviderPresets.ts` 为例）：
+**前端状态管理模式总结**：
+- **服务器状态**：React Query 管理（provider 列表、设置、代理状态等）
+- **UI 状态**：localStorage 管理（当前视图、当前 app、窗口位置等）
+- **事件驱动**：Tauri event 监听后端状态变化，触发 UI 更新
+- **轮询**：`useProxyStatus` 每 2 秒轮询代理状态
+- **缓存失效**：`queryClient.invalidateQueries()` 刷新 React Query 缓存
+**React Query 使用模式**：
 ```typescript
-// src/config/claudeProviderPresets.ts
-export const claudeProviderPresets = [
-  {
-    name: "Anthropic",
-    icon: "anthropic",
-**AI Slop 特征**：
-    iconColor: "#00A67E",
-- 7 个文件结构几乎一样，但没有抽取公共模板
-    settingsConfig: {
-- 287KB 的 TypeScript 数据，可以移到 JSON 文件
-      apiKey: "sk-ant-xxx",
-- 很多 preset 是从官网复制的，更新时需要手动同步
-      baseUrl: "https://api.anthropic.com",
-- 没有类型检查，preset 数据的结构没有 TypeScript 类型定义
-    },
+// 查询数据
+const { data, isLoading, error } = useQuery(
+  ["key", param],
+  () => invoke("command", { param })
+);
+// 修改数据
+const mutation = useMutation({
+  mutationFn: (data) => invoke("command", { data }),
+  onSuccess: () => {
+    queryClient.invalidateQueries(["key"]);
+  },
+});
+```
+**前端错误处理**：
+- Tauri 命令返回 `Result<T, String>`，前端通过 `try/catch` 捕获
+- React Query 的 `error` 状态用于显示错误信息
+- 没有统一的错误处理组件，每个组件自己处理错误
+**前端国际化（i18n）**（`src/i18n/`）：
+- 支持中文和英文
+- 使用 `react-i18next` 库
+- 翻译文件在 `src/i18n/locales/` 目录下
+- 前端根据系统语言自动选择
 **其他前端配置**：
   },
 - `src/config/appConfig.tsx`（3.2KB）— 应用配置（视图列表、图标等）
