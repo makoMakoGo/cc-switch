@@ -98,9 +98,7 @@ Additive 模式（OpenCode、OpenClaw、Hermes）：
 ```
 
 ### 1.3 状态管理
-
 **后端状态**（`src-tauri/src/store.rs:6`）：
-
 ```rust
 pub struct AppState {           // src-tauri/src/store.rs:6
     pub db: Arc<Database>,           // SQLite 连接（Mutex 包装）
@@ -108,23 +106,29 @@ pub struct AppState {           // src-tauri/src/store.rs:6
     pub usage_cache: Arc<UsageCache>,// 用量统计缓存
 }
 ```
-
-`Arc<T>` = 引用计数智能指针，允许多个地方共享同一份数据。`src-tauri/src/store.rs:3`
+`Arc<T>` = 引用计数智能指针，允许多个地方共享同一份数据（`src-tauri/src/store.rs:3`）。
 `Database` 内部用 `Mutex<Connection>` 包装 SQLite 连接（`src-tauri/src/database/mod.rs:76`），因为 `rusqlite::Connection` 不是 `Sync` 的。
-
+**ProxyService**（`src-tauri/src/services/proxy.rs:55`）：
+```rust
+pub struct ProxyService {       // src-tauri/src/services/proxy.rs:55
+    db: Arc<Database>,
+    server: Arc<RwLock<Option<ProxyServer>>>,
+    app_handle: Arc<RwLock<Option<tauri::AppHandle>>>,
+    switch_locks: SwitchLockManager,
+}
+```
+- `ProxyService` 管理代理服务器的生命周期（启动、停止、配置）
+- `server` 是 `Option<ProxyServer>`，因为代理可能没启动
+- `switch_locks` 防止并发切换 provider
 **设置缓存**（`src-tauri/src/settings.rs:5`）：
-
 ```rust
 static APP_SETTINGS: OnceLock<RwLock<AppSettings>> = OnceLock::new();  // src-tauri/src/settings.rs:5
 ```
-
 - `OnceLock` = 全局只初始化一次
 - `RwLock` = 读写锁，多读单写
 - 流程：`read_settings()` 先读文件 → 反序列化 → 缓存到内存；后续读直接返回内存缓存
 - 写流程：`mutate_settings()` → 读 → clone → 修改 → 写文件 → 更新内存缓存
-
 **前端状态**（React）：
-
 ```text
 App.tsx
   ├─ localStorage("currentView")     ← 当前视图状态
@@ -132,16 +136,12 @@ App.tsx
   ├─ useTauriEvent("provider-changed") ← 监听后端事件刷新 UI
   └─ useProxyStatus()                 ← 轮询代理状态
 ```
-
+**状态同步机制**：
+- 前端通过 `invoke()` 调用 Tauri 命令，获取后端状态
+- 后端通过 `app.emit()` 发射事件，通知前端状态变化
+- React Query 自动缓存和刷新数据
+- `useTauriEvent` hook 监听后端事件，触发 UI 更新
 ### 1.4 模块依赖全景图
-
-```text
-                    ┌─────────────┐
-                    │   main.rs   │
-                    └──────┬──────┘
-                           │
-                    ┌──────▼──────┐
-                    │   lib.rs    │  ← 声明所有模块，注册所有命令
                     └──────┬──────┘
                            │
           ┌────────────────┼────────────────┐
