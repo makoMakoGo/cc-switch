@@ -538,25 +538,25 @@ pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
 5. 接收响应，转换回统一格式
 6. 返回给客户端
 **多 provider 路由逻辑**（`src-tauri/src/proxy/provider_router.rs`）：
-- 用于恢复 previous_response_id 指向的 tool call
-- 存储 Codex Chat API 的历史记录
-**forwarder.rs 详解**（`src-tauri/src/proxy/forwarder.rs`，122KB）：
-- 这是代理子系统最大的文件，包含了请求转发的核心逻辑
-- 主要职责：
-  - 接收客户端请求
-  - 解析请求头，提取 API key
-  - 匹配到对应的 provider
-  - 转换请求格式（如果需要）
-  - 转发到 provider 的 base URL
+- 每个 provider 有自己的 API key
+- 代理服务器根据请求中的 API key 判断转发到哪个 provider
+- 支持故障转移：主 provider 挂了自动切换到备选
+- `ProviderRouter` 持有熔断器状态，跨请求保持
+**路由匹配流程**：
+1. 从请求头提取 `Authorization: Bearer <api_key>`
+2. 在数据库中查找匹配的 provider
+3. 检查 provider 的熔断器状态
+4. 如果熔断器打开，尝试故障转移
+5. 转发到 provider 的 base URL
   - 等待响应
   - 转换响应格式（如果需要）
   - 返回给客户端
 **forwarder 设计问题**：
 - 122KB 太大，包含了太多职责
-- 请求转发、格式转换、错误处理全在一起
-- 应该拆分成多个职责单一的模块
-- 没有单元测试，难以验证正确性
-**CircuitBreaker 详解**（`src-tauri/src/proxy/circuit_breaker.rs:76`）：
+**路由问题**：
+- API key 匹配是线性扫描，没有索引
+- 没有缓存路由结果，每次请求都查数据库
+- 故障转移逻辑和路由逻辑耦合在一起
 - 熔断器是代理子系统的核心组件
 - 防止向不健康的 provider 发送请求
 - 支持三种状态：Closed（正常）、Open（熔断）、HalfOpen（半开）
