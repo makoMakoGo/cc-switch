@@ -42,31 +42,31 @@ main.rs                          // src-tauri/src/main.rs:6
 - `main.rs` 只有 1 行有意义代码：`lib::run()` — `src-tauri/src/main.rs:6`
 - `lib.rs`（1826 行）是整个后端的"上帝文件"——模块声明（`lib.rs:1-36`）、插件注册（`lib.rs:250-283`）、命令注册（`lib.rs:1072-1377`）全在这里
 - 初始化顺序很重要：先建数据库（`lib.rs:383`），再建服务（`lib.rs:423`），再注册命令（`lib.rs:1072`）
-
-### 1.2 数据流：一次 Provider Switch 的完整调用链
-
-以"用户在 UI 里点击切换 Claude Code 的 provider"为例：
-
-```text
-前端 (React)
-  │  useProviderActions.ts → invoke("switch_claude_provider", { provider_id })
-  │
+**初始化流程详解**：
+1. **Panic Hook 设置**（`lib.rs:205`）— 崩溃时记录日志到 `~/.cc-switch/crash.log`
+2. **单实例检查**（`lib.rs:211`）— 防止多个 cc-switch 实例同时运行
+3. **深度链接处理**（`lib.rs:252`）— 处理 `ccs://` 协议的 URL
+4. **窗口关闭拦截**（`lib.rs:254`）— 根据设置决定最小化到托盘还是退出
+5. **Store 插件初始化**（`lib.rs:278`）— 前端持久化存储
+6. **数据库初始化**（`lib.rs:383`）— SQLite + Schema 迁移
+7. **JSON → SQLite 迁移**（`lib.rs:403`）— 从旧版本平滑升级
+8. **AppState 创建**（`lib.rs:423`）— 组装全局状态
   ▼
 Tauri IPC 层
   │  lib.rs 中 invoke_handler 注册的命令
   │
   ▼
-Rust 命令处理器 (commands/provider.rs)
-  │  fn switch_claude_provider(state, provider_id)
-  │    → state.db.get_provider(provider_id)      // 从 SQLite 取 provider
-  │    → state.config_service.write_claude_config()  // 写 Claude 配置文件
-  │
-  ▼
-ConfigService (services/config.rs)
-  │  write_claude_config(provider)
-  │    → claude_config::build_live_config(provider)  // 构建 JSON
-  │    → write_json_file(path, config)               // 原子写入 ~/.claude/settings.json
-  │
+9. **默认 Skills 仓库初始化**（`lib.rs:433`）— 首次运行时插入官方 Skills
+10. **Provider 种子数据**（`lib.rs:496`）— 遍历 `AppType::all()` 导入默认配置
+11. **公共配置片段提取**（`lib.rs:1601`）— 从 live 配置提取公共字段
+12. **代理状态恢复**（`lib.rs:1558`）— 启动时恢复上次的代理接管状态
+13. **系统托盘创建**（`tray.rs`）— 创建托盘菜单
+14. **命令注册**（`lib.rs:1072`）— 注册 ~300 个 Tauri 命令
+15. **窗口显示**（`lib.rs:1041`）— 根据设置决定静默启动还是显示窗口
+**退出流程**（`lib.rs:1383`）：
+- 用户主动退出时，先保存窗口状态（`lib.rs:1401`）
+- 然后清理代理状态（`lib.rs:1402`）— 恢复 live 配置，停止代理服务器
+- 最后退出应用
   ▼
 文件系统
   ~/.claude/settings.json  ← Claude Code 读取这个文件
