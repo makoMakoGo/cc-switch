@@ -381,20 +381,20 @@ fn migrate_v9_to_v10(conn: &Connection) -> Result<(), AppError> {
 **关键设计**：
 - 数据库备份功能（`backup.rs`）支持导出/导入 SQL 快照
 - 变更钩子（`src-tauri/src/database/mod.rs:80`）自动触发 WebDAV 同步
-- 没有版本控制，并发修改可能丢失
-- `ProviderMeta` 的类型定义很深（`ProviderMeta` → `ProviderMetaInner` → ...），阅读困难
-**亮点**：
-- Provider 支持 `in_failover_queue` 标记，可以加入故障转移队列
-- 支持 `icon` 和 `icon_color` 自定义，前端可以显示彩色图标
-- 支持 `notes` 字段，用户可以添加备注
-- 支持 `category` 字段，可以按分类筛选 provider
-    });
-    settings.read().unwrap().clone()
-}
-pub fn mutate_settings<F>(f: F) -> Result<(), AppError>
-where
-    F: FnOnce(&mut AppSettings),
-{
+**数据库备份功能**（`src-tauri/src/database/backup.rs`）：
+- `create_db_backup()` — 创建数据库快照
+- `list_db_backups()` — 列出所有备份
+- `restore_db_backup()` — 恢复备份
+- `delete_db_backup()` — 删除备份
+- `rename_db_backup()` — 重命名备份
+**备份格式**：
+- SQL 快照格式（`.sql` 文件）
+- 包含完整的数据库结构和数据
+- 支持压缩（可选）
+**备份触发时机**：
+- 手动备份（用户点击"创建备份"按钮）
+- 自动备份（应用升级前）
+- WebDAV 同步前（可选）
     let mut settings = APP_SETTINGS.get().unwrap().write().unwrap();
     f(&mut settings);
     write_settings_to_file(&settings)?;
