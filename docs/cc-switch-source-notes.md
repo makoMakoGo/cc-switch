@@ -424,34 +424,35 @@ pub struct VisibleApps {       // src-tauri/src/settings.rs:28
 - `unwrap()` 在锁获取时，如果锁被 poisoned 会 panic
 - 写入失败时内存缓存和文件可能不一致
 - 没有版本控制，并发修改可能丢失
+### 3.5.5 services/ — 业务逻辑层
+**接口**：业务逻辑层，连接 commands/ 和 database/（`src-tauri/src/services/mod.rs`）。
+**模块结构**（`src-tauri/src/services/`）：
+- `provider/mod.rs`（~2600 行）— Provider 业务逻辑（CRUD、切换、导入导出）
+- `proxy.rs`（3910 行）— ProxyService 业务逻辑（启动、停止、接管、热切换）
+- `config.rs` — ConfigService（配置文件读写）
+- `skill.rs`（~2600 行）— SkillService（Skills 管理）
+- `usage_stats.rs`（~2800 行）— UsageStatsService（用量统计）
+- `stream_check.rs`（~2000 行）— StreamCheckService（流式检查）
+- `mcp.rs` — McpService（MCP 服务器管理）
+- `prompt.rs` — PromptService（Prompt 管理）
+- `webdav.rs` / `webdav_sync.rs` / `webdav_auto_sync.rs` — WebDAV 同步
+- `session_usage.rs` / `session_usage_codex.rs` / `session_usage_gemini.rs` — 会话用量同步
+- `balance.rs` — 余额查询
+- `subscription.rs` — 订阅管理
+- `coding_plan.rs` — Coding Plan 管理
+- `env_checker.rs` / `env_manager.rs` — 环境变量检查和管理
+- `model_fetch.rs` — 模型列表获取
+- `speedtest.rs` — 端点速度测试
+**services 层的职责**：
+- 封装业务逻辑，不直接处理 Tauri IPC
+- 与数据库交互，读取/更新数据
+- 与配置文件交互，读写各工具的配置
+- 管理代理服务器的生命周期
+**陷阱**：
+- `provider/mod.rs`（~2600 行）和 `proxy.rs`（3910 行）太大，应该拆分
+- 有些逻辑直接放在 `commands/` 里，没有经过 services 层
+- 没有统一的 service trait 或接口
 ### 3.6 各工具 config 模块对比
-| 模块 | 文件 | 大小 | 职责 |
-|------|------|------|------|
-| Claude Code | `src-tauri/src/claude_config.rs` | 27.7KB | Claude Code CLI 的配置读写 |
-| Claude Desktop | `src-tauri/src/claude_desktop_config.rs` | 61.5KB | Claude Desktop GUI 的配置读写 |
-| Codex CLI | `src-tauri/src/codex_config.rs` | 66.5KB | OpenAI Codex CLI 的配置读写 |
-| Gemini CLI | `src-tauri/src/gemini_config.rs` | 20.4KB | Gemini CLI 的配置读写 |
-| OpenCode | `src-tauri/src/opencode_config.rs` | 42.6KB | OpenCode 的配置读写 |
-| OpenClaw | `src-tauri/src/openclaw_config.rs` | 52.4KB | OpenClaw 的配置读写 |
-| Hermes | `src-tauri/src/hermes_config.rs` | 35.2KB | Hermes 的配置读写 |
-**共同模式（每个模块都有）**：
-1. `read_xxx_config()` — 读取工具的配置文件（如 `~/.claude/settings.json`）
-2. `write_xxx_config()` — 写入工具的配置文件
-3. `build_live_config()` — 构建当前生效的配置（合并 provider + 公共配置）
-4. `switch_provider()` — 切换 provider 的核心逻辑
-5. `import_from_live()` — 从工具的 live 配置导入 provider
-**AI Slop 特征**：
-- 每个模块的 `switch_provider()` 逻辑高度相似，但没有抽取公共函数
-- 配置文件格式不同导致代码差异大，但"读文件 → 解析 → 修改 → 写文件"的骨架是一样的
-- `codex_config.rs`（66.5KB）和 `claude_desktop_config.rs`（61.5KB）明显过大
-- 每个模块都自己实现了一遍 JSON merge 逻辑
-**设计好的地方**：
-- 每个模块独立，不互相依赖
-- 错误处理一致（都用 `AppError`）
-- 配置文件路径都通过 `config.rs` 的函数获取，不硬编码
-**屎山特征**：
-- 大量重复的文件读写代码（每个模块 100-200 行几乎一样）
-- 没有统一的 config trait 或接口
 - 每个模块都自己处理了边界情况（文件不存在、JSON 格式错误等）
 - 配置文件格式不统一（有的用 JSON，有的用 TOML，有的用 YAML）
 **对比分析**：
