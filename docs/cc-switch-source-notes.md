@@ -524,17 +524,17 @@ pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
 - `providers/claude/` — Anthropic API 格式处理
 - `providers/codex/` — OpenAI API 格式处理
 - `providers/gemini/` — Gemini API 格式处理
-**为什么需要格式转换**：
-- 不同 AI 工具使用不同的 API 格式
-- Claude 使用 Anthropic API（`/v1/messages`）
-- Codex 使用 OpenAI API（`/v1/chat/completions`）
-- Gemini 使用 Gemini API（`/v1beta/models/`）
-- 代理层需要将请求转换为目标 provider 的格式
-**格式转换流程**：
-1. 接收客户端请求（统一格式）
-2. 解析请求体，提取消息内容
-3. 转换为目标 provider 的 API 格式
-4. 转发到 provider 的 base URL
+**代理支持的 Provider 类型**：
+- **Anthropic**（Claude）— 使用 `/v1/messages` 端点
+- **OpenAI**（Codex）— 使用 `/v1/chat/completions` 端点
+- **Google**（Gemini）— 使用 `/v1beta/models/` 端点
+- **GitHub Copilot** — 使用 OAuth 认证，特殊处理
+- **自定义端点** — 用户可以配置自己的 API 端点
+**Provider 类型检测**：
+- 通过 `provider_type()` 方法判断（`src-tauri/src/provider.rs:69`）
+- `is_codex_oauth()` — 检测是否为 Codex OAuth
+- `is_github_copilot()` — 检测是否为 GitHub Copilot
+- `uses_managed_account_auth()` — 检测是否使用托管账户认证
 5. 接收响应，转换回统一格式
 6. 返回给客户端
 **多 provider 路由逻辑**（`src-tauri/src/proxy/provider_router.rs`）：
