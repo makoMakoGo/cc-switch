@@ -379,16 +379,16 @@ impl Database {
     }
 }
 ```
+**DAO 模式优点**：
+- 封装数据库操作，不暴露 SQL 给业务层
+- 通过 `impl Database` 添加方法，不破坏封装
+- 使用 `lock_conn!` 宏安全获取锁
+- 返回 `Result<T, AppError>`，统一错误处理
+**DAO 模式缺点**：
+- 没有事务支持，多个相关操作可能部分成功
+- 没有连接池，高并发场景可能成为瓶颈
+- SQL 字符串硬编码，没有类型安全
 **DAO 方法列表**：
-- `get_providers()` — 获取 provider 列表
-- `get_provider_by_id()` — 获取单个 provider
-- `add_provider()` — 添加 provider
-- `update_provider()` — 更新 provider
-- `delete_provider()` — 删除 provider
-- `get_current_provider()` — 获取当前 provider
-- `set_current_provider()` — 设置当前 provider
-- `get_settings()` — 获取设置
-- `set_setting()` — 设置单个配置项
 **Schema 迁移示例**（`src-tauri/src/database/schema.rs`）：
 ```rust
 // 迁移逻辑示例
