@@ -524,20 +524,20 @@ pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
 - `providers/claude/` — Anthropic API 格式处理
 - `providers/codex/` — OpenAI API 格式处理
 - `providers/gemini/` — Gemini API 格式处理
+**为什么需要格式转换**：
+- 不同 AI 工具使用不同的 API 格式
+- Claude 使用 Anthropic API（`/v1/messages`）
+- Codex 使用 OpenAI API（`/v1/chat/completions`）
+- Gemini 使用 Gemini API（`/v1beta/models/`）
+- 代理层需要将请求转换为目标 provider 的格式
+**格式转换流程**：
+1. 接收客户端请求（统一格式）
+2. 解析请求体，提取消息内容
+3. 转换为目标 provider 的 API 格式
+4. 转发到 provider 的 base URL
+5. 接收响应，转换回统一格式
+6. 返回给客户端
 **多 provider 路由逻辑**（`src-tauri/src/proxy/provider_router.rs`）：
-- 每个 provider 有自己的 API key
-- 代理服务器根据请求中的 API key 判断转发到哪个 provider
-- 支持故障转移：主 provider 挂了自动切换到备选
-- `ProviderRouter` 持有熔断器状态，跨请求保持
-**请求处理流程**：
-  ├─ 等待响应
-  ├─ 转换响应格式（如果需要）
-  └─ 返回给客户端
-```
-**Gemini Shadow Store**（`src-tauri/src/proxy/providers/gemini_shadow.rs`）：
-- 用于 thoughtSignature / tool call 回放
-- 存储 Gemini API 的中间状态，支持流式响应
-**Codex Chat History Store**（`src-tauri/src/proxy/providers/codex_chat_history.rs`）：
 - 用于恢复 previous_response_id 指向的 tool call
 - 存储 Codex Chat API 的历史记录
 **forwarder.rs 详解**（`src-tauri/src/proxy/forwarder.rs`，122KB）：
