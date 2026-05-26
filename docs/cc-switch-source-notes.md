@@ -263,6 +263,33 @@ async fn my_command(state: tauri::State<'_, AppState>) -> Result<String, AppErro
     Ok(result)
 }
 ```
+**所有权和借用模式**：
+```rust
+// Arc<T> 共享所有权
+let db = Arc::new(Database::init()?);  // 创建 Arc
+let db_clone = db.clone();             // 克隆 Arc（增加引用计数）
+// db 和 db_clone 指向同一个 Database
+// Mutex<T> 内部可变性
+let conn = self.conn.lock()?;          // 获取锁
+// conn 是 MutexGuard，离开作用域时自动释放锁
+// RwLock<T> 读写锁
+let settings = APP_SETTINGS.read()?;   // 读锁（多读单写）
+let mut settings = APP_SETTINGS.write()?; // 写锁（独占）
+```
+**Option 和 Result 模式**：
+```rust
+// Option 处理
+let icon: Option<String> = provider.icon;
+match icon {
+    Some(icon) => println!("Icon: {}", icon),
+    None => println!("No icon"),
+}
+// 或者用 unwrap_or
+let icon = provider.icon.unwrap_or("default".to_string());
+// Result 处理
+let config = read_json_file(path)?;  // 提前返回错误
+let config = read_json_file(path).unwrap_or_default();  // 用默认值
+```
 ## 第 3 章：后端核心模块
 按依赖顺序读，不是按文件大小。先读底层工具模块，再读业务模块。
 ### 3.1 config.rs — 路径解析和文件 I/O（14KB）
@@ -284,33 +311,6 @@ async fn my_command(state: tauri::State<'_, AppState>) -> Result<String, AppErro
 - 路径硬编码了 `~/.claude` 等，如果用户自定义了 Claude 的配置目录会出问题
 - 没有文件锁保护，并发写入可能冲突
 ### 3.1.5 database/ — 数据持久化（SQLite）
-**接口**：SQLite 数据库的初始化、迁移、DAO 操作（`src-tauri/src/database/mod.rs`）。
-**核心结构**：
-```rust
-pub struct Database {           // src-tauri/src/database/mod.rs:76
-    pub(crate) conn: Mutex<Connection>,  // SQLite 连接（Mutex 包装）
-}
-```
-**模块结构**（`src-tauri/src/database/`）：
-- `mod.rs` — Database 结构体 + 初始化（`src-tauri/src/database/mod.rs:91`）
-- `schema.rs` — 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`src-tauri/src/database/mod.rs:52`）
-- `backup.rs` — SQL 导入导出 + 快照备份
-- `migration.rs` — JSON → SQLite 数据迁移（`src-tauri/src/database/migration.rs`）
-- `dao/` — 数据访问对象
-  - `providers.rs` — Provider CRUD
-  - `mcp.rs` — MCP 服务器配置
-  - `prompts.rs` — Prompt 管理
-  - `skills.rs` — Skills 管理
-  - `settings.rs` — 通用设置存储
-**数据库表结构**（`src-tauri/src/database/schema.rs`）：
-- `providers` — Provider 数据（id, name, app_type, settings_config, meta, icon 等）
-- `mcp_servers` — MCP 服务器配置（id, name, server_config, apps 等）
-- `prompts` — Prompt 管理（id, name, content, app_type 等）
-- `skills` — Skills 管理（id, name, description, app_type 等）
-- `settings` — 通用设置（key, value）
-- `failover_queue` — 故障转移队列（provider_id, app_type, priority）
-- `proxy_config` — 代理配置（app_type, enabled, config）
-- `model_pricing` — 模型定价（model, input_price, output_price）
 - `request_logs` — 请求日志（timestamp, provider, model, status 等）
 **Schema 迁移**（`src-tauri/src/database/schema.rs`）：
 - 当前版本 `SCHEMA_VERSION = 10`（`src-tauri/src/database/mod.rs:52`）
