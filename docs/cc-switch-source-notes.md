@@ -503,22 +503,22 @@ pub fn set_settings(&self, settings: &[(String, String)]) -> Result<(), AppError
 }
 ```
 **SpeedtestService 详解**（`src-tauri/src/services/speedtest.rs`）：
+**EnvChecker 详解**（`src-tauri/src/services/env_checker.rs`）：
+- 检查环境变量冲突
+- 检测 AI 工具的环境变量设置
+- 提供修复建议
+**EnvChecker 方法列表**：
+- `check_env_conflicts()` — 检查环境变量冲突
+- `delete_env_vars()` — 删除环境变量
+- `restore_env_backup()` — 恢复环境变量备份
+**EnvManager 详解**（`src-tauri/src/services/env_manager.rs`）：
+- 管理环境变量的设置和恢复
+- 支持备份和恢复
+- 支持批量操作
 ## 第 4 章：本地代理子系统
 这是项目里最复杂的部分，单独拎出来。代理子系统实现了本地 HTTP 代理，支持 API 格式转换（Anthropic ↔ OpenAI ↔ Gemini）、多 provider 路由、故障转移和熔断。
 ### 4.1 proxy/ 目录结构
 **ProxyServer**（`src-tauri/src/proxy/server.rs:54`）：
-- `ProxyServer::new()` 创建 `ProxyState` 并初始化所有共享组件
-- `ProxyServer::start()` 绑定端口、启动 Axum 路由
-- `ProxyServer::stop()` 发送 shutdown 信号、等待服务器关闭
-**技术栈**：
-- 中间件按添加顺序执行（请求从外到内，响应从内到外）
-- 常用中间件：`tower_http::cors::CorsLayer`（CORS）、`tower_http::trace::TraceLayer`（日志）
-**Axum 路由**（`src-tauri/src/proxy/server.rs`）：
-- `Router::new()` 创建路由
-- `.route("/v1/chat/completions", post(handler))` 注册路由
-- `.route("/v1/messages", post(handler))` 注册路由
-- `.layer(middleware)` 添加中间件
-**API 格式转换**（`src-tauri/src/proxy/`）：
 - `transform_codex_chat.rs`（71KB）— OpenAI Codex Chat API ↔ 内部格式
 - `transform_gemini.rs`（78KB）— Gemini API ↔ 内部格式
 - `providers/claude/` — Anthropic API 格式处理
