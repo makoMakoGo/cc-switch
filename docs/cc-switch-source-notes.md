@@ -647,64 +647,74 @@ export function useTauriEvent<T>(event: string, handler: (payload: T) => void) {
 ### 5.3 config/ — 287KB 的 preset 数据
 ```text
 src/config/
+├── claudeProviderPresets.ts         # 35.6KB — Claude Code 官方 provider 列表
+├── claudeDesktopProviderPresets.ts  # 27.0KB — Claude Desktop 官方 provider 列表
+├── codexProviderPresets.ts          # 32.5KB — Codex CLI 官方 provider 列表
+├── geminiProviderPresets.ts         # 9.3KB  — Gemini CLI 官方 provider 列表
+├── opencodeProviderPresets.ts       # 42.6KB — OpenCode 官方 provider 列表
+├── openclawProviderPresets.ts       # 52.4KB — OpenClaw 官方 provider 列表
+├── hermesProviderPresets.ts         # 35.2KB — Hermes 官方 provider 列表
+└── universalProviderPresets.ts      # 3.0KB  — 跨应用共享的 provider 列表
 ```
-
 每个 preset 文件定义了该工具的官方 provider 列表（名称、图标、默认配置等）。
-
+**Preset 结构**（以 `claudeProviderPresets.ts` 为例）：
+```typescript
+// src/config/claudeProviderPresets.ts
+export const claudeProviderPresets = [
+  {
+    name: "Anthropic",
+    icon: "anthropic",
 **AI Slop 特征**：
+    iconColor: "#00A67E",
 - 7 个文件结构几乎一样，但没有抽取公共模板
+    settingsConfig: {
 - 287KB 的 TypeScript 数据，可以移到 JSON 文件
+      apiKey: "sk-ant-xxx",
 - 很多 preset 是从官网复制的，更新时需要手动同步
-
+      baseUrl: "https://api.anthropic.com",
+- 没有类型检查，preset 数据的结构没有 TypeScript 类型定义
+    },
+**其他前端配置**：
+  },
+- `src/config/appConfig.tsx`（3.2KB）— 应用配置（视图列表、图标等）
+  // ... 更多 provider
+- `src/config/constants.ts`（445B）— 常量定义
+];
+- `src/config/codingPlanProviders.ts`（2.6KB）— Coding Plan provider 列表
+```
 ### 5.4 前端 → 后端的调用模式
-
 **invoke 封装**（没有统一封装，直接用 Tauri 的 `invoke`）：
-
 ```typescript
 import { invoke } from "@tauri-apps/api/core";
-
 // 直接调用
 const result = await invoke("command_name", { arg1, arg2 });
 ```
-
 **Tauri event 监听**：
-
 ```typescript
 import { listen } from "@tauri-apps/api/event";
-
 const unlisten = await listen("event-name", (event) => {
   console.log(event.payload);
 });
-
 // 组件卸载时取消监听
 return () => unlisten();
 ```
-
----
-
+**前端组件结构**（`src/components/`）：
+- `settings/` — 设置页面组件
+- `providers/` — Provider 管理组件
+- `proxy/` — 代理状态组件
+- `mcp/` — MCP 配置组件
+- `skills/` — Skills 管理组件
+- `prompts/` — Prompt 管理组件
+- `usage/` — 用量统计组件
+- `common/` — 通用组件（按钮、输入框等）
 ## 第 6 章：AI Slop 特征模式识别
 这是你重构的弹药库。这些模式不是"代码风格偏好"，而是实实在在的维护负担。
 ### 6.1 代码膨胀模式
 **过大的单文件**：
-| 文件 | 行数 | 问题 |
-|------|------|------|
-| `lib.rs` | 1826 | 模块声明（`lib.rs:1-36`）+ 插件注册（`lib.rs:250-283`）+ 命令注册（`lib.rs:1072-1377`）+ 初始化逻辑（`lib.rs:284-1070`）全混在一起 |
-| `App.tsx` | 1605 | 14 个视图 + 事件处理 + 状态管理全在一个文件 |
-| `forwarder.rs` | ~3000 | 请求转发 + 格式转换 + 错误处理全在一起 |
-| `codex_config.rs` | ~1600 | 配置读写 + 迁移 + 验证全在一起 |
-| `claude_desktop_config.rs` | ~1500 | 同上 |
-| `proxy.rs`（services） | 3910 | `ProxyService` 的所有方法全在一个文件（`src-tauri/src/services/proxy.rs:55`） |
-| `provider/mod.rs`（services） | ~2600 | `ProviderService` 的所有方法全在一个文件 |
 **复制粘贴的 config 模块**：
 - 7 个工具的 config 模块结构几乎一样，但没有抽取公共函数
 - 每个都自己实现了一遍 `read → parse → modify → write` 流程
 - 没有公共的 config trait 或接口
-**无意义的 wrapper 层**：
-- 有些函数只是简单调用另一个函数，没有增加任何价值
-- 例如 `commands/` 里很多函数只是 `state.service.method()` 的透传
-**冗余的 match 分支**：
-- `AppType` 的 match 在 `McpApps`（`src-tauri/src/app_config.rs:24`）、`VisibleApps`（`src-tauri/src/settings.rs:66`）、`CommonConfigSnippets`（`src-tauri/src/app_config.rs:441`）里重复出现
-- 每次加新工具都要改 10+ 个 match
 **冗余的 pub use 导出**：
 - `lib.rs:38-51` 里有大量 `pub use` 导出，很多已经在 `commands/mod.rs` 里导出过
 - 导致同一个函数从两个路径可以访问，增加了理解难度
