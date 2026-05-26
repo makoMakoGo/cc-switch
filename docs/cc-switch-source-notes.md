@@ -531,18 +531,18 @@ pub fn get_failover_queue(&self, app_type: &str) -> Result<Vec<FailoverQueueItem
 }
 ```
 **SpeedtestService 详解**（`src-tauri/src/services/speedtest.rs`）：
+**ModelFetchService 详解**（`src-tauri/src/services/model_fetch.rs`）：
+- 从 AI 工具的 API 获取可用模型列表
+- 支持 OpenAI 兼容的 `/v1/models` 端点
+- 返回模型名称、ID、能力等信息
+**ModelFetchService 方法列表**：
+- `fetch_models_for_config()` — 获取模型列表
+- 支持缓存，避免频繁请求
+- 支持超时和重试
 ## 第 4 章：本地代理子系统
 这是项目里最复杂的部分，单独拎出来。代理子系统实现了本地 HTTP 代理，支持 API 格式转换（Anthropic ↔ OpenAI ↔ Gemini）、多 provider 路由、故障转移和熔断。
 ### 4.1 proxy/ 目录结构
 **ProxyServer**（`src-tauri/src/proxy/server.rs:54`）：
-5. 接收响应，转换回统一格式
-6. 返回给客户端
-**多 provider 路由逻辑**（`src-tauri/src/proxy/provider_router.rs`）：
-- 每个 provider 有自己的 API key
-- 代理服务器根据请求中的 API key 判断转发到哪个 provider
-- 支持故障转移：主 provider 挂了自动切换到备选
-- `ProviderRouter` 持有熔断器状态，跨请求保持
-**路由匹配流程**：
 1. 从请求头提取 `Authorization: Bearer <api_key>`
 2. 在数据库中查找匹配的 provider
 3. 检查 provider 的熔断器状态
