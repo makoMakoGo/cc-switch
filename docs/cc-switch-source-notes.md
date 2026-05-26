@@ -443,19 +443,19 @@ pub struct VisibleApps {       // src-tauri/src/settings.rs:28
 - `env_checker.rs` / `env_manager.rs` — 环境变量检查和管理
 - `model_fetch.rs` — 模型列表获取
 - `speedtest.rs` — 端点速度测试
+**UsageStatsService 详解**（`src-tauri/src/services/usage_stats.rs`）：
+- 这是用量统计的核心服务
+- 从代理层收集请求日志
+- 按 provider、model、时间维度聚合数据
+- 提供 `get_usage_summary()`、`get_usage_trends()` 等方法
+**UsageStatsService 方法列表**：
+- `get_usage_summary()` — 获取用量摘要
+- `get_usage_summary_by_app()` — 按应用获取用量
+- `get_usage_trends()` — 获取用量趋势
+- `get_provider_stats()` — 获取 provider 统计
+- `get_model_stats()` — 获取模型统计
+- `get_request_logs()` — 获取请求日志
 **services 层的职责**：
-- 封装业务逻辑，不直接处理 Tauri IPC
-- 与数据库交互，读取/更新数据
-- 与配置文件交互，读写各工具的配置
-- 管理代理服务器的生命周期
-**services 层示例**（`src-tauri/src/services/provider/mod.rs`）：
-```rust
-// ProviderService 示例
-pub struct ProviderService {
-    db: Arc<Database>,
-}
-impl ProviderService {
-    pub fn get_providers(&self, app_type: &str) -> Result<Vec<Provider>, AppError> {
         // 从数据库获取 providers
         self.db.get_providers(app_type)
     }
