@@ -519,17 +519,17 @@ pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
 - `.route("/v1/messages", post(handler))` 注册路由
 - `.layer(middleware)` 添加中间件
 **API 格式转换**（`src-tauri/src/proxy/`）：
+- `transform_codex_chat.rs`（71KB）— OpenAI Codex Chat API ↔ 内部格式
+- `transform_gemini.rs`（78KB）— Gemini API ↔ 内部格式
+- `providers/claude/` — Anthropic API 格式处理
+- `providers/codex/` — OpenAI API 格式处理
+- `providers/gemini/` — Gemini API 格式处理
+**多 provider 路由逻辑**（`src-tauri/src/proxy/provider_router.rs`）：
+- 每个 provider 有自己的 API key
+- 代理服务器根据请求中的 API key 判断转发到哪个 provider
+- 支持故障转移：主 provider 挂了自动切换到备选
 - `ProviderRouter` 持有熔断器状态，跨请求保持
 **请求处理流程**：
-```text
-客户端请求 → Axum 路由 → handlers/ → ProviderRouter
-  ├─ 解析请求头，提取 API key
-  ├─ 匹配到对应的 provider
-  ├─ 检查熔断器状态
-  │    ├─ Closed → 正常转发
-  │    ├─ Open → 拒绝，返回 503
-  │    └─ HalfOpen → 尝试转发，成功则关闭熔断
-  ├─ 转发到 provider 的 base URL
   ├─ 等待响应
   ├─ 转换响应格式（如果需要）
   └─ 返回给客户端
