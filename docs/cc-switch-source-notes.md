@@ -468,20 +468,20 @@ impl ProviderService {
     }
 }
 ```
+**ProviderService 方法列表**：
+- `get_providers()` — 获取 provider 列表
+- `get_current_provider()` — 获取当前 provider
+- `add_provider()` — 添加 provider
+- `update_provider()` — 更新 provider
+- `delete_provider()` — 删除 provider
+- `switch_provider()` — 切换 provider
+- `import_default_config()` — 导入默认配置
+- `export_config()` — 导出配置
+- `import_config()` — 导入配置
 **陷阱**：
 - `provider/mod.rs`（~2600 行）和 `proxy.rs`（3910 行）太大，应该拆分
 - 有些逻辑直接放在 `commands/` 里，没有经过 services 层
 - 没有统一的 service trait 或接口
-- Gemini CLI: JSON，支持模型配置
-- OpenCode: JSON，支持多 provider 配置
-- OpenClaw: JSON，支持多 provider 配置
-- Hermes: YAML，支持多 provider 配置
-**共同模式（每个模块都有）**：
-1. `read_xxx_config()` — 读取工具的配置文件
-2. `write_xxx_config()` — 写入工具的配置文件
-3. `build_live_config()` — 构建当前生效的配置
-4. `switch_provider()` — 切换 provider 的核心逻辑
-5. `import_from_live()` — 从工具的 live 配置导入 provider
 **config 模块代码模式**：
 ```rust
 // 读取配置文件
