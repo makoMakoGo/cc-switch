@@ -237,52 +237,52 @@ fn atomic_write(path: &Path, content: &str) -> Result<(), AppError> {
 ---
 
 ## 第 3 章：后端核心模块
-
+按依赖顺序读，不是按文件大小。先读底层工具模块，再读业务模块。
 ### 3.1 config.rs — 路径解析和文件 I/O（14KB）
-
-**接口**：提供所有模块需要的路径解析和文件读写工具函数。
-
+**接口**：提供所有模块需要的路径解析和文件读写工具函数（`src-tauri/src/config.rs`）。
 **核心函数**：
 - `get_home_dir()` → `~` 目录（支持 `CC_SWITCH_TEST_HOME` 测试覆盖）
-- `get_app_config_dir()` → `~/.cc-switch/`
+- `get_app_config_dir()` → `~/.cc-switch/`（`src-tauri/src/config.rs`）
 - `get_claude_dir()` → `~/.claude/`
 - `get_codex_dir()` → `~/.codex/`
-- `read_json_file<T>(path)` → 读文件并反序列化
+- `read_json_file<T>(path)` → 读文件并反序列化为 Rust 结构体
 - `write_json_file<T>(path, data)` → 序列化并原子写入
 - `atomic_write(path, content)` → 临时文件 + rename 的安全写入
-
 **实现亮点**：
-- 所有路径函数都支持环境变量覆盖，方便测试
+- 所有路径函数都支持环境变量覆盖，方便测试（`CC_SWITCH_TEST_HOME`）
 - `atomic_write` 用 `write_to_tmp + rename` 避免写入中断导致文件损坏
-
+- 文件读写统一用 `AppError::io()` 和 `AppError::json()` 包装错误
 **陷阱**：
 - `get_home_dir()` 在某些环境下可能返回 None，导致 panic
 - 路径硬编码了 `~/.claude` 等，如果用户自定义了 Claude 的配置目录会出问题
-
-### 3.2 error.rs — 错误模型（3.5KB）
-
-**接口**：统一的错误类型 `AppError`（`src-tauri/src/error.rs:6`），所有后端函数都用它。
-
-**实现**：
-
+- 没有文件锁保护，并发写入可能冲突
+### 3.1.5 database/ — 数据持久化（SQLite）
+**接口**：SQLite 数据库的初始化、迁移、DAO 操作（`src-tauri/src/database/mod.rs`）。
+**核心结构**：
 ```rust
-#[derive(Debug, thiserror::Error)]  // src-tauri/src/error.rs:6
-pub enum AppError {
-    #[error("Config error: {0}")]    // src-tauri/src/error.rs:8
-    Config(String),
-
-    #[error("IO error for {path}: {source}")]  // src-tauri/src/error.rs:11
-    Io { path: String, source: std::io::Error },
-
-    #[error("JSON error for {path}: {source}")]  // src-tauri/src/error.rs:14
-    Json { path: String, source: serde_json::Error },
-
-    #[error("TOML error: {0}")]     // src-tauri/src/error.rs:17
-    Toml(#[from] toml::de::Error),
-
-    #[error("Lock poisoned: {0}")]  // src-tauri/src/error.rs:20
-    Lock(String),
-
+pub struct Database {           // src-tauri/src/database/mod.rs:76
+    pub(crate) conn: Mutex<Connection>,  // SQLite 连接（Mutex 包装）
+}
+```
+**模块结构**（`src-tauri/src/database/`）：
+- `mod.rs` — Database 结构体 + 初始化（`src-tauri/src/database/mod.rs:91`）
+- `schema.rs` — 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`src-tauri/src/database/mod.rs:52`）
+- `backup.rs` — SQL 导入导出 + 快照备份
+- `migration.rs` — JSON → SQLite 数据迁移（`src-tauri/src/database/migration.rs`）
+- `dao/` — 数据访问对象
+  - `providers.rs` — Provider CRUD
+  - `mcp.rs` — MCP 服务器配置
+  - `prompts.rs` — Prompt 管理
+  - `skills.rs` — Skills 管理
+  - `settings.rs` — 通用设置存储
+**关键设计**：
+- `lock_conn!` 宏（`src-tauri/src/database/mod.rs:61`）安全获取 Mutex 锁，避免 unwrap panic
+- `to_json_string()`（`src-tauri/src/database/mod.rs:55`）安全序列化 JSON
+- 数据库变更钩子（`src-tauri/src/database/mod.rs:80`）通知 WebDAV 自动同步
+**陷阱**：
+- `Mutex<Connection>` 意味着同一时间只有一个线程能访问数据库，高并发场景可能成为瓶颈
+- Schema 迁移是线性的，如果迁移失败可能导致数据库损坏
+- 没有连接池，每次操作都用同一个连接
     #[error("Database error: {0}")]  // src-tauri/src/error.rs:23
     Database(String),
 
