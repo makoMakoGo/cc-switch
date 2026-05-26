@@ -597,32 +597,32 @@ pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
 - `TAKEOVER_ENABLE` — 接管启用
 - `TAKEOVER_DISABLE` — 接管禁用
 **热切换 vs 冷切换**：
+**SwitchLock 详解**（`src-tauri/src/proxy/switch_lock.rs`）：
+- 防止并发切换 provider
+- 使用 `tokio::sync::Mutex` 保护切换操作
+- 每个应用类型有独立的锁
+- 切换时获取锁，完成后释放
+**SwitchLock 代码示例**：
+```rust
+// src-tauri/src/proxy/switch_lock.rs
+pub struct SwitchLockManager {
+    locks: HashMap<String, Arc<Mutex<()>>>,
+}
+impl SwitchLockManager {
+    pub async fn acquire(&self, app_type: &str) -> MutexGuard<()> {
+        let lock = self.locks.get(app_type).unwrap();
+        lock.lock().await
+    }
+}
+```
+**SwitchLock 问题**：
+- 没有超时机制，死锁时会永远等待
+- 没有优先级，先到先得
+- 锁粒度太粗，整个切换过程都持有锁
 ## 第 5 章：前端架构
 前端是 React + TypeScript，通过 Tauri IPC 与 Rust 后端通信。前端代码在 `src/` 目录下。
 ### 5.1 App.tsx — 14 个视图的路由机制
 **App.tsx**（1605 行）是前端的"上帝文件"（`src/App.tsx`）。
-- 没有代码分割（code splitting），所有视图都打包在一个 chunk 里
-**视图切换实现**：
-```typescript
-// src/App.tsx
-const [currentView, setCurrentView] = useState(
-  localStorage.getItem("currentView") || "providers"
-);
-// 14 个视图
-switch (currentView) {
-  case "providers":    return <ProviderList />;
-  case "settings":     return <Settings />;
-  case "proxy":        return <ProxyStatus />;
-  // ... 其他 11 个视图
-}
-```
-**视图切换问题**：
-- 没有 URL 路由，无法通过 URL 直接访问特定视图
-- 没有浏览器前进/后退支持
-- 所有视图都在一个文件里，难以维护
-- 没有代码分割，首屏加载慢
-// 切换 provider
-const switchMutation = useMutation({
   mutationFn: (providerId: string) =>
     invoke("switch_claude_provider", { providerId }),
   onSuccess: () => {
