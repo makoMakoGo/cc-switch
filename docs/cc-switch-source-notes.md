@@ -597,22 +597,22 @@ pub fn list_sessions(&self, app_type: &str) -> Result<Vec<Session>, AppError> {
 - `FAILOVER_SWITCH` — 故障转移切换
 - `TAKEOVER_ENABLE` — 接管启用
 - `TAKEOVER_DISABLE` — 接管禁用
+**日志代码分类**：
+- `SRV_*` — 服务器相关（启动、停止、状态变化）
+- `REQ_*` — 请求相关（转发、错误、超时）
+- `CB_*` — 熔断器相关（状态变化、重置）
+- `FAILOVER_*` — 故障转移相关（切换、回退）
+- `TAKEOVER_*` — 接管相关（启用、禁用、恢复）
+**日志使用示例**：
+```rust
+// src-tauri/src/proxy/log_codes.rs
+pub const SRV_START: &str = "SRV_START";
+pub const SRV_STOP: &str = "SRV_STOP";
+pub const REQ_FORWARD: &str = "REQ_FORWARD";
+// 使用
+log::info!(code = SRV_START, "Proxy server started on port {}", port);
+```
 **热切换 vs 冷切换**：
-**余额查询**（`src-tauri/src/services/balance.rs`）：
-- 查询 AI 工具的账户余额
-- 支持多种认证方式（API key、OAuth）
-- 返回余额、额度、过期时间等信息
-**余额查询方法列表**：
-- `get_balance()` — 获取余额
-- `get_subscription_quota()` — 获取订阅配额
-- `get_codex_oauth_quota()` — 获取 Codex OAuth 配额
-**会话用量同步**（`src-tauri/src/services/session_usage.rs`）：
-4. 写入数据库的 `request_logs` 表
-5. 更新用量统计缓存
-**SwitchLock 详解**（`src-tauri/src/proxy/switch_lock.rs`）：
-    pub async fn acquire(&self, app_type: &str) -> MutexGuard<()> {
-        let lock = self.locks.get(app_type).unwrap();
-        lock.lock().await
     }
 }
 ```
