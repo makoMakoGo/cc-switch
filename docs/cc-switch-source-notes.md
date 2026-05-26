@@ -602,25 +602,25 @@ pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
 - 所有视图都在一个 switch 里，没有用路由库（React Router）
 - 大量内联的事件处理逻辑，应该抽取到 hooks
 - 没有代码分割（code splitting），所有视图都打包在一个 chunk 里
-**14 个视图详解**：
-- `providers` — Provider 管理（列表、添加、编辑、删除、排序）
-- `settings` — 全局设置（代理配置、UI 偏好、WebDAV 同步）
-- `proxy` — 代理状态（状态显示、启停控制、故障转移配置）
-- `mcp` — MCP 配置（服务器列表、添加、编辑、删除）
-- `skills` — Skills 管理（列表、安装、卸载、更新）
-- `prompts` — Prompt 管理（列表、添加、编辑、删除）
-- `usage` — 用量统计（图表、筛选、导出）
-- `sync` — WebDAV 同步（配置、测试、上传、下载）
-- `env` — 环境变量检查（冲突检测、修复）
-- `subscription` — 订阅管理（余额、配额）
-- `omo` — OMO 集成（配置、状态）
-- `coding-plan` — Coding Plan（配置、状态）
-- `import-export` — 导入导出（配置、文件）
-- `about` — 关于页面（版本、更新日志）
-**useProviderActions 详解**（`src/hooks/useProviderActions.ts`）：
-这是最核心的 hooks，封装了所有 Provider 的 CRUD 操作：
+**视图切换实现**：
 ```typescript
-// src/hooks/useProviderActions.ts
+// src/App.tsx
+const [currentView, setCurrentView] = useState(
+  localStorage.getItem("currentView") || "providers"
+);
+// 14 个视图
+switch (currentView) {
+  case "providers":    return <ProviderList />;
+  case "settings":     return <Settings />;
+  case "proxy":        return <ProxyStatus />;
+  // ... 其他 11 个视图
+}
+```
+**视图切换问题**：
+- 没有 URL 路由，无法通过 URL 直接访问特定视图
+- 没有浏览器前进/后退支持
+- 所有视图都在一个文件里，难以维护
+- 没有代码分割，首屏加载慢
 // 切换 provider
 const switchMutation = useMutation({
   mutationFn: (providerId: string) =>
