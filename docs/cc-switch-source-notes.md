@@ -389,29 +389,29 @@ impl Database {
 - 没有连接池，高并发场景可能成为瓶颈
 - SQL 字符串硬编码，没有类型安全
 **DAO 方法列表**：
-**Schema 迁移示例**（`src-tauri/src/database/schema.rs`）：
+- `get_providers(app_type)` — 获取 provider 列表
+- `get_provider_by_id(id)` — 获取单个 provider
+- `add_provider(provider)` — 添加 provider
+- `update_provider(provider)` — 更新 provider
+- `delete_provider(id)` — 删除 provider
+- `get_current_provider(app_type)` — 获取当前 provider
+- `set_current_provider(app_type, provider_id)` — 设置当前 provider
+- `get_settings()` — 获取所有设置
+- `get_setting(key)` — 获取单个设置
+- `set_setting(key, value)` — 设置单个配置项
+**DAO CRUD 模式**：
 ```rust
-// 迁移逻辑示例
-fn migrate_v9_to_v10(conn: &Connection) -> Result<(), AppError> {
-    // 添加新列
-    conn.execute("ALTER TABLE providers ADD COLUMN notes TEXT", [])?;
-    // 更新版本号
-    conn.execute("PRAGMA user_version = 10", [])?;
+// 添加 provider
+pub fn add_provider(&self, provider: &Provider) -> Result<(), AppError> {
+    let conn = lock_conn!(self.conn);
+    conn.execute(
+        "INSERT INTO providers (id, name, app_type, settings_config) VALUES (?1, ?2, ?3, ?4)",
+        rusqlite::params![provider.id, provider.name, provider.app_type, to_json_string(&provider.settings_config)?],
+    )?;
     Ok(())
 }
 ```
-**Schema 版本控制**：
-- 当前版本 `SCHEMA_VERSION = 10`（`src-tauri/src/database/mod.rs:52`）
-- 每次修改表结构时递增版本号
-- 迁移逻辑在 `schema.rs` 中，按版本顺序执行
-- 支持从 JSON 配置文件迁移到 SQLite（`migration.rs`）
-**备份触发时机**：
-- 可见应用列表（`VisibleApps`，`src-tauri/src/settings.rs:28`）
-- 自动启动、静默启动等偏好
-**VisibleApps**（`src-tauri/src/settings.rs:28`）：
-```rust
-pub struct VisibleApps {       // src-tauri/src/settings.rs:28
-    pub claude: bool,
+**Schema 迁移示例**（`src-tauri/src/database/schema.rs`）：
     pub claude_desktop: bool,
     pub codex: bool,
     pub gemini: bool,
