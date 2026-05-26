@@ -802,11 +802,11 @@ impl ToolConfig for ClaudeConfig { ... }
 - 抽取公共的 `useTauriCommand` hook
 ## 第 7 章：重构路线图
 基于前 6 章的理解，制定具体重构计划。按风险从低到高排列。
-**预期收益**：
-- 减少代码量 10-15%
-- 提高可读性和一致性
-- 为后续重构打下基础
-### 7.2 中等重构（3-5 天）
+### 7.1 低风险清理（先做，1-2 天）
+**删除死代码**：
+- 搜索 `#[allow(dead_code)]` 和未使用的函数
+- 删除注释掉的代码块
+- 删除 `lib.rs:38` 里重复的 `pub use` 导出
 **统一命名**：
 - `get_xxx` / `read_xxx` / `fetch_xxx` 统一为 `read_xxx`
 - `xxx_config` / `xxx_settings` 统一为 `xxx_config`
@@ -815,6 +815,10 @@ impl ToolConfig for ClaudeConfig { ... }
 - 7 个 config 模块的 `read → parse → modify → write` 骨架抽取为公共函数
 - 7 个 preset 文件的结构抽取为公共模板
 - `AppType` 的 match 分支抽取为 trait 方法
+**预期收益**：
+- 减少代码量 10-15%
+- 提高可读性和一致性
+- 为后续重构打下基础
 ### 7.2 中等重构（3-5 天）
 **拆分过大的文件**：
 - `lib.rs`（1826 行）→ `init.rs` + `commands.rs` + `lib.rs`
@@ -833,12 +837,8 @@ trait ToolConfig {
 **简化前端 hooks 层**：
 - 合并 `useSettings` + `useSettingsForm` + `useDirectorySettings`
 - 抽取公共的 `useTauriCommand` hook
+**预期收益**：
+- 文件大小减少 50-70%
+- 模块职责更清晰
+- 新功能开发更容易
 ### 7.3 架构级重构（最后做，慎重，1-2 周）
-**Provider 管理的统一抽象**：
-- 定义 `ProviderManager` trait
-- 每个工具有自己的 `ProviderManager` 实现
-- 切换逻辑统一处理，不再分散在各个 config 模块
-**代理子系统的简化**：
-- `forwarder.rs`（122KB）拆分成多个职责单一的模块
-- 抽取公共的 API 格式转换框架
-- 统一错误处理和日志记录
