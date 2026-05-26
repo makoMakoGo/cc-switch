@@ -558,17 +558,17 @@ Closed 或 Open
 - 熔断器状态是内存中的，重启后重置（`src-tauri/src/proxy/circuit_breaker.rs:78`）
 - 并发切换时需要 `SwitchLock` 保护（`src-tauri/src/proxy/switch_lock.rs`）
 - 没有持久化熔断器状态，重启后所有 provider 都是 Closed 状态
-### 4.4 代理接管（Takeover）机制
-**什么是代理接管**：
-- 代理接管是指 cc-switch 代理服务器"接管"目标工具的 live 配置
-- 接管后，目标工具的 API 请求会通过 cc-switch 代理转发
-- cc-switch 可以在代理层做格式转换、故障转移、用量统计等
-**接管流程**（`src-tauri/src/services/proxy.rs`）：
-1. 用户在 UI 里点击"启用代理"按钮
-2. 前端调用 `set_proxy_takeover_for_app` Tauri 命令
-3. `ProxyService` 读取目标工具的 live 配置
-4. 备份 live 配置到数据库（`has_any_live_backup`）
-5. 修改 live 配置：
+**代理错误处理**（`src-tauri/src/proxy/`）：
+- `ProxyError` 枚举定义了代理层的所有错误类型
+- 错误码系统（`log_codes.rs`）用于日志和调试
+- 熔断器根据错误类型决定是否计入失败（如 4xx 错误不计入）
+- 超时错误会触发熔断器状态转换
+- 所有错误都通过 `app.emit()` 通知前端
+**代理日志系统**（`src-tauri/src/proxy/log_codes.rs`）：
+- 定义了所有日志代码常量
+- 每个日志代码对应一个特定的事件或错误
+- 方便过滤和分析日志
+- 支持结构化日志（JSON 格式）
    - 设置 `base_url` 为 `http://localhost:代理端口`
    - 设置 `api_key` 为 `PROXY_MANAGED` 占位符
    - 设置模型别名（如 `claude-haiku-4-5`、`claude-sonnet-4-6`）
