@@ -200,9 +200,7 @@ App.tsx
 | 宏 (`macro_rules!`) | 只有 `lock_conn!` 一个自定义宏 |
 
 ### 2.3 常见模式速查
-
-**读取配置文件并处理错误**：
-
+**读取配置文件并处理错误**（`src-tauri/src/config.rs`）：
 ```rust
 // config.rs 里的典型模式
 let content = std::fs::read_to_string(&path)
@@ -210,20 +208,16 @@ let content = std::fs::read_to_string(&path)
 let config: MyConfig = serde_json::from_str(&content)
     .map_err(|e| AppError::json(&path, e))?;
 ```
-
-**Tauri 命令的标准签名**：
-
+**Tauri 命令的标准签名**（`src-tauri/src/commands/`）：
 ```rust
-#[tauri::command]
-async fn get_providers(
-    state: tauri::State<'_, AppState>,
-) -> Result<Vec<Provider>, AppError> {
-    // state 自动注入，返回 Result 会自动转为 JS 的 reject
+#[tauri::command]                    // 标记为 Tauri IPC 命令
+async fn get_providers(              // 异步函数
+    state: tauri::State<'_, AppState>, // 自动注入全局状态
+) -> Result<Vec<Provider>, AppError> { // 返回 Result，自动转为 JS reject
+    // state.db, state.proxy_service 等都可以直接访问
 }
 ```
-
-**写入配置文件（原子写入）**：
-
+**写入配置文件（原子写入）**（`src-tauri/src/config.rs`）：
 ```rust
 // config.rs: atomic_write
 fn atomic_write(path: &Path, content: &str) -> Result<(), AppError> {
@@ -233,9 +227,42 @@ fn atomic_write(path: &Path, content: &str) -> Result<(), AppError> {
     Ok(())
 }
 ```
-
----
-
+**Mutex 锁获取**（`src-tauri/src/database/mod.rs:61`）：
+```rust
+// database/mod.rs: lock_conn! 宏
+macro_rules! lock_conn {
+    ($mutex:expr) => {
+        $mutex
+            .lock()
+            .map_err(|e| AppError::Database(format!("Mutex lock failed: {}", e)))?
+    };
+}
+// 使用方式
+let conn = lock_conn!(self.conn);
+```
+**serde 属性速查**：
+```rust
+#[derive(Serialize, Deserialize)]           // 自动派生序列化
+#[serde(rename_all = "camelCase")]          // JSON 字段用 camelCase
+#[serde(skip_serializing_if = "Option::is_none")]  // None 时不序列化
+#[serde(default)]                           // 反序列化时缺失字段用默认值
+#[serde(rename = "settingsConfig")]         // 重命名单个字段
+#[serde(alias = "claudeDesktop")]           // 支持多个别名
+```
+**async/await 模式**（`src-tauri/src/services/`）：
+```rust
+// 异步函数
+async fn some_operation() -> Result<(), AppError> {
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    Ok(())
+}
+// 在 Tauri 命令中使用
+#[tauri::command]
+async fn my_command(state: tauri::State<'_, AppState>) -> Result<String, AppError> {
+    let result = some_operation().await?;
+    Ok(result)
+}
+```
 ## 第 3 章：后端核心模块
 按依赖顺序读，不是按文件大小。先读底层工具模块，再读业务模块。
 ### 3.1 config.rs — 路径解析和文件 I/O（14KB）
@@ -265,33 +292,6 @@ pub struct Database {           // src-tauri/src/database/mod.rs:76
 }
 ```
 **模块结构**（`src-tauri/src/database/`）：
-- `mod.rs` — Database 结构体 + 初始化（`src-tauri/src/database/mod.rs:91`）
-- `schema.rs` — 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`src-tauri/src/database/mod.rs:52`）
-- `backup.rs` — SQL 导入导出 + 快照备份
-- `migration.rs` — JSON → SQLite 数据迁移（`src-tauri/src/database/migration.rs`）
-- `dao/` — 数据访问对象
-  - `providers.rs` — Provider CRUD
-  - `mcp.rs` — MCP 服务器配置
-  - `prompts.rs` — Prompt 管理
-  - `skills.rs` — Skills 管理
-  - `settings.rs` — 通用设置存储
-**关键设计**：
-- `lock_conn!` 宏（`src-tauri/src/database/mod.rs:61`）安全获取 Mutex 锁，避免 unwrap panic
-- `to_json_string()`（`src-tauri/src/database/mod.rs:55`）安全序列化 JSON
-- 数据库变更钩子（`src-tauri/src/database/mod.rs:80`）通知 WebDAV 自动同步
-**陷阱**：
-- `Mutex<Connection>` 意味着同一时间只有一个线程能访问数据库，高并发场景可能成为瓶颈
-- Schema 迁移是线性的，如果迁移失败可能导致数据库损坏
-- 没有连接池，每次操作都用同一个连接
-    #[error("Database error: {0}")]  // src-tauri/src/error.rs:23
-    Database(String),
-
-    #[error("All providers circuit open")]  // src-tauri/src/error.rs:26
-    AllProvidersCircuitOpen,
-
-    #[error("Localized: {zh}")]     // src-tauri/src/error.rs:29
-    Localized { zh: String, en: String },
-    // ... 更多变体
 }
 ```
 
