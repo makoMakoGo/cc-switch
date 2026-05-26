@@ -478,31 +478,31 @@ pub fn add_providers(&self, providers: &[Provider]) -> Result<(), AppError> {
 }
 ```
 - `skill.rs`（~2600 行）— SkillService（Skills 管理）
-**SpeedtestService 详解**（`src-tauri/src/services/speedtest.rs`）：
-- 测试 API 端点的延迟和可用性
-- 支持批量测试多个端点
-- 返回每个端点的延迟和状态
-**SpeedtestService 方法列表**：
-- `test_api_endpoints()` — 测试 API 端点
-- `get_custom_endpoints()` — 获取自定义端点列表
-- `add_custom_endpoint()` — 添加自定义端点
-- `remove_custom_endpoint()` — 删除自定义端点
-**陷阱**：
-- `read_claude_config()` — 读取 Claude 配置
-- `write_claude_config()` — 写入 Claude 配置
-- `read_codex_config()` — 读取 Codex 配置
-- `write_codex_config()` — 写入 Codex 配置
-- `read_gemini_config()` — 读取 Gemini 配置
-- `write_gemini_config()` — 写入 Gemini 配置
-**config 模块代码模式**：
-pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
-    let mut config = read_xxx_config()?;
-    // 合并 provider 配置
-    config["apiKey"] = json!(provider.settings_config["apiKey"]);
-    config["baseUrl"] = json!(provider.settings_config["baseUrl"]);
-    Ok(config)
+**DAO 设置模式**：
+```rust
+// 获取设置
+pub fn get_setting(&self, key: &str) -> Result<Option<String>, AppError> {
+    let conn = lock_conn!(self.conn);
+    let mut stmt = conn.prepare("SELECT value FROM settings WHERE key = ?1")?;
+    let mut rows = stmt.query_map([key], |row| row.get(0))?;
+    Ok(rows.next().transpose()?)
 }
 ```
+**DAO 批量设置**：
+```rust
+// 批量设置
+pub fn set_settings(&self, settings: &[(String, String)]) -> Result<(), AppError> {
+    let conn = lock_conn!(self.conn);
+    for (key, value) in settings {
+        conn.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?1, ?2)",
+            rusqlite::params![key, value],
+        )?;
+    }
+    Ok(())
+}
+```
+**SpeedtestService 详解**（`src-tauri/src/services/speedtest.rs`）：
 ## 第 4 章：本地代理子系统
 这是项目里最复杂的部分，单独拎出来。代理子系统实现了本地 HTTP 代理，支持 API 格式转换（Anthropic ↔ OpenAI ↔ Gemini）、多 provider 路由、故障转移和熔断。
 ### 4.1 proxy/ 目录结构
