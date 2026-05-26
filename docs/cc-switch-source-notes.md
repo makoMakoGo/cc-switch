@@ -452,29 +452,29 @@ pub fn delete_provider(&self, id: &str) -> Result<(), AppError> {
 }
 ```
 - `skill.rs`（~2600 行）— SkillService（Skills 管理）
-- `enable_prompt()` — 启用/禁用 Prompt
-- `import_prompt_from_file()` — 从文件导入 Prompt
-**McpService 详解**（`src-tauri/src/services/mcp.rs`）：
-**UsageStatsService 详解**（`src-tauri/src/services/usage_stats.rs`）：
-        // 从数据库获取 providers
-        self.db.get_providers(app_type)
-    }
-    pub fn switch_provider(&self, app_type: &str, provider_id: &str) -> Result<(), AppError> {
-        // 切换 provider 的业务逻辑
-        // 1. 验证 provider 是否存在
-        // 2. 更新数据库中的 current_provider
-        // 3. 写入目标工具的配置文件
-        Ok(())
-    }
-}
-```
-**ProviderService 方法列表**：
-- `get_providers()` — 获取 provider 列表
-- `get_current_provider()` — 获取当前 provider
-- `add_provider()` — 添加 provider
-- `update_provider()` — 更新 provider
-- `delete_provider()` — 删除 provider
-- `switch_provider()` — 切换 provider
+- `webdav.rs` / `webdav_sync.rs` / `webdav_auto_sync.rs` — WebDAV 同步
+- `session_usage.rs` / `session_usage_codex.rs` / `session_usage_gemini.rs` — 会话用量同步
+- `balance.rs` — 余额查询
+- `subscription.rs` — 订阅管理
+- `coding_plan.rs` — Coding Plan 管理
+- `env_checker.rs` / `env_manager.rs` — 环境变量检查和管理
+- `model_fetch.rs` — 模型列表获取
+- `speedtest.rs` — 端点速度测试
+**WebDAV 同步模块详解**：
+- `webdav.rs` — WebDAV 客户端实现
+- `webdav_sync.rs` — 同步逻辑（上传、下载、冲突解决）
+- `webdav_auto_sync.rs` — 自动同步（数据库变更时触发）
+**WebDAV 同步流程**：
+1. 用户配置 WebDAV 服务器地址和凭据
+2. 点击"同步"按钮
+3. `webdav_sync.rs` 比较本地和远程版本
+4. 如果远程更新，下载并合并
+5. 如果本地更新，上传到远程
+6. 解决冲突（本地优先或远程优先）
+**WebDAV 自动同步**：
+- 监听数据库变更钩子（`src-tauri/src/database/mod.rs:80`）
+- 数据库变更时自动触发同步
+- 支持防抖（避免频繁同步）
 - `import_default_config()` — 导入默认配置
 - `export_config()` — 导出配置
 - `import_config()` — 导入配置
