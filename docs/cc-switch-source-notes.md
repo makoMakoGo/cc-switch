@@ -430,28 +430,28 @@ pub fn get_providers(&self, app_type: &str) -> Result<Vec<Provider>, AppError> {
 }
 ```
 **Schema 迁移示例**（`src-tauri/src/database/schema.rs`）：
+**DAO 更新模式**：
+```rust
+// 更新 provider
+pub fn update_provider(&self, provider: &Provider) -> Result<(), AppError> {
+    let conn = lock_conn!(self.conn);
+    conn.execute(
+        "UPDATE providers SET name = ?1, settings_config = ?2 WHERE id = ?3",
+        rusqlite::params![provider.name, to_json_string(&provider.settings_config)?, provider.id],
+    )?;
+    Ok(())
+}
+```
+**DAO 删除模式**：
+```rust
+// 删除 provider
+pub fn delete_provider(&self, id: &str) -> Result<(), AppError> {
+    let conn = lock_conn!(self.conn);
+    conn.execute("DELETE FROM providers WHERE id = ?1", [id])?;
+    Ok(())
+}
+```
 - `skill.rs`（~2600 行）— SkillService（Skills 管理）
-- `usage_stats.rs`（~2800 行）— UsageStatsService（用量统计）
-- `stream_check.rs`（~2000 行）— StreamCheckService（流式检查）
-- `mcp.rs` — McpService（MCP 服务器管理）
-- `prompt.rs` — PromptService（Prompt 管理）
-- `webdav.rs` / `webdav_sync.rs` / `webdav_auto_sync.rs` — WebDAV 同步
-- `session_usage.rs` / `session_usage_codex.rs` / `session_usage_gemini.rs` — 会话用量同步
-- `balance.rs` — 余额查询
-- `subscription.rs` — 订阅管理
-- `coding_plan.rs` — Coding Plan 管理
-- `env_checker.rs` / `env_manager.rs` — 环境变量检查和管理
-- `model_fetch.rs` — 模型列表获取
-- `speedtest.rs` — 端点速度测试
-**PromptService 详解**（`src-tauri/src/services/prompt.rs`）：
-- Prompt 是 AI 工具的系统提示词
-- cc-switch 管理 Prompt 配置，支持多工具共享
-- 每个 Prompt 有独立的配置（name、content、app_type 等）
-- 支持启用/禁用单个 Prompt
-**PromptService 方法列表**：
-- `get_prompts()` — 获取 Prompt 列表
-- `upsert_prompt()` — 添加/更新 Prompt
-- `delete_prompt()` — 删除 Prompt
 - `enable_prompt()` — 启用/禁用 Prompt
 - `import_prompt_from_file()` — 从文件导入 Prompt
 **McpService 详解**（`src-tauri/src/services/mcp.rs`）：
