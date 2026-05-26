@@ -380,14 +380,10 @@ pub struct Provider {          // src-tauri/src/provider.rs:10
 - Provider 和 AppType 的关系是 N:1，但代码里很多地方假设 1:1
 
 ### 3.5 settings.rs — 设置管理（28.9KB）
-
-**接口**：全局应用设置的读写，包括代理配置、UI 偏好、WebDAV 同步等。
 **接口**：全局应用设置的读写（`src-tauri/src/settings.rs:5`），包括代理配置、UI 偏好、WebDAV 同步等。
 **实现**：
-
 ```rust
 static APP_SETTINGS: OnceLock<RwLock<AppSettings>> = OnceLock::new();  // src-tauri/src/settings.rs:5
-
 pub fn read_settings() -> AppSettings {
     let settings = APP_SETTINGS.get_or_init(|| {
         let file_settings = read_settings_from_file();
@@ -395,7 +391,6 @@ pub fn read_settings() -> AppSettings {
     });
     settings.read().unwrap().clone()
 }
-
 pub fn mutate_settings<F>(f: F) -> Result<(), AppError>
 where
     F: FnOnce(&mut AppSettings),
@@ -406,27 +401,32 @@ where
     Ok(())
 }
 ```
-
-**AppSettings 包含**：
+**AppSettings 包含**（`src-tauri/src/settings.rs`）：
 - 代理端口、监听地址
 - 每个工具的代理配置（是否启用、超时时间等）
-- WebDAV 同步配置
+- WebDAV 同步配置（`src-tauri/src/settings.rs:82`）
 - UI 主题、语言偏好
-
+- 可见应用列表（`VisibleApps`，`src-tauri/src/settings.rs:28`）
+- 自动启动、静默启动等偏好
+**VisibleApps**（`src-tauri/src/settings.rs:28`）：
+```rust
+pub struct VisibleApps {       // src-tauri/src/settings.rs:28
+    pub claude: bool,
+    pub claude_desktop: bool,
+    pub codex: bool,
+    pub gemini: bool,
+    pub opencode: bool,
+    pub openclaw: bool,
+    pub hermes: bool,           // 默认不显示
+}
+```
 **陷阱**：
 - `unwrap()` 在锁获取时，如果锁被 poisoned 会 panic
 - 写入失败时内存缓存和文件可能不一致
-
+- 没有版本控制，并发修改可能丢失
 ### 3.6 各工具 config 模块对比
-
 | 模块 | 大小 | 职责 |
 |------|------|------|
-| `claude_config.rs` | 27.7KB | Claude Code 的配置读写 |
-| `claude_desktop_config.rs` | 61.5KB | Claude Desktop 的配置读写 |
-| `codex_config.rs` | 66.5KB | Codex CLI 的配置读写 |
-| `gemini_config.rs` | 20.4KB | Gemini CLI 的配置读写 |
-| `opencode_config.rs` | 42.6KB | OpenCode 的配置读写 |
-| `openclaw_config.rs` | 52.4KB | OpenClaw 的配置读写 |
 | `hermes_config.rs` | 35.2KB | Hermes 的配置读写 |
 
 **共同模式（每个模块都有）**：
