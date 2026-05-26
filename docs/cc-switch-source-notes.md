@@ -556,19 +556,19 @@ pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
 - 请求转发、格式转换、错误处理全在一起
 - 应该拆分成多个职责单一的模块
 - 没有单元测试，难以验证正确性
+**CircuitBreaker 详解**（`src-tauri/src/proxy/circuit_breaker.rs:76`）：
+- 熔断器是代理子系统的核心组件
+- 防止向不健康的 provider 发送请求
+- 支持三种状态：Closed（正常）、Open（熔断）、HalfOpen（半开）
+- 使用原子计数器跟踪连续失败/成功次数
+- 使用 `Arc<RwLock<>>` 共享状态
+**CircuitBreakerConfig 默认值**：
+- `failure_threshold`: 4（连续失败 4 次后打开熔断器）
+- `success_threshold`: 2（半开状态下成功 2 次后关闭）
+- `timeout_seconds`: 60（熔断器打开后 60 秒尝试半开）
+- `error_rate_threshold`: 0.6（错误率超过 60% 时打开）
+- `min_requests`: 10（计算错误率前的最小请求数）
 **FailoverSwitchManager**（`src-tauri/src/proxy/failover_switch.rs`）：
-- 管理故障转移切换逻辑
-- 与数据库交互，读取/更新 failover_queue
-- 发射 Tauri 事件通知前端
-**陷阱**：
-- `forwarder.rs`（122KB）太大，包含了太多职责
-- 熔断器状态是内存中的，重启后重置（`src-tauri/src/proxy/circuit_breaker.rs:78`）
-- 并发切换时需要 `SwitchLock` 保护（`src-tauri/src/proxy/switch_lock.rs`）
-- 没有持久化熔断器状态，重启后所有 provider 都是 Closed 状态
-**代理错误处理**（`src-tauri/src/proxy/`）：
-- `ProxyError` 枚举定义了代理层的所有错误类型
-- 错误码系统（`log_codes.rs`）用于日志和调试
-- 熔断器根据错误类型决定是否计入失败（如 4xx 错误不计入）
 - 超时错误会触发熔断器状态转换
 - 所有错误都通过 `app.emit()` 通知前端
 **代理日志系统**（`src-tauri/src/proxy/log_codes.rs`）：
