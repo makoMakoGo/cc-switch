@@ -569,20 +569,20 @@ pub fn build_live_config(provider: &Provider) -> Result<Value, AppError> {
 - `error_rate_threshold`: 0.6（错误率超过 60% 时打开）
 - `min_requests`: 10（计算错误率前的最小请求数）
 **FailoverSwitchManager**（`src-tauri/src/proxy/failover_switch.rs`）：
-- 超时错误会触发熔断器状态转换
-- 所有错误都通过 `app.emit()` 通知前端
+- 管理故障转移切换逻辑
+- 与数据库交互，读取/更新 failover_queue
+- 发射 Tauri 事件通知前端
+**故障转移流程**：
+1. 主 provider 熔断器打开（连续失败 >= 4 次）
+2. `FailoverSwitchManager` 从 `failover_queue` 表读取备选 provider 列表
+3. 按优先级尝试备选 provider
+4. 如果备选 provider 成功，切换到该 provider
+5. 如果所有备选都失败，返回 `AllProvidersCircuitOpen` 错误
+**故障转移 vs 熔断器**：
+- **熔断器**：单个 provider 的健康检查
+- **故障转移**：多个 provider 之间的切换
+- 两者配合使用，实现高可用
 **代理日志系统**（`src-tauri/src/proxy/log_codes.rs`）：
-- 定义了所有日志代码常量
-- 每个日志代码对应一个特定的事件或错误
-- 方便过滤和分析日志
-- 支持结构化日志（JSON 格式）
-**热切换详细流程**（`src-tauri/src/services/proxy.rs`）：
-1. 前端调用 `switch_proxy_provider` Tauri 命令
-2. `ProxyService` 获取 `SwitchLock`，防止并发切换
-3. 读取目标 provider 的配置
-4. 更新内存中的路由表（`current_providers`）
-5. 如果是代理接管模式：
-   - 重写 live 配置中的模型别名
    - 更新 `PROXY_MANAGED` 占位符
 6. 发射 Tauri 事件通知前端
 7. 释放 `SwitchLock`
