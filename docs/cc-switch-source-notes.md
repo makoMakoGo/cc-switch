@@ -265,43 +265,43 @@ let conn = lock_conn!(self.conn);
 - `AppType` 使用 `Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize`（`src-tauri/src/app_config.rs:339`）
 - `AppError` 使用 `Debug, Error`（通过 thiserror）（`src-tauri/src/error.rs:6`）
 - `CircuitState` 使用 `Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize`（`src-tauri/src/proxy/circuit_breaker.rs:14`）
-- JSON 配置文件读写（`read_json_file`, `write_json_file`）
-- Tauri IPC 参数传递（`#[tauri::command]` 自动序列化）
-- 数据库存储（`to_json_string()`）
-- 前端数据传递（`invoke()` 返回值）
-**Rust 同步原语**：
-- `Mutex<T>` — 互斥锁，同一时间只有一个线程能访问
-- `RwLock<T>` — 读写锁，多读单写
-- `Arc<T>` — 原子引用计数，多线程共享数据
-- `AtomicU32` — 原子计数器，无锁操作
-**cc-switch 中的同步模式**：
-- `Database` 使用 `Mutex<Connection>` 保护 SQLite 连接
-- `APP_SETTINGS` 使用 `OnceLock<RwLock<AppSettings>>` 保护设置缓存
-- `ProxyState` 使用 `Arc<RwLock<>>` 共享代理状态
-- `CircuitBreaker` 使用 `AtomicU32` 跟踪连续失败次数
-**为什么用这些同步原语**：
-- `Mutex` 用于写多读少的场景（数据库连接）
-- `RwLock` 用于读多写少的场景（设置缓存）
-- `Arc` 用于多线程共享数据（代理状态）
-- `AtomicU32` 用于简单的计数器（熔断器）
-    let data = response.json().await
-        .map_err(|e| AppError::Json(e.to_string()))?;
-    Ok(data)
-}
-```
-```
-**错误处理模式**：
+**Rust enum 在 cc-switch 中的使用**：
+- `AppType` — 7 个 AI 工具的枚举（`src-tauri/src/app_config.rs:341`）
+- `AppError` — 错误类型枚举（`src-tauri/src/error.rs:6`）
+- `CircuitState` — 熔断器状态枚举（`src-tauri/src/proxy/circuit_breaker.rs:14`）
+- `Action` — SQLite 操作类型枚举（rusqlite）
+**enum 的两种形式**：
 ```rust
-// 使用 ? 操作符传播错误
-fn read_config(path: &Path) -> Result<Config, AppError> {
-    let content = std::fs::read_to_string(path)
-        .map_err(|e| AppError::io(path, e))?;  // 转换错误类型
-    let config: Config = serde_json::from_str(&content)
-        .map_err(|e| AppError::json(path, e))?;  // 转换错误类型
-    Ok(config)
+// 简单枚举（C-like）
+enum CircuitState {
+    Closed,
+    Open,
+    HalfOpen,
 }
-// 使用 map_err 转换错误类型
-let conn = self.conn.lock()
+// 带数据的枚举（类似 TypeScript 的 discriminated union）
+enum AppError {
+    Config(String),
+    Io { path: String, source: std::io::Error },
+    Json { path: String, source: serde_json::Error },
+}
+```
+**enum 与 match 配合**：
+```rust
+match app_type {
+    AppType::Claude => "claude",
+    AppType::Codex => "codex",
+    AppType::Gemini => "gemini",
+    _ => "unknown",
+}
+```
+**serde 枚举序列化**：
+```rust
+#[serde(rename_all = "lowercase")]
+enum AppType {
+    Claude,    // 序列化为 "claude"
+    Codex,     // 序列化为 "codex"
+}
+```
     .map_err(|e| AppError::Lock(e.to_string()))?;
 // 使用 unwrap_or_default 提供默认值
 let settings = APP_SETTINGS.read().unwrap_or_default();
