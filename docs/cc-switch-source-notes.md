@@ -707,22 +707,22 @@ return () => unlisten();
 - `prompts/` — Prompt 管理组件
 - `usage/` — 用量统计组件
 - `common/` — 通用组件（按钮、输入框等）
+**国际化（i18n）**（`src/i18n/`）：
+- 支持中文和英文
+- 使用 `react-i18next` 库
+- 翻译文件在 `src/i18n/locales/` 目录下
+- 前端根据系统语言自动选择
+**前端状态管理总结**：
+- React Query 管理服务器状态（provider 列表、设置等）
+- localStorage 管理 UI 状态（当前视图、当前 app）
+- Tauri event 监听后端状态变化
+- 没有使用 Redux 或 Zustand 等全局状态库
 ## 第 6 章：AI Slop 特征模式识别
 这是你重构的弹药库。这些模式不是"代码风格偏好"，而是实实在在的维护负担。
 ### 6.1 代码膨胀模式
 **过大的单文件**：
-- `lib.rs`（1826 行）— 模块声明 + 插件注册 + 命令注册 + 初始化逻辑全混在一起
-- `App.tsx`（1605 行）— 14 个视图 + 事件处理 + 状态管理全在一个文件
-- `forwarder.rs`（~3000 行）— 请求转发 + 格式转换 + 错误处理全在一起
-- `codex_config.rs`（~1600 行）— 配置读写 + 迁移 + 验证全在一起
-- `claude_desktop_config.rs`（~1500 行）— 同上
-- `proxy.rs`（services，3910 行）— `ProxyService` 的所有方法全在一个文件
-- `provider/mod.rs`（services，~2600 行）— `ProviderService` 的所有方法全在一个文件
 **复制粘贴的 config 模块**：
 - 7 个工具的 config 模块结构几乎一样，但没有抽取公共函数
-- 每个都自己实现了一遍 `read → parse → modify → write` 流程
-- 没有公共的 config trait 或接口
-**冗余的 pub use 导出**：
 - `lib.rs:38-51` 里有大量 `pub use` 导出，很多已经在 `commands/mod.rs` 里导出过
 - 导致同一个函数从两个路径可以访问，增加了理解难度
 **重复的错误处理代码**：
