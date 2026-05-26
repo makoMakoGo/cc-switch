@@ -453,38 +453,45 @@ pub struct VisibleApps {       // src-tauri/src/settings.rs:28
 - 有些逻辑直接放在 `commands/` 里，没有经过 services 层
 - 没有统一的 service trait 或接口
 ### 3.6 各工具 config 模块对比
+**各工具配置文件路径**：
+- Claude Code: `~/.claude/settings.json`
+- Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`（macOS）
+- Codex CLI: `~/.codex/config.json` + `~/.codex/auth.json`
+- Gemini CLI: `~/.gemini/settings.json`
+- OpenCode: `~/.opencode/config.json`
 - 每个模块都自己处理了边界情况（文件不存在、JSON 格式错误等）
+- OpenClaw: `~/.openclaw/config.json`
 - 配置文件格式不统一（有的用 JSON，有的用 TOML，有的用 YAML）
+- Hermes: `~/.hermes/config.yaml`
 **对比分析**：
+**配置文件格式差异**：
 - Switch 模式工具（Claude、Codex、Gemini）的 config 模块更简单，因为只需要覆盖写入
+- Claude Code: JSON，支持 `env` 字段设置环境变量
 - Additive 模式工具（OpenCode、OpenClaw、Hermes）的 config 模块更复杂，需要管理多个 provider 的 enabled 状态
+- Claude Desktop: JSON，支持 MCP 服务器配置
 - Claude Desktop 的 config 模块最大（61.5KB），因为它需要处理 MCP 服务器配置
+- Codex CLI: JSON，支持 OAuth 认证和 Copilot 集成
 - Codex 的 config 模块最大（66.5KB），因为它需要处理 OAuth 认证和 Copilot 集成
-## 第 4 章：本地代理子系统
-这是项目里最复杂的部分，单独拎出来。代理子系统实现了本地 HTTP 代理，支持 API 格式转换（Anthropic ↔ OpenAI ↔ Gemini）、多 provider 路由、故障转移和熔断。
-### 4.1 proxy/ 目录结构
-```text
-src-tauri/src/proxy/
-├── server.rs           # HTTP 服务器（Axum）— src-tauri/src/proxy/server.rs:34
-├── forwarder.rs        # 请求转发（122KB，最大）
-├── circuit_breaker.rs  # 熔断器（496 行）— src-tauri/src/proxy/circuit_breaker.rs:76
-├── provider_router.rs  # 多 provider 路由
-├── failover_switch.rs  # 故障转移切换
-├── switch_lock.rs      # 切换锁（防止并发切换）
-├── handlers/           # 请求处理器
-├── providers/          # 格式转换器
-│   ├── claude/         # Anthropic API 格式
-│   ├── codex/          # OpenAI API 格式
+- Gemini CLI: JSON，支持模型配置
+- OpenCode: JSON，支持多 provider 配置
+- OpenClaw: JSON，支持多 provider 配置
+- Hermes: YAML，支持多 provider 配置
+**共同模式（每个模块都有）**：
+1. `read_xxx_config()` — 读取工具的配置文件
+2. `write_xxx_config()` — 写入工具的配置文件
+3. `build_live_config()` — 构建当前生效的配置
+4. `switch_provider()` — 切换 provider 的核心逻辑
+5. `import_from_live()` — 从工具的 live 配置导入 provider
 │   ├── gemini/         # Gemini API 格式
 │   └── ...
 ├── transform_*.rs      # API 格式转换（58-78KB 每个）
 ├── types.rs            # 共享类型定义
 └── log_codes.rs        # 日志代码常量
 ```
+## 第 4 章：本地代理子系统
+这是项目里最复杂的部分，单独拎出来。代理子系统实现了本地 HTTP 代理，支持 API 格式转换（Anthropic ↔ OpenAI ↔ Gemini）、多 provider 路由、故障转移和熔断。
+### 4.1 proxy/ 目录结构
 **ProxyState**（`src-tauri/src/proxy/server.rs:34`）：
-```rust
-pub struct ProxyState {       // src-tauri/src/proxy/server.rs:34
-    pub db: Arc<Database>,
     pub config: Arc<RwLock<ProxyConfig>>,
     pub status: Arc<RwLock<ProxyStatus>>,
     pub provider_router: Arc<ProviderRouter>,
