@@ -722,15 +722,15 @@ return () => unlisten();
 这是你重构的弹药库。这些模式不是"代码风格偏好"，而是实实在在的维护负担。
 ### 6.1 代码膨胀模式
 **过大的单文件**：
+- `lib.rs`（1826 行）— 模块声明 + 插件注册 + 命令注册 + 初始化逻辑全混在一起
+- `App.tsx`（1605 行）— 14 个视图 + 事件处理 + 状态管理全在一个文件
+- `forwarder.rs`（~3000 行）— 请求转发 + 格式转换 + 错误处理全在一起
+- `codex_config.rs`（~1600 行）— 配置读写 + 迁移 + 验证全在一起
+- `claude_desktop_config.rs`（~1500 行）— 同上
+- `proxy.rs`（services，3910 行）— `ProxyService` 的所有方法全在一个文件
+- `provider/mod.rs`（services，~2600 行）— `ProviderService` 的所有方法全在一个文件
 **复制粘贴的 config 模块**：
 - 7 个工具的 config 模块结构几乎一样，但没有抽取公共函数
-- `lib.rs:38-51` 里有大量 `pub use` 导出，很多已经在 `commands/mod.rs` 里导出过
-- 导致同一个函数从两个路径可以访问，增加了理解难度
-**重复的错误处理代码**：
-- 每个 config 模块都自己实现了一遍文件读取错误处理
-- 每个 service 都自己实现了一遍数据库错误处理
-- 应该抽取公共的错误处理宏或函数
-**冗余的 match 分支**：
 - `AppType` 的 match 在 `McpApps`（`src-tauri/src/app_config.rs:24`）、`VisibleApps`（`src-tauri/src/settings.rs:66`）、`CommonConfigSnippets`（`src-tauri/src/app_config.rs:441`）里重复出现
 - 每次加新工具都要改 10+ 个 match
 ### 6.2 过度抽象模式
