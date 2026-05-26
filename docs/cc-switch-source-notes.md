@@ -683,11 +683,8 @@ return () => unlisten();
 ---
 
 ## 第 6 章：AI Slop 特征模式识别
-
-这是你重构的弹药库。
-
+这是你重构的弹药库。这些模式不是"代码风格偏好"，而是实实在在的维护负担。
 ### 6.1 代码膨胀模式
-
 **过大的单文件**：
 | 文件 | 行数 | 问题 |
 |------|------|------|
@@ -708,6 +705,13 @@ return () => unlisten();
 **冗余的 match 分支**：
 - `AppType` 的 match 在 `McpApps`（`src-tauri/src/app_config.rs:24`）、`VisibleApps`（`src-tauri/src/settings.rs:66`）、`CommonConfigSnippets`（`src-tauri/src/app_config.rs:441`）里重复出现
 - 每次加新工具都要改 10+ 个 match
+**冗余的 pub use 导出**：
+- `lib.rs:38-51` 里有大量 `pub use` 导出，很多已经在 `commands/mod.rs` 里导出过
+- 导致同一个函数从两个路径可以访问，增加了理解难度
+**重复的错误处理代码**：
+- 每个 config 模块都自己实现了一遍文件读取错误处理
+- 每个 service 都自己实现了一遍数据库错误处理
+- 应该抽取公共的错误处理宏或函数
 ### 6.2 过度抽象模式
 **为了"未来可能需要"而加的抽象**：
 - `CommonConfigSnippets`（`src-tauri/src/app_config.rs:419`）— 理论上是跨工具共享的配置片段，但实际使用率不高
@@ -719,6 +723,10 @@ return () => unlisten();
 - `Provider.settings_config: Value`（`src-tauri/src/provider.rs:14`）是 `serde_json::Value`，不是强类型
 - 运行时才知道配置是否合法，编译器帮不上忙
 - 对比：如果用 `enum ProviderSettings { Anthropic(AnthropicConfig), OpenAI(OpenAIConfig), ... }` 会更安全
+**过度的 Option 包装**：
+- `Provider` 结构体里很多字段都是 `Option<T>`（`src-tauri/src/provider.rs:15-38`）
+- 有些字段（如 `icon`、`icon_color`）实际上总是有值的，不应该用 Option
+- 增加了运行时的 None 检查负担
 ### 6.3 命名和组织问题
 **不一致的命名约定**：
 - 有的用 `xxx_config`，有的用 `xxx_settings`
@@ -732,14 +740,6 @@ return () => unlisten();
 - `cleanup_before_exit()`（`src-tauri/src/lib.rs:1513`）是代理相关的逻辑，但放在 lib.rs
 - `restore_proxy_state_on_startup()`（`src-tauri/src/lib.rs:1558`）同理
 - `is_chinese_locale()`（`src-tauri/src/lib.rs:1685`）是通用工具函数，但放在 lib.rs
-
-| 文件 | 问题 | 建议 |
-|------|------|------|
-| `lib.rs:1-36` | 35+ 个 `mod` 声明全在顶层 | 按功能分组：core/、tools/、ui/ 子目录 |
-| `lib.rs:284-1070` | `.setup()` 闭包 786 行 | 拆分成 `init_database()`, `init_plugins()`, `seed_data()`, `restore_state()` |
-| `lib.rs:1072-1377` | 305 个命令注册在一行 | 按模块分组，每组一个 `invoke_handler` 或用宏 |
-| `lib.rs:1513-1547` | `cleanup_before_exit()` 放在 lib.rs | 移到 `services/proxy.rs` |
-| `lib.rs:1558-1598` | `restore_proxy_state_on_startup()` 放在 lib.rs | 移到 `services/proxy.rs` |
 | `lib.rs:1601-1678` | `initialize_common_config_snippets()` 放在 lib.rs | 移到 `services/config.rs` |
 | `lib.rs:1685-1691` | `is_chinese_locale()` 放在 lib.rs | 移到 `config.rs` 或 `utils/` |
 | `App.tsx:1-1605` | 14 个视图在 switch 里 | 用 React Router 或状态机库 |
