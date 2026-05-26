@@ -443,18 +443,18 @@ pub fn get_providers(&self, app_type: &str) -> Result<Vec<Provider>, AppError> {
 - `env_checker.rs` / `env_manager.rs` — 环境变量检查和管理
 - `model_fetch.rs` — 模型列表获取
 - `speedtest.rs` — 端点速度测试
+**PromptService 详解**（`src-tauri/src/services/prompt.rs`）：
+- Prompt 是 AI 工具的系统提示词
+- cc-switch 管理 Prompt 配置，支持多工具共享
+- 每个 Prompt 有独立的配置（name、content、app_type 等）
+- 支持启用/禁用单个 Prompt
+**PromptService 方法列表**：
+- `get_prompts()` — 获取 Prompt 列表
+- `upsert_prompt()` — 添加/更新 Prompt
+- `delete_prompt()` — 删除 Prompt
+- `enable_prompt()` — 启用/禁用 Prompt
+- `import_prompt_from_file()` — 从文件导入 Prompt
 **McpService 详解**（`src-tauri/src/services/mcp.rs`）：
-- MCP（Model Context Protocol）是 AI 工具的扩展协议
-- cc-switch 管理 MCP 服务器配置，支持多工具共享
-- 每个 MCP 服务器有独立的配置（command、args、env 等）
-- 支持启用/禁用单个服务器
-**McpService 方法列表**：
-- `get_mcp_servers()` — 获取 MCP 服务器列表
-- `upsert_mcp_server()` — 添加/更新 MCP 服务器
-- `delete_mcp_server()` — 删除 MCP 服务器
-- `toggle_mcp_app()` — 切换 MCP 服务器的应用启用状态
-- `import_mcp_from_apps()` — 从各工具导入 MCP 配置
-**SkillService 详解**（`src-tauri/src/services/skill.rs`）：
 **UsageStatsService 详解**（`src-tauri/src/services/usage_stats.rs`）：
         // 从数据库获取 providers
         self.db.get_providers(app_type)
