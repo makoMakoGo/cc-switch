@@ -209,22 +209,22 @@ App.tsx
 - 大部分逻辑是具体的，不需要抽象
 - 没有插件系统，不需要 trait object
 - 泛型已经够用，不需要 trait bound
+**Rust 生命周期在 cc-switch 中的使用**：
 ```rust
-#[tauri::command]                    // 标记为 Tauri IPC 命令
-async fn get_providers(              // 异步函数
-    state: tauri::State<'_, AppState>, // 自动注入全局状态
-) -> Result<Vec<Provider>, AppError> { // 返回 Result，自动转为 JS reject
-    // state.db, state.proxy_service 等都可以直接访问
+// 生命周期标注 'a 表示引用的有效期
+// cc-switch 里几乎不用，因为大部分数据是 Arc 或 owned
+// 唯一的例子：Tauri State
+#[tauri::command]
+async fn my_command(
+    state: tauri::State<'_, AppState>,  // '_ 是生命周期标注
+) -> Result<String, AppError> {
+    // state 的生命周期由 Tauri 管理
 }
 ```
-**写入配置文件（原子写入）**（`src-tauri/src/config.rs`）：
-```rust
-// config.rs: atomic_write
-fn atomic_write(path: &Path, content: &str) -> Result<(), AppError> {
-    let tmp = path.with_extension("tmp");
-    std::fs::write(&tmp, content)?;
-    std::fs::rename(&tmp, path)?;  // 原子替换
-    Ok(())
+**为什么 cc-switch 很少用生命周期**：
+- 大部分数据是 `Arc<T>`（引用计数），不需要生命周期
+- 配置文件读取后立即 clone，不持有引用
+- Tauri 框架管理 `State` 的生命周期，开发者不需要关心
 }
 ```
 **Mutex 锁获取**（`src-tauri/src/database/mod.rs:61`）：
