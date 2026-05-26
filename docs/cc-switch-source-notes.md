@@ -549,18 +549,18 @@ pub fn list_sessions(&self, app_type: &str) -> Result<Vec<Session>, AppError> {
 }
 ```
 **ModelFetchService 详解**（`src-tauri/src/services/model_fetch.rs`）：
+**CodingPlanService 详解**（`src-tauri/src/services/coding_plan.rs`）：
+- 管理 Coding Plan 配置
+- 支持多种 Coding Plan 类型
+- 提供配额查询和管理
+**CodingPlanService 方法列表**：
+- `get_coding_plan_quota()` — 获取 Coding Plan 配额
+- 支持多种认证方式
+- 返回配额、使用量、过期时间等信息
 ## 第 4 章：本地代理子系统
 这是项目里最复杂的部分，单独拎出来。代理子系统实现了本地 HTTP 代理，支持 API 格式转换（Anthropic ↔ OpenAI ↔ Gemini）、多 provider 路由、故障转移和熔断。
 ### 4.1 proxy/ 目录结构
 **ProxyServer**（`src-tauri/src/proxy/server.rs:54`）：
-**路由问题**：
-- API key 匹配是线性扫描，没有索引
-- 没有缓存路由结果，每次请求都查数据库
-- 故障转移逻辑和路由逻辑耦合在一起
-- 熔断器是代理子系统的核心组件
-- 防止向不健康的 provider 发送请求
-- 支持三种状态：Closed（正常）、Open（熔断）、HalfOpen（半开）
-- 使用原子计数器跟踪连续失败/成功次数
 - 使用 `Arc<RwLock<>>` 共享状态
 **CircuitBreakerConfig 默认值**：
 - `failure_threshold`: 4（连续失败 4 次后打开熔断器）
