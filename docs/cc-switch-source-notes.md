@@ -714,23 +714,23 @@ export function useDarkMode() {
   return isDark;
 }
 ```
-**useDragSort 详解**（`src/hooks/useDragSort.ts`）：
-- 实现拖拽排序功能
-- 用于 Provider 列表排序
-- 支持触摸和鼠标拖拽
-**useDragSort 代码示例**：
+**useStreamCheck 详解**（`src/hooks/useStreamCheck.ts`）：
+- 检查 API 端点的流式响应支持
+- 测试 SSE（Server-Sent Events）连接
+- 返回流式响应的延迟和状态
+**useStreamCheck 代码示例**：
 ```typescript
-// src/hooks/useDragSort.ts
-export function useDragSort<T>(items: T[], onReorder: (items: T[]) => void) {
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const handleDragStart = (index: number) => setDragIndex(index);
-  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
-  const handleDrop = (index: number) => {
-    if (dragIndex === null) return;
-    const newItems = [...items];
-### 6.1 代码膨胀模式
-    newItems.splice(index, 0, removed);
-    onReorder(newItems);
+// src/hooks/useStreamCheck.ts
+export function useStreamCheck() {
+  const [results, setResults] = useState<StreamCheckResult[]>([]);
+  const checkStream = async (url: string) => {
+    const result = await invoke("stream_check_provider", { url });
+    setResults(prev => [...prev, result]);
+  };
+  return { results, checkStream };
+}
+```
+**useDragSort 详解**（`src/hooks/useDragSort.ts`）：
     setDragIndex(null);
   };
   return { handleDragStart, handleDragOver, handleDrop };
