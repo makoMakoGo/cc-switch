@@ -240,20 +240,20 @@ macro_rules! lock_conn {
 // 使用方式
 let conn = lock_conn!(self.conn);
 ```
-**serde 属性速查**：
-```rust
-#[derive(Serialize, Deserialize)]           // 自动派生序列化
-#[serde(rename_all = "camelCase")]          // JSON 字段用 camelCase
-#[serde(skip_serializing_if = "Option::is_none")]  // None 时不序列化
-#[serde(default)]                           // 反序列化时缺失字段用默认值
-#[serde(rename = "settingsConfig")]         // 重命名单个字段
-#[serde(alias = "claudeDesktop")]           // 支持多个别名
-```
-**serde 实际使用示例**：
-```rust
-// Provider 结构体（src-tauri/src/provider.rs:10）
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Provider {
+**宏的工作原理**：
+- `macro_rules!` 定义宏
+- `$mutex:expr` 匹配一个表达式
+- `.map_err(...)` 转换错误类型
+- `?` 提前返回错误
+**为什么用宏而不是函数**：
+- 宏可以在调用处展开，避免额外的函数调用开销
+- 宏可以捕获表达式类型，避免泛型约束
+- 宏可以生成代码，减少重复
+**其他常用宏**：
+- `vec![]` — 创建 Vec
+- `format!()` — 格式化字符串
+- `println!()` — 打印到标准输出
+- `json!()` — 创建 JSON 值（serde_json）
     pub id: String,
     pub name: String,
     #[serde(rename = "settingsConfig")]  // JSON 字段用 camelCase
