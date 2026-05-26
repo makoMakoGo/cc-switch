@@ -576,17 +576,20 @@ Closed 或 Open
 - 每个日志代码对应一个特定的事件或错误
 - 方便过滤和分析日志
 - 支持结构化日志（JSON 格式）
-   - 设置 `base_url` 为 `http://localhost:代理端口`
-   - 设置 `api_key` 为 `PROXY_MANAGED` 占位符
-   - 设置模型别名（如 `claude-haiku-4-5`、`claude-sonnet-4-6`）
-6. 写入修改后的 live 配置
-7. 启动代理服务器（如果还没启动）
-8. 发射 Tauri 事件通知前端
-**热切换**（`src-tauri/src/services/proxy.rs`）：
-- 代理运行时切换 provider，不需要重启代理
-- 通过 `hot_switch_provider` 方法实现
-- 更新内存中的路由表，立即生效
-- 重写 live 配置中的模型别名
+**热切换详细流程**（`src-tauri/src/services/proxy.rs`）：
+1. 前端调用 `switch_proxy_provider` Tauri 命令
+2. `ProxyService` 获取 `SwitchLock`，防止并发切换
+3. 读取目标 provider 的配置
+4. 更新内存中的路由表（`current_providers`）
+5. 如果是代理接管模式：
+   - 重写 live 配置中的模型别名
+   - 更新 `PROXY_MANAGED` 占位符
+6. 发射 Tauri 事件通知前端
+7. 释放 `SwitchLock`
+**热切换 vs 冷切换**：
+- **热切换**：代理运行时切换 provider，不需要重启代理
+- **冷切换**：停止代理 → 切换 provider → 重新启动代理
+- cc-switch 默认使用热切换，用户体验更好
 **恢复流程**（`src-tauri/src/lib.rs:1513`）：
 - 应用退出时，`cleanup_before_exit()` 恢复 live 配置
 - 使用 `stop_with_restore_keep_state()` 保留代理状态
@@ -599,9 +602,6 @@ Closed 或 Open
 - 所有视图都在一个 switch 里，没有用路由库（React Router）
 - 大量内联的事件处理逻辑，应该抽取到 hooks
 - 没有代码分割（code splitting），所有视图都打包在一个 chunk 里
-| `useSettings` | `src/hooks/useSettings.ts` | 设置的读写 |
-| `useSettingsForm` | `src/hooks/useSettingsForm.ts` | 设置表单状态管理 |
-| `useDirectorySettings` | `src/hooks/useDirectorySettings.ts` | 工具目录配置 |
 | `useProxyStatus` | `src/hooks/useProxyStatus.ts` | 代理状态实时同步 |
 | `useTauriEvent` | `src/hooks/useTauriEvent.ts` | 监听 Tauri 后端事件 |
 | `useAutoCompact` | `src/hooks/useAutoCompact.ts` | 自动压缩对话 |
