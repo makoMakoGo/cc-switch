@@ -443,18 +443,18 @@ pub fn add_provider(&self, provider: &Provider) -> Result<(), AppError> {
 - `env_checker.rs` / `env_manager.rs` — 环境变量检查和管理
 - `model_fetch.rs` — 模型列表获取
 - `speedtest.rs` — 端点速度测试
+**McpService 详解**（`src-tauri/src/services/mcp.rs`）：
+- MCP（Model Context Protocol）是 AI 工具的扩展协议
+- cc-switch 管理 MCP 服务器配置，支持多工具共享
+- 每个 MCP 服务器有独立的配置（command、args、env 等）
+- 支持启用/禁用单个服务器
+**McpService 方法列表**：
+- `get_mcp_servers()` — 获取 MCP 服务器列表
+- `upsert_mcp_server()` — 添加/更新 MCP 服务器
+- `delete_mcp_server()` — 删除 MCP 服务器
+- `toggle_mcp_app()` — 切换 MCP 服务器的应用启用状态
+- `import_mcp_from_apps()` — 从各工具导入 MCP 配置
 **SkillService 详解**（`src-tauri/src/services/skill.rs`）：
-- Skills 是 cc-switch 的扩展系统
-- 每个 Skill 是一个目录，包含 `SKILL.md` 描述文件
-- 支持安装、卸载、更新、备份
-- 支持多应用共享（SSOT 模式）
-**SkillService 方法列表**：
-- `get_installed_skills()` — 获取已安装的 Skills
-- `install_skill_unified()` — 安装 Skill
-- `uninstall_skill_unified()` — 卸载 Skill
-- `restore_skill_backup()` — 恢复 Skill 备份
-- `toggle_skill_app()` — 切换 Skill 的应用启用状态
-- `scan_unmanaged_skills()` — 扫描未管理的 Skills
 **UsageStatsService 详解**（`src-tauri/src/services/usage_stats.rs`）：
         // 从数据库获取 providers
         self.db.get_providers(app_type)
