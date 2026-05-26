@@ -254,17 +254,17 @@ let conn = lock_conn!(self.conn);
 - `format!()` — 格式化字符串
 - `println!()` — 打印到标准输出
 - `json!()` — 创建 JSON 值（serde_json）
-    pub id: String,
-    pub name: String,
-    #[serde(rename = "settingsConfig")]  // JSON 字段用 camelCase
-    pub settings_config: Value,
-    #[serde(skip_serializing_if = "Option::is_none")]  // None 时不序列化
-    pub website_url: Option<String>,
-    #[serde(default)]  // 反序列化时缺失字段用默认值
-    pub in_failover_queue: bool,
-}
-```
-**serde 常用场景**：
+**Rust derive 宏**：
+- `#[derive(Debug)]` — 自动派生 Debug trait，允许 `{:?}` 打印
+- `#[derive(Clone)]` — 自动派生 Clone trait，允许 `.clone()`
+- `#[derive(Serialize, Deserialize)]` — 自动派生 serde 序列化
+- `#[derive(PartialEq, Eq)]` — 自动派生比较操作
+- `#[derive(Hash)]` — 自动派生 Hash trait，允许用作 HashMap 键
+**cc-switch 中的 derive 使用**：
+- `Provider` 使用 `Debug, Clone, Serialize, Deserialize`（`src-tauri/src/provider.rs:9`）
+- `AppType` 使用 `Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize`（`src-tauri/src/app_config.rs:339`）
+- `AppError` 使用 `Debug, Error`（通过 thiserror）（`src-tauri/src/error.rs:6`）
+- `CircuitState` 使用 `Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize`（`src-tauri/src/proxy/circuit_breaker.rs:14`）
 - JSON 配置文件读写（`read_json_file`, `write_json_file`）
 - Tauri IPC 参数传递（`#[tauri::command]` 自动序列化）
 - 数据库存储（`to_json_string()`）
