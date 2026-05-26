@@ -302,22 +302,22 @@ pub struct Database {           // src-tauri/src/database/mod.rs:76
   - `prompts.rs` — Prompt 管理
   - `skills.rs` — Skills 管理
   - `settings.rs` — 通用设置存储
+**数据库表结构**（`src-tauri/src/database/schema.rs`）：
+- `providers` — Provider 数据（id, name, app_type, settings_config, meta, icon 等）
+- `mcp_servers` — MCP 服务器配置（id, name, server_config, apps 等）
+- `prompts` — Prompt 管理（id, name, content, app_type 等）
+- `skills` — Skills 管理（id, name, description, app_type 等）
+- `settings` — 通用设置（key, value）
+- `failover_queue` — 故障转移队列（provider_id, app_type, priority）
+- `proxy_config` — 代理配置（app_type, enabled, config）
+- `model_pricing` — 模型定价（model, input_price, output_price）
+- `request_logs` — 请求日志（timestamp, provider, model, status 等）
+**Schema 迁移**（`src-tauri/src/database/schema.rs`）：
+- 当前版本 `SCHEMA_VERSION = 10`（`src-tauri/src/database/mod.rs:52`）
+- 每次修改表结构时递增版本号
+- 迁移逻辑在 `schema.rs` 中，按版本顺序执行
+- 支持从 JSON 配置文件迁移到 SQLite（`migration.rs`）
 **关键设计**：
-- `lock_conn!` 宏（`src-tauri/src/database/mod.rs:61`）安全获取 Mutex 锁，避免 unwrap panic
-- `to_json_string()`（`src-tauri/src/database/mod.rs:55`）安全序列化 JSON
-- 数据库变更钩子（`src-tauri/src/database/mod.rs:80`）通知 WebDAV 自动同步
-**DAO 模式**：
-- 每个 DAO 模块负责一个表的 CRUD 操作
-- 通过 `impl Database` 添加方法，不暴露内部连接
-- 所有数据库操作都通过 `lock_conn!` 宏获取锁
-**陷阱**：
-- `Mutex<Connection>` 意味着同一时间只有一个线程能访问数据库，高并发场景可能成为瓶颈
-- Schema 迁移是线性的，如果迁移失败可能导致数据库损坏
-- 没有连接池，每次操作都用同一个连接
-- 没有事务支持，多个相关操作可能部分成功
-**亮点**：
-- Schema 版本控制（`SCHEMA_VERSION`）确保数据库结构与代码同步
-- JSON → SQLite 迁移路径（`migration.rs`）支持从旧版本平滑升级
 - 数据库备份功能（`backup.rs`）支持导出/导入 SQL 快照
 - 变更钩子（`src-tauri/src/database/mod.rs:80`）自动触发 WebDAV 同步
 ### 3.2 error.rs — 错误模型（3.5KB）
