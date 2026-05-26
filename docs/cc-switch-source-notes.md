@@ -601,52 +601,52 @@ const [currentApp, setCurrentApp] = useState<AppType>(
 | `useDragSort` | `src/hooks/useDragSort.ts` | 拖拽排序 |
 | `useStreamCheck` | `src/hooks/useStreamCheck.ts` | 流式检查 |
 | `useDarkMode` | `src/hooks/useDarkMode.ts` | 暗色模式 |
-| `useDirectorySettings` | 工具目录配置 |
-| `useProxyStatus` | 代理状态实时同步 |
-| `useTauriEvent` | 监听 Tauri 后端事件 |
-| `useAutoCompact` | 自动压缩对话 |
-| `useUsageCacheBridge` | 用量缓存桥接 |
-
-**useProviderActions 示例**：
-
+**useProviderActions 详解**（`src/hooks/useProviderActions.ts`）：
+这是最核心的 hooks，封装了所有 Provider 的 CRUD 操作：
 ```typescript
+// src/hooks/useProviderActions.ts
 const switchMutation = useMutation({
   mutationFn: (providerId: string) =>
-    invoke("switch_claude_provider", { providerId }),
+    invoke("switch_claude_provider", { providerId }),  // 调用 Tauri 命令
   onSuccess: () => {
-    queryClient.invalidateQueries(["providers"]);
+    queryClient.invalidateQueries(["providers"]);     // 刷新缓存
     // 发射事件通知其他组件
   },
 });
 ```
-
+**useSettings 详解**（`src/hooks/useSettings.ts`）：
+- 封装了 `get_settings` 和 `save_settings` Tauri 命令
+- 使用 React Query 缓存设置数据
+- 提供 `mutateSettings` 方法用于修改设置
+**useProxyStatus 详解**（`src/hooks/useProxyStatus.ts`）：
+- 轮询代理服务器状态（每 2 秒）
+- 提供 `isRunning`, `currentProviders`, `uptime` 等状态
+- 使用 `useTauriEvent` 监听代理状态变化事件
 **前端 → 后端调用模式**：
-
 ```typescript
 // 标准模式：invoke + React Query
 const { data: providers } = useQuery(
   ["providers", currentApp],
   () => invoke("get_providers", { appType: currentApp })
 );
-
 // 事件监听模式
 useTauriEvent("provider-changed", (event) => {
   queryClient.invalidateQueries(["providers"]);
 });
 ```
-
+**useTauriEvent 详解**（`src/hooks/useTauriEvent.ts`）：
+```typescript
+// src/hooks/useTauriEvent.ts
+export function useTauriEvent<T>(event: string, handler: (payload: T) => void) {
+  useEffect(() => {
+    const unlisten = listen(event, (e) => handler(e.payload));
+    return () => { unlisten.then(fn => fn()); };
+  }, [event, handler]);
+}
+```
 ### 5.3 config/ — 287KB 的 preset 数据
-
 ```text
 src/config/
-├── claudeProviderPresets.ts         # 35.6KB
-├── claudeDesktopProviderPresets.ts  # 27.0KB
-├── codexProviderPresets.ts          # 32.5KB
-├── geminiProviderPresets.ts         # 9.3KB
-├── opencodeProviderPresets.ts       # 42.6KB
-├── openclawProviderPresets.ts       # 52.4KB
-├── hermesProviderPresets.ts         # 35.2KB
-└── universalProviderPresets.ts      # 3.0KB
 ```
 
 每个 preset 文件定义了该工具的官方 provider 列表（名称、图标、默认配置等）。
