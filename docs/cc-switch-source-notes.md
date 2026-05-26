@@ -411,25 +411,25 @@ pub fn add_provider(&self, provider: &Provider) -> Result<(), AppError> {
     Ok(())
 }
 ```
-**Schema 迁移示例**（`src-tauri/src/database/schema.rs`）：
-    pub claude_desktop: bool,
-    pub codex: bool,
-    pub gemini: bool,
-    pub opencode: bool,
-    pub openclaw: bool,
-    pub hermes: bool,           // 默认不显示
+**DAO 查询模式**：
+```rust
+// 查询 provider 列表
+pub fn get_providers(&self, app_type: &str) -> Result<Vec<Provider>, AppError> {
+    let conn = lock_conn!(self.conn);
+    let mut stmt = conn.prepare("SELECT * FROM providers WHERE app_type = ?1")?;
+    let providers = stmt.query_map([app_type], |row| {
+        Ok(Provider {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            app_type: row.get(2)?,
+            settings_config: serde_json::from_str(&row.get::<_, String>(3)?)?,
+            // ... 其他字段
+        })
+    })?.collect();
+    Ok(providers)
 }
 ```
-**陷阱**：
-- `unwrap()` 在锁获取时，如果锁被 poisoned 会 panic
-- 写入失败时内存缓存和文件可能不一致
-- 没有版本控制，并发修改可能丢失
-### 3.5.5 services/ — 业务逻辑层
-**接口**：业务逻辑层，连接 commands/ 和 database/（`src-tauri/src/services/mod.rs`）。
-**模块结构**（`src-tauri/src/services/`）：
-- `provider/mod.rs`（~2600 行）— Provider 业务逻辑（CRUD、切换、导入导出）
-- `proxy.rs`（3910 行）— ProxyService 业务逻辑（启动、停止、接管、热切换）
-- `config.rs` — ConfigService（配置文件读写）
+**Schema 迁移示例**（`src-tauri/src/database/schema.rs`）：
 - `skill.rs`（~2600 行）— SkillService（Skills 管理）
 - `usage_stats.rs`（~2800 行）— UsageStatsService（用量统计）
 - `stream_check.rs`（~2000 行）— StreamCheckService（流式检查）
