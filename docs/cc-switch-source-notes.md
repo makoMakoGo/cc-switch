@@ -225,31 +225,31 @@ async fn my_command(
 - 大部分数据是 `Arc<T>`（引用计数），不需要生命周期
 - 配置文件读取后立即 clone，不持有引用
 - Tauri 框架管理 `State` 的生命周期，开发者不需要关心
-}
-```
-**Mutex 锁获取**（`src-tauri/src/database/mod.rs:61`）：
+**Rust 闭包在 cc-switch 中的使用**：
 ```rust
-// database/mod.rs: lock_conn! 宏
-macro_rules! lock_conn {
-    ($mutex:expr) => {
-        $mutex
-            .lock()
-            .map_err(|e| AppError::Database(format!("Mutex lock failed: {}", e)))?
-    };
+// 闭包（匿名函数）
+// cc-switch 里到处都是，特别是配置修改和数据库操作
+let mutate_settings = |settings: &mut AppSettings| {
+    settings.proxy_port = 8080;
+};
+// 异步闭包
+tokio::spawn(async move {
+    // 异步任务
+});
+// 闭包作为参数
+pub fn mutate_settings<F>(f: F) -> Result<(), AppError>
+where
+    F: FnOnce(&mut AppSettings),
+{
+    let mut settings = APP_SETTINGS.get().unwrap().write().unwrap();
+    f(&mut settings);
+    Ok(())
 }
-// 使用方式
-let conn = lock_conn!(self.conn);
 ```
-**宏的工作原理**：
-- `macro_rules!` 定义宏
-- `$mutex:expr` 匹配一个表达式
-- `.map_err(...)` 转换错误类型
-- `?` 提前返回错误
-**为什么用宏而不是函数**：
-- 宏可以在调用处展开，避免额外的函数调用开销
-- 宏可以捕获表达式类型，避免泛型约束
-- 宏可以生成代码，减少重复
-**其他常用宏**：
+**闭包 vs 函数**：
+- 闭包可以捕获外部变量，函数不能
+- 闭包可以作为参数传递，更灵活
+- cc-switch 里大部分配置修改都用闭包
 - `vec![]` — 创建 Vec
 - `format!()` — 格式化字符串
 - `println!()` — 打印到标准输出
