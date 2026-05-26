@@ -558,40 +558,40 @@ Closed 或 Open
 - 熔断器状态是内存中的，重启后重置（`src-tauri/src/proxy/circuit_breaker.rs:78`）
 - 并发切换时需要 `SwitchLock` 保护（`src-tauri/src/proxy/switch_lock.rs`）
 - 没有持久化熔断器状态，重启后所有 provider 都是 Closed 状态
+### 4.4 代理接管（Takeover）机制
+**什么是代理接管**：
+- 代理接管是指 cc-switch 代理服务器"接管"目标工具的 live 配置
+- 接管后，目标工具的 API 请求会通过 cc-switch 代理转发
+- cc-switch 可以在代理层做格式转换、故障转移、用量统计等
+**接管流程**（`src-tauri/src/services/proxy.rs`）：
+1. 用户在 UI 里点击"启用代理"按钮
+2. 前端调用 `set_proxy_takeover_for_app` Tauri 命令
+3. `ProxyService` 读取目标工具的 live 配置
+4. 备份 live 配置到数据库（`has_any_live_backup`）
+5. 修改 live 配置：
+   - 设置 `base_url` 为 `http://localhost:代理端口`
+   - 设置 `api_key` 为 `PROXY_MANAGED` 占位符
+   - 设置模型别名（如 `claude-haiku-4-5`、`claude-sonnet-4-6`）
+6. 写入修改后的 live 配置
+7. 启动代理服务器（如果还没启动）
+8. 发射 Tauri 事件通知前端
+**热切换**（`src-tauri/src/services/proxy.rs`）：
+- 代理运行时切换 provider，不需要重启代理
+- 通过 `hot_switch_provider` 方法实现
+- 更新内存中的路由表，立即生效
+- 重写 live 配置中的模型别名
+**恢复流程**（`src-tauri/src/lib.rs:1513`）：
+- 应用退出时，`cleanup_before_exit()` 恢复 live 配置
+- 使用 `stop_with_restore_keep_state()` 保留代理状态
+- 下次启动时自动恢复代理接管状态（`restore_proxy_state_on_startup()`，`lib.rs:1558`）
 ## 第 5 章：前端架构
 前端是 React + TypeScript，通过 Tauri IPC 与 Rust 后端通信。前端代码在 `src/` 目录下。
 ### 5.1 App.tsx — 14 个视图的路由机制
 **App.tsx**（1605 行）是前端的"上帝文件"（`src/App.tsx`）。
 **视图切换机制**（`src/App.tsx`）：
-```typescript
-// localStorage 持久化当前视图
-const [currentView, setCurrentView] = useState(
-  localStorage.getItem("currentView") || "providers"  // 默认显示 provider 列表
-);
-// 14 个视图
-switch (currentView) {
-  case "coding-plan":  return <CodingPlan />;        // Coding Plan
-  case "import-export":return <ImportExport />;      // 导入导出
-  case "about":        return <About />;             // 关于页面
-}
-```
-**App 切换机制**（`src/App.tsx`）：
-```typescript
-// 切换当前管理的 AI 工具
-const [currentApp, setCurrentApp] = useState<AppType>(
-  localStorage.getItem("currentApp") || "Claude"  // 默认管理 Claude
-);
-```
-**AI Slop 特征**：
-- 1605 行的单文件，应该拆分
 - 所有视图都在一个 switch 里，没有用路由库（React Router）
 - 大量内联的事件处理逻辑，应该抽取到 hooks
 - 没有代码分割（code splitting），所有视图都打包在一个 chunk 里
-### 5.2 hooks/ — 状态管理层
-**核心 hooks**（`src/hooks/`）：
-| Hook | 文件 | 职责 |
-|------|------|------|
-| `useProviderActions` | `src/hooks/useProviderActions.ts` | Provider 的 CRUD 操作（React Query mutations） |
 | `useSettings` | `src/hooks/useSettings.ts` | 设置的读写 |
 | `useSettingsForm` | `src/hooks/useSettingsForm.ts` | 设置表单状态管理 |
 | `useDirectorySettings` | `src/hooks/useDirectorySettings.ts` | 工具目录配置 |
