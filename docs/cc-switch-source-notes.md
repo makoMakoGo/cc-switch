@@ -311,7 +311,49 @@ let config = read_json_file(path).unwrap_or_default();  // 用默认值
 - 路径硬编码了 `~/.claude` 等，如果用户自定义了 Claude 的配置目录会出问题
 - 没有文件锁保护，并发写入可能冲突
 ### 3.1.5 database/ — 数据持久化（SQLite）
+**接口**：SQLite 数据库的初始化、迁移、DAO 操作（`src-tauri/src/database/mod.rs`）。
+**核心结构**：
+```rust
+pub struct Database {           // src-tauri/src/database/mod.rs:76
+    pub(crate) conn: Mutex<Connection>,  // SQLite 连接（Mutex 包装）
+}
+```
+**模块结构**（`src-tauri/src/database/`）：
+- `mod.rs` — Database 结构体 + 初始化（`src-tauri/src/database/mod.rs:91`）
+- `schema.rs` — 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`src-tauri/src/database/mod.rs:52`）
+- `backup.rs` — SQL 导入导出 + 快照备份
+- `migration.rs` — JSON → SQLite 数据迁移（`src-tauri/src/database/migration.rs`）
+- `dao/` — 数据访问对象
+  - `providers.rs` — Provider CRUD
+  - `mcp.rs` — MCP 服务器配置
+  - `prompts.rs` — Prompt 管理
+  - `skills.rs` — Skills 管理
+  - `settings.rs` — 通用设置存储
+**数据库表结构**（`src-tauri/src/database/schema.rs`）：
+- `providers` — Provider 数据（id, name, app_type, settings_config, meta, icon 等）
+- `mcp_servers` — MCP 服务器配置（id, name, server_config, apps 等）
+- `prompts` — Prompt 管理（id, name, content, app_type 等）
+- `skills` — Skills 管理（id, name, description, app_type 等）
+- `settings` — 通用设置（key, value）
+- `failover_queue` — 故障转移队列（provider_id, app_type, priority）
+- `proxy_config` — 代理配置（app_type, enabled, config）
+- `model_pricing` — 模型定价（model, input_price, output_price）
 - `request_logs` — 请求日志（timestamp, provider, model, status 等）
+**DAO 模式示例**（`src-tauri/src/database/dao/providers.rs`）：
+```rust
+// 通过 impl Database 添加方法
+impl Database {
+    pub fn get_providers(&self, app_type: &str) -> Result<Vec<Provider>, AppError> {
+        let conn = lock_conn!(self.conn);
+        let mut stmt = conn.prepare("SELECT * FROM providers WHERE app_type = ?1")?;
+        let providers = stmt.query_map([app_type], |row| {
+            // 从行数据构建 Provider 结构体
+            Ok(Provider { ... })
+        })?.collect();
+        Ok(providers)
+    }
+}
+```
 **Schema 迁移**（`src-tauri/src/database/schema.rs`）：
 - 当前版本 `SCHEMA_VERSION = 10`（`src-tauri/src/database/mod.rs:52`）
 - 每次修改表结构时递增版本号
@@ -320,48 +362,6 @@ let config = read_json_file(path).unwrap_or_default();  // 用默认值
 **关键设计**：
 - 数据库备份功能（`backup.rs`）支持导出/导入 SQL 快照
 - 变更钩子（`src-tauri/src/database/mod.rs:80`）自动触发 WebDAV 同步
-### 3.2 error.rs — 错误模型（3.5KB）
-**接口**：统一的错误类型 `AppError`（`src-tauri/src/error.rs:6`），所有后端函数都用它。
-**实现**：
-```rust
-#[derive(Debug, thiserror::Error)]  // src-tauri/src/error.rs:6
-pub enum AppError {
-    #[error("Config error: {0}")]    // src-tauri/src/error.rs:8
-    Config(String),
-    #[error("IO error for {path}: {source}")]  // src-tauri/src/error.rs:11
-    Io { path: String, source: std::io::Error },
-    #[error("JSON error for {path}: {source}")]  // src-tauri/src/error.rs:14
-    Json { path: String, source: serde_json::Error },
-    #[error("TOML error: {0}")]     // src-tauri/src/error.rs:17
-    Toml(#[from] toml::de::Error),
-    #[error("Lock poisoned: {0}")]  // src-tauri/src/error.rs:20
-    Lock(String),
-    #[error("Database error: {0}")]  // src-tauri/src/error.rs:23
-    Database(String),
-    #[error("All providers circuit open")]  // src-tauri/src/error.rs:26
-    AllProvidersCircuitOpen,
-    #[error("Localized: {zh}")]     // src-tauri/src/error.rs:29
-    Localized { zh: String, en: String },
-}
-```
-**亮点**：
-- `Localized` 变体支持中英双语错误消息，前端可以根据语言选择显示
-- `Io` 变体包含文件路径，方便调试
-**陷阱**：
-- `Config(String)` 太宽泛，很多不同类型的错误都往这里塞
-- 错误消息不一致，有的用英文有的用中文
-### 3.3 app_config.rs — 多应用配置模型（41KB）
-**接口**：定义 cc-switch 管理的 7 个 AI 工具的抽象（`src-tauri/src/app_config.rs:338`）。
-**核心类型**：
-```rust
-pub enum AppType {            // src-tauri/src/app_config.rs:341
-    Claude,        // Claude Code (CLI)
-    ClaudeDesktop, // Claude Desktop (GUI)
-    Codex,         // OpenAI Codex CLI
-    Gemini,        // Gemini CLI
-    OpenCode,      // OpenCode
-    OpenClaw,      // OpenClaw
-    Hermes,        // Hermes
 }
 ```
 }
