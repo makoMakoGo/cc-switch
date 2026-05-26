@@ -365,31 +365,31 @@ pub struct Database {           // src-tauri/src/database/mod.rs:76
 - `model_pricing` — 模型定价（model, input_price, output_price）
 - `request_logs` — 请求日志（timestamp, provider, model, status 等）
 **DAO 模式示例**（`src-tauri/src/database/dao/providers.rs`）：
-6. 插入到 SQLite 数据库
-7. 归档 `config.json`（重命名为 `config.json.migrated`）
-**Schema 迁移示例**（`src-tauri/src/database/schema.rs`）：
 ```rust
-// 迁移逻辑示例
-fn migrate_v9_to_v10(conn: &Connection) -> Result<(), AppError> {
-    // 添加新列
-    conn.execute("ALTER TABLE providers ADD COLUMN notes TEXT", [])?;
-    // 更新版本号
-    conn.execute("PRAGMA user_version = 10", [])?;
-    Ok(())
+// 通过 impl Database 添加方法
+impl Database {
+    pub fn get_providers(&self, app_type: &str) -> Result<Vec<Provider>, AppError> {
+        let conn = lock_conn!(self.conn);
+        let mut stmt = conn.prepare("SELECT * FROM providers WHERE app_type = ?1")?;
+        let providers = stmt.query_map([app_type], |row| {
+            // 从行数据构建 Provider 结构体
+            Ok(Provider { ... })
+        })?.collect();
+        Ok(providers)
+    }
 }
 ```
-**关键设计**：
-- 数据库备份功能（`backup.rs`）支持导出/导入 SQL 快照
-- 变更钩子（`src-tauri/src/database/mod.rs:80`）自动触发 WebDAV 同步
-**数据库备份功能**（`src-tauri/src/database/backup.rs`）：
-- `create_db_backup()` — 创建数据库快照
-- `list_db_backups()` — 列出所有备份
-- `restore_db_backup()` — 恢复备份
-- `delete_db_backup()` — 删除备份
-- `rename_db_backup()` — 重命名备份
-**备份格式**：
-- SQL 快照格式（`.sql` 文件）
-- 包含完整的数据库结构和数据
+**DAO 方法列表**：
+- `get_providers()` — 获取 provider 列表
+- `get_provider_by_id()` — 获取单个 provider
+- `add_provider()` — 添加 provider
+- `update_provider()` — 更新 provider
+- `delete_provider()` — 删除 provider
+- `get_current_provider()` — 获取当前 provider
+- `set_current_provider()` — 设置当前 provider
+- `get_settings()` — 获取设置
+- `set_setting()` — 设置单个配置项
+**Schema 迁移示例**（`src-tauri/src/database/schema.rs`）：
 - 支持压缩（可选）
 **备份触发时机**：
 - 手动备份（用户点击"创建备份"按钮）
