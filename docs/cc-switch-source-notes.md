@@ -14,34 +14,34 @@
 启动链路（`main.rs` → `lib.rs` → 窗口）：
 
 ```text
-main.rs
-  └─ lib::run()                          // src-tauri/src/lib.rs:119
-       ├─ tauri::Builder::default()
-       ├─ .plugin(tauri_plugin_shell)     // 外部插件：shell 访问
-       ├─ .plugin(tauri_plugin_dialog)    // 文件对话框
-       ├─ .plugin(tauri_plugin_clipboard)
-       ├─ .plugin(tauri_plugin_updater)
-       ├─ .plugin(tauri_plugin_deep_link) // 深度链接处理
-       ├─ .plugin(tauri_plugin_global_shortcut)
-       ├─ .plugin(tauri_plugin_http)
-       ├─ .plugin(tauri_plugin_notification)
-       ├─ .plugin(tauri_plugin_process)
-       ├─ .plugin(tauri_plugin_store)     // 前端持久化存储
-       ├─ .plugin(tauri_plugin_autostart)
-       ├─ Database::init()               // SQLite 初始化 + 迁移
-       ├─ seed_default_providers()        // 首次运行时插入官方 preset
-       ├─ ProxyService::new(db)           // 代理服务实例化
-       ├─ UsageCache::new()               // 用量缓存初始化
-       ├─ create_system_tray()            // 托盘菜单
-       ├─ migrate_codex_history()         // Codex 历史数据迁移
-       ├─ invoke_handler(...)             // 注册 ~300 个 Tauri 命令
+main.rs                          // src-tauri/src/main.rs:6
+  └─ lib::run()                  // src-tauri/src/lib.rs:203
+       ├─ panic_hook::setup()    // src-tauri/src/lib.rs:205
+       ├─ tauri::Builder::default()  // src-tauri/src/lib.rs:207
+       ├─ .plugin(single_instance)   // src-tauri/src/lib.rs:211
+       ├─ .plugin(deep_link)     // src-tauri/src/lib.rs:252
+       ├─ .on_window_event()     // src-tauri/src/lib.rs:254  拦截关闭，最小化到托盘
+       ├─ .plugin(process)       // src-tauri/src/lib.rs:275
+       ├─ .plugin(dialog)        // src-tauri/src/lib.rs:276
+       ├─ .plugin(store)         // src-tauri/src/lib.rs:278
+       ├─ .setup(|app| {        // src-tauri/src/lib.rs:284
+       │    ├─ Database::init()  // src-tauri/src/lib.rs:383  SQLite + schema 迁移
+       │    ├─ migrate_from_json() // src-tauri/src/lib.rs:403  JSON→SQLite 迁移
+       │    ├─ AppState::new(db) // src-tauri/src/lib.rs:423
+       │    ├─ init_default_skill_repos() // src-tauri/src/lib.rs:433
+       │    ├─ seed providers   // src-tauri/src/lib.rs:496  遍历 AppType::all()
+       │    ├─ init_common_config_snippets() // src-tauri/src/lib.rs:1601
+       │    ├─ restore_proxy_state_on_startup() // src-tauri/src/lib.rs:1558
+       │    └─ create_system_tray() // src-tauri/src/tray.rs
+       ├─ .invoke_handler(...)   // src-tauri/src/lib.rs:1072  注册 ~300 个命令
+       └─ .run()                 // src-tauri/src/lib.rs:1379
        └─ .run(tauri::generate_context!())
 ```
 
 关键点：
-- `main.rs` 只有 1 行有意义代码：`lib::run()`
-- `lib.rs`（1826 行）是整个后端的"上帝文件"——模块声明、插件注册、命令注册全在这里
-- 初始化顺序很重要：先建数据库，再建服务，再注册命令
+- `main.rs` 只有 1 行有意义代码：`lib::run()` — `src-tauri/src/main.rs:6`
+- `lib.rs`（1826 行）是整个后端的"上帝文件"——模块声明（`lib.rs:1-36`）、插件注册（`lib.rs:250-283`）、命令注册（`lib.rs:1072-1377`）全在这里
+- 初始化顺序很重要：先建数据库（`lib.rs:383`），再建服务（`lib.rs:423`），再注册命令（`lib.rs:1072`）
 
 ### 1.2 数据流：一次 Provider Switch 的完整调用链
 
@@ -72,7 +72,7 @@ ConfigService (services/config.rs)
   ~/.claude/settings.json  ← Claude Code 读取这个文件
 ```
 
-**Switch vs Additive 两种模式**（`app_config.rs:316`）：
+**Switch vs Additive 两种模式**（`src-tauri/src/app_config.rs:373`）：
 
 ```text
 Switch 模式（Claude Code、Claude Desktop、Codex、Gemini）：
@@ -99,23 +99,23 @@ Additive 模式（OpenCode、OpenClaw、Hermes）：
 
 ### 1.3 状态管理
 
-**后端状态**（`store.rs`）：
+**后端状态**（`src-tauri/src/store.rs:6`）：
 
 ```rust
-pub struct AppState {
+pub struct AppState {           // src-tauri/src/store.rs:6
     pub db: Arc<Database>,           // SQLite 连接（Mutex 包装）
     pub proxy_service: ProxyService, // 代理服务器管理
     pub usage_cache: Arc<UsageCache>,// 用量统计缓存
 }
 ```
 
-`Arc<T>` = 引用计数智能指针，允许多个地方共享同一份数据。
-`Database` 内部用 `Mutex<Connection>` 包装 SQLite 连接，因为 `rusqlite::Connection` 不是 `Sync` 的。
+`Arc<T>` = 引用计数智能指针，允许多个地方共享同一份数据。`src-tauri/src/store.rs:3`
+`Database` 内部用 `Mutex<Connection>` 包装 SQLite 连接（`src-tauri/src/database/mod.rs:76`），因为 `rusqlite::Connection` 不是 `Sync` 的。
 
-**设置缓存**（`settings.rs`）：
+**设置缓存**（`src-tauri/src/settings.rs:5`）：
 
 ```rust
-static APP_SETTINGS: OnceLock<RwLock<AppSettings>> = OnceLock::new();
+static APP_SETTINGS: OnceLock<RwLock<AppSettings>> = OnceLock::new();  // src-tauri/src/settings.rs:5
 ```
 
 - `OnceLock` = 全局只初始化一次
@@ -261,35 +261,35 @@ fn atomic_write(path: &Path, content: &str) -> Result<(), AppError> {
 
 ### 3.2 error.rs — 错误模型（3.5KB）
 
-**接口**：统一的错误类型 `AppError`，所有后端函数都用它。
+**接口**：统一的错误类型 `AppError`（`src-tauri/src/error.rs:6`），所有后端函数都用它。
 
 **实现**：
 
 ```rust
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error)]  // src-tauri/src/error.rs:6
 pub enum AppError {
-    #[error("Config error: {0}")]
+    #[error("Config error: {0}")]    // src-tauri/src/error.rs:8
     Config(String),
 
-    #[error("IO error for {path}: {source}")]
+    #[error("IO error for {path}: {source}")]  // src-tauri/src/error.rs:11
     Io { path: String, source: std::io::Error },
 
-    #[error("JSON error for {path}: {source}")]
+    #[error("JSON error for {path}: {source}")]  // src-tauri/src/error.rs:14
     Json { path: String, source: serde_json::Error },
 
-    #[error("TOML error: {0}")]
+    #[error("TOML error: {0}")]     // src-tauri/src/error.rs:17
     Toml(#[from] toml::de::Error),
 
-    #[error("Lock poisoned: {0}")]
+    #[error("Lock poisoned: {0}")]  // src-tauri/src/error.rs:20
     Lock(String),
 
-    #[error("Database error: {0}")]
+    #[error("Database error: {0}")]  // src-tauri/src/error.rs:23
     Database(String),
 
-    #[error("All providers circuit open")]
+    #[error("All providers circuit open")]  // src-tauri/src/error.rs:26
     AllProvidersCircuitOpen,
 
-    #[error("Localized: {zh}")]
+    #[error("Localized: {zh}")]     // src-tauri/src/error.rs:29
     Localized { zh: String, en: String },
     // ... 更多变体
 }
@@ -305,12 +305,12 @@ pub enum AppError {
 
 ### 3.3 app_config.rs — 多应用配置模型（41KB）
 
-**接口**：定义 cc-switch 管理的 7 个 AI 工具的抽象。
+**接口**：定义 cc-switch 管理的 7 个 AI 工具的抽象（`src-tauri/src/app_config.rs:338`）。
 
 **核心类型**：
 
 ```rust
-pub enum AppType {
+pub enum AppType {            // src-tauri/src/app_config.rs:341
     Claude,        // Claude Code (CLI)
     ClaudeDesktop, // Claude Desktop (GUI)
     Codex,         // OpenAI Codex CLI
@@ -321,17 +321,17 @@ pub enum AppType {
 }
 ```
 
-**关键设计决策 — `is_additive_mode()`**：
+**关键设计决策 — `is_additive_mode()`**（`src-tauri/src/app_config.rs:373`）：
 
 ```rust
 impl AppType {
-    pub fn is_additive_mode(&self) -> bool {
-        match self {
-            AppType::OpenCode | AppType::OpenClaw | AppType::Hermes => true,
-            _ => false,
-        }
+    pub fn is_additive_mode(&self) -> bool {  // src-tauri/src/app_config.rs:373
+        matches!(self,
+            AppType::OpenCode | AppType::OpenClaw | AppType::Hermes
+        )
     }
 }
+```
 ```
 
 这个分类影响整个架构：
@@ -339,36 +339,36 @@ impl AppType {
 - Additive 模式（3 个工具）：所有 provider 同时写入，切换 = 更新 enabled 状态
 
 **其他重要类型**：
-- `McpApps` — 哪些工具支持 MCP server 配置
-- `SkillApps` — 哪些工具支持 skills
-- `CommonConfigSnippets` — 跨工具共享的配置片段
+- `McpApps`（`src-tauri/src/app_config.rs:9`）— 哪些工具支持 MCP server 配置
+- `SkillApps`（`src-tauri/src/app_config.rs:78`）— 哪些工具支持 skills
+- `CommonConfigSnippets`（`src-tauri/src/app_config.rs:419`）— 跨工具共享的配置片段
 
 **陷阱**：
 - 这个文件 41KB 太大了，包含了太多职责（类型定义 + 工具特性查询 + 配置片段管理）
-- `AppType` 的 match 到处都是，加新工具需要改很多地方
+- `AppType` 的 match 到处都是（`McpApps:24`, `VisibleApps:66`, `CommonConfigSnippets:441`），加新工具需要改很多地方
 
 ### 3.4 provider.rs — 核心数据模型（40.6KB）
 
-**接口**：Provider 是 cc-switch 的核心数据单元，代表一个 AI 服务提供商的配置。
+**接口**：Provider 是 cc-switch 的核心数据单元（`src-tauri/src/provider.rs:10`）。
 
-**Provider 结构体**：
+**Provider 结构体**（`src-tauri/src/provider.rs:10-43`）：
 
 ```rust
-pub struct Provider {
+pub struct Provider {          // src-tauri/src/provider.rs:10
     pub id: String,                    // 唯一标识
     pub name: String,                  // 显示名称
-    pub app_type: AppType,            // 属于哪个工具
     pub settings_config: Value,        // JSON 格式的配置（API key、base URL 等）
-    pub meta: ProviderMeta,            // 元数据（是否默认、排序等）
+    pub website_url: Option<String>,   // 官网地址
+    pub category: Option<String>,      // 分类
+    pub created_at: Option<i64>,       // 创建时间
+    pub sort_index: Option<usize>,     // 排序索引
+    pub notes: Option<String>,         // 备注
+    pub meta: Option<ProviderMeta>,    // 元数据
     pub icon: Option<String>,          // 图标
+    pub icon_color: Option<String>,    // 图标颜色
     pub in_failover_queue: bool,       // 是否在故障转移队列中
 }
 ```
-
-**ProviderManager 的职责**：
-- CRUD 操作（增删改查）
-- 切换当前 provider
-- 导入导出
 - 与数据库交互
 
 **UniversalProvider**：
@@ -382,11 +382,11 @@ pub struct Provider {
 ### 3.5 settings.rs — 设置管理（28.9KB）
 
 **接口**：全局应用设置的读写，包括代理配置、UI 偏好、WebDAV 同步等。
-
+**接口**：全局应用设置的读写（`src-tauri/src/settings.rs:5`），包括代理配置、UI 偏好、WebDAV 同步等。
 **实现**：
 
 ```rust
-static APP_SETTINGS: OnceLock<RwLock<AppSettings>> = OnceLock::new();
+static APP_SETTINGS: OnceLock<RwLock<AppSettings>> = OnceLock::new();  // src-tauri/src/settings.rs:5
 
 pub fn read_settings() -> AppSettings {
     let settings = APP_SETTINGS.get_or_init(|| {
@@ -484,7 +484,7 @@ src-tauri/src/proxy/
 
 ### 4.2 认证和路由
 
-**ProviderRouter**（`provider_router.rs`）：
+**ProviderRouter**（`src-tauri/src/proxy/provider_router.rs`）：
 
 ```text
 客户端请求 → ProviderRouter
@@ -504,10 +504,10 @@ src-tauri/src/proxy/
 
 ### 4.3 故障转移和熔断
 
-**CircuitBreaker**（`circuit_breaker.rs`）：
+**CircuitBreaker**（`src-tauri/src/proxy/circuit_breaker.rs:76`）：
 
 ```rust
-pub struct CircuitBreaker {
+pub struct CircuitBreaker {    // src-tauri/src/proxy/circuit_breaker.rs:76
     state: Arc<RwLock<CircuitState>>,          // Closed/Open/HalfOpen
     consecutive_failures: Arc<AtomicU32>,       // 连续失败计数
     consecutive_successes: Arc<AtomicU32>,      // 连续成功计数
@@ -517,7 +517,7 @@ pub struct CircuitBreaker {
     config: CircuitBreakerConfig,
 }
 ```
-
+**CircuitBreakerConfig**（`src-tauri/src/proxy/circuit_breaker.rs:38`）：
 **状态转换**：
 
 ```text
@@ -537,12 +537,12 @@ Closed 或 Open
 **FailoverQueue**（数据库中的 `failover_queue` 表）：
 - 存储备选 provider 列表
 - 当主 provider 熔断时，按优先级尝试备选
-- 所有备选都失败时，返回 `AllProvidersCircuitOpen` 错误
+- 所有备选都失败时，返回 `AllProvidersCircuitOpen` 错误（`src-tauri/src/error.rs:26`）
 
 **陷阱**：
 - `forwarder.rs`（122KB）太大，包含了太多职责
-- 熔断器状态是内存中的，重启后重置
-- 并发切换时需要 `SwitchLock` 保护
+- 熔断器状态是内存中的，重启后重置（`src-tauri/src/proxy/circuit_breaker.rs:78`）
+- 并发切换时需要 `SwitchLock` 保护（`src-tauri/src/proxy/switch_lock.rs`）
 
 ---
 
