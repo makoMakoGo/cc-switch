@@ -673,20 +673,20 @@ const mutation = useMutation({
   },
 });
 ```
+**React Query 配置**：
+- `staleTime`: 数据过期时间（默认 0，立即重新获取）
+- `cacheTime`: 缓存时间（默认 5 分钟）
+- `refetchOnWindowFocus`: 窗口聚焦时重新获取（默认 true）
+- `retry`: 失败重试次数（默认 3）
+**React Query 最佳实践**：
+- 使用 `queryKey` 数组作为缓存键
+- 使用 `invalidateQueries` 刷新相关缓存
+- 使用 `setQueryData` 乐观更新
+- 使用 `onSuccess` / `onError` 处理副作用
 **前端错误处理**：
 - Tauri 命令返回 `Result<T, String>`，前端通过 `try/catch` 捕获
 - React Query 的 `error` 状态用于显示错误信息
 - 没有统一的错误处理组件，每个组件自己处理错误
-**前端国际化（i18n）**（`src/i18n/`）：
-- 支持中文和英文
-- 使用 `react-i18next` 库
-- 翻译文件在 `src/i18n/locales/` 目录下
-- 前端根据系统语言自动选择
-**其他前端配置**：
-  },
-- `src/config/appConfig.tsx`（3.2KB）— 应用配置（视图列表、图标等）
-  // ... 更多 provider
-- `src/config/constants.ts`（445B）— 常量定义
 ];
 - `src/config/codingPlanProviders.ts`（2.6KB）— Coding Plan provider 列表
 ```
