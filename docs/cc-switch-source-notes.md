@@ -790,43 +790,44 @@ impl ToolConfig for ClaudeConfig { ... }
 - 合并 `useSettings` + `useSettingsForm` + `useDirectorySettings`
 - 抽取公共的 `useTauriCommand` hook
 ## 第 7 章：重构路线图
+基于前 6 章的理解，制定具体重构计划。按风险从低到高排列。
 ### 7.1 低风险清理（先做，1-2 天）
-### 7.3 架构级重构（最后做，慎重，1-2 周）
+**删除死代码**：
+- 搜索 `#[allow(dead_code)]` 和未使用的函数
+- 删除注释掉的代码块
+- 删除 `lib.rs:38` 里重复的 `pub use` 导出
+**统一命名**：
+- `get_xxx` / `read_xxx` / `fetch_xxx` 统一为 `read_xxx`
+- `xxx_config` / `xxx_settings` 统一为 `xxx_config`
+- 错误消息统一为英文（或统一为中文）
+**提取重复模式**：
+- 7 个 config 模块的 `read → parse → modify → write` 骨架抽取为公共函数
+- 7 个 preset 文件的结构抽取为公共模板
+- `AppType` 的 match 分支抽取为 trait 方法
 ### 7.2 中等重构（3-5 天）
+**拆分过大的文件**：
+- `lib.rs`（1826 行）→ `init.rs` + `commands.rs` + `lib.rs`
+- `App.tsx`（1605 行）→ 每个视图一个文件 + `AppRouter.tsx`
+- `codex_config.rs`（66.5KB）→ `codex/` 目录
+- `claude_desktop_config.rs`（61.5KB）→ `claude_desktop/` 目录
+- `services/proxy.rs`（3910 行）→ 拆分成 `takeover.rs`, `hot_switch.rs`, `config.rs`
+**统一 config 模块的结构**：
+```rust
+trait ToolConfig {
+    fn read_config(&self) -> Result<Value, AppError>;
+    fn write_config(&self, config: &Value) -> Result<(), AppError>;
+    fn switch_provider(&self, provider: &Provider) -> Result<(), AppError>;
+}
+```
+**简化前端 hooks 层**：
+- 合并 `useSettings` + `useSettingsForm` + `useDirectorySettings`
+- 抽取公共的 `useTauriCommand` hook
+### 7.3 架构级重构（最后做，慎重，1-2 周）
 **Provider 管理的统一抽象**：
 - 定义 `ProviderManager` trait
 - 每个工具有自己的 `ProviderManager` 实现
 - 切换逻辑统一处理，不再分散在各个 config 模块
-
 **代理子系统的简化**：
 - `forwarder.rs`（122KB）拆分成多个职责单一的模块
 - 抽取公共的 API 格式转换框架
 - 统一错误处理和日志记录
-
-**配置文件格式统一**：
-- 考虑让所有工具使用统一的配置文件格式
-- 或者定义一个中间表示（IR），转换逻辑集中处理
-
----
-
-## 附录：文件大小速查表
-
-| 文件 | 大小 | 优先级 |
-|------|------|--------|
-| `lib.rs` | 1826 行 | 高 |
-| `App.tsx` | 1605 行 | 高 |
-| `codex_config.rs` | 66.5KB | 高 |
-| `claude_desktop_config.rs` | 61.5KB | 高 |
-| `forwarder.rs` | ~122KB | 高 |
-| `openclaw_config.rs` | 52.4KB | 中 |
-| `opencode_config.rs` | 42.6KB | 中 |
-| `app_config.rs` | 41KB | 中 |
-| `provider.rs` | 40.6KB | 中 |
-| `hermesConfig.ts` | 35.2KB | 中 |
-| `settings.rs` | 28.9KB | 中 |
-| `claude_config.rs` | 27.7KB | 中 |
-| `claudeProviderPresets.ts` | 35.6KB | 低 |
-| `codexProviderPresets.ts` | 32.5KB | 低 |
-| `config.rs` | 14KB | 低 |
-| `gemini_config.rs` | 20.4KB | 低 |
-| `error.rs` | 3.5KB | 低 |
