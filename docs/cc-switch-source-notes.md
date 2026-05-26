@@ -475,27 +475,27 @@ src-tauri/src/proxy/
 ├── types.rs            # 共享类型定义
 └── log_codes.rs        # 日志代码常量
 ```
-
+**ProxyState**（`src-tauri/src/proxy/server.rs:34`）：
+```rust
+pub struct ProxyState {       // src-tauri/src/proxy/server.rs:34
+    pub db: Arc<Database>,
+    pub config: Arc<RwLock<ProxyConfig>>,
+    pub status: Arc<RwLock<ProxyStatus>>,
+    pub provider_router: Arc<ProviderRouter>,
+    pub gemini_shadow: Arc<GeminiShadowStore>,
+    pub codex_chat_history: Arc<CodexChatHistoryStore>,
+    pub failover_manager: Arc<FailoverSwitchManager>,
+}
+```
+**ProxyServer**（`src-tauri/src/proxy/server.rs:54`）：
+- `ProxyServer::new()` 创建 `ProxyState` 并初始化所有共享组件
+- `ProxyServer::start()` 绑定端口、启动 Axum 路由
+- `ProxyServer::stop()` 发送 shutdown 信号、等待服务器关闭
 **技术栈**：
 - Axum — HTTP 框架
 - Tower — 中间件层
 - Hyper — 底层 HTTP 实现
 - Tokio — 异步运行时
-
-### 4.2 认证和路由
-
-**ProviderRouter**（`src-tauri/src/proxy/provider_router.rs`）：
-
-```text
-客户端请求 → ProviderRouter
-  ├─ 从请求头解析 API key
-  ├─ 匹配到对应的 provider
-  ├─ 检查熔断器状态
-  │    ├─ Closed → 正常转发
-  │    ├─ Open → 拒绝，返回 503
-  │    └─ HalfOpen → 尝试转发，成功则关闭熔断
-  └─ 转发到 provider 的 base URL
-```
 
 **多 provider 路由逻辑**：
 - 每个 provider 有自己的 API key
@@ -689,88 +689,88 @@ return () => unlisten();
 ### 6.1 代码膨胀模式
 
 **过大的单文件**：
-
 | 文件 | 行数 | 问题 |
 |------|------|------|
-| `lib.rs` | 1826 | 模块声明 + 插件注册 + 命令注册 + 初始化逻辑全混在一起 |
+| `lib.rs` | 1826 | 模块声明（`lib.rs:1-36`）+ 插件注册（`lib.rs:250-283`）+ 命令注册（`lib.rs:1072-1377`）+ 初始化逻辑（`lib.rs:284-1070`）全混在一起 |
 | `App.tsx` | 1605 | 14 个视图 + 事件处理 + 状态管理全在一个文件 |
 | `forwarder.rs` | ~3000 | 请求转发 + 格式转换 + 错误处理全在一起 |
 | `codex_config.rs` | ~1600 | 配置读写 + 迁移 + 验证全在一起 |
 | `claude_desktop_config.rs` | ~1500 | 同上 |
-
+| `proxy.rs`（services） | 3910 | `ProxyService` 的所有方法全在一个文件（`src-tauri/src/services/proxy.rs:55`） |
+| `provider/mod.rs`（services） | ~2600 | `ProviderService` 的所有方法全在一个文件 |
 **复制粘贴的 config 模块**：
-- 7 个工具的 config 模块结构几乎一样
+- 7 个工具的 config 模块结构几乎一样，但没有抽取公共函数
 - 每个都自己实现了一遍 `read → parse → modify → write` 流程
-- 没有公共的 config trait
-
+- 没有公共的 config trait 或接口
 **无意义的 wrapper 层**：
 - 有些函数只是简单调用另一个函数，没有增加任何价值
-
+- 例如 `commands/` 里很多函数只是 `state.service.method()` 的透传
+**冗余的 match 分支**：
+- `AppType` 的 match 在 `McpApps`（`src-tauri/src/app_config.rs:24`）、`VisibleApps`（`src-tauri/src/settings.rs:66`）、`CommonConfigSnippets`（`src-tauri/src/app_config.rs:441`）里重复出现
+- 每次加新工具都要改 10+ 个 match
 ### 6.2 过度抽象模式
-
 **为了"未来可能需要"而加的抽象**：
-- `CommonConfigSnippets` — 理论上是跨工具共享的配置片段，但实际使用率不高
+- `CommonConfigSnippets`（`src-tauri/src/app_config.rs:419`）— 理论上是跨工具共享的配置片段，但实际使用率不高
 - 一些 trait 定义了接口但只有一个实现
-
 **深层嵌套的类型定义**：
-- `Provider` → `ProviderMeta` → `ProviderMetaInner` → ...
+- `Provider`（`src-tauri/src/provider.rs:10`）→ `ProviderMeta` → `ProviderMetaInner` → ...
 - 层级太深，阅读困难
-
+**动态类型滥用**：
+- `Provider.settings_config: Value`（`src-tauri/src/provider.rs:14`）是 `serde_json::Value`，不是强类型
+- 运行时才知道配置是否合法，编译器帮不上忙
+- 对比：如果用 `enum ProviderSettings { Anthropic(AnthropicConfig), OpenAI(OpenAIConfig), ... }` 会更安全
 ### 6.3 命名和组织问题
-
 **不一致的命名约定**：
 - 有的用 `xxx_config`，有的用 `xxx_settings`
 - 有的函数叫 `get_xxx`，有的叫 `read_xxx`，有的叫 `fetch_xxx`
-- 错误消息有的中文有的英文
-
+- 错误消息有的中文有的英文（`src-tauri/src/error.rs:29` 的 `Localized` 变体试图解决这个问题，但不彻底）
 **模糊的模块边界**：
-- `services/` 和 `commands/` 的职责划分不清晰
+- `services/`（`src-tauri/src/services/mod.rs`）和 `commands/`（`src-tauri/src/commands/mod.rs`）的职责划分不清晰
 - 有些逻辑放在 `services/` 里，有些直接放在 `commands/` 里
-
+- `lib.rs` 里的 `initialize_common_config_snippets()`（`src-tauri/src/lib.rs:1601`）应该在 services 层
 **放错地方的代码**：
-- 一些通用工具函数放在了具体的业务模块里
-- 一些配置相关的代码放在了 proxy 模块里
-
-### 6.4 具体案例清单
+- `cleanup_before_exit()`（`src-tauri/src/lib.rs:1513`）是代理相关的逻辑，但放在 lib.rs
+- `restore_proxy_state_on_startup()`（`src-tauri/src/lib.rs:1558`）同理
+- `is_chinese_locale()`（`src-tauri/src/lib.rs:1685`）是通用工具函数，但放在 lib.rs
 
 | 文件 | 问题 | 建议 |
 |------|------|------|
-| `lib.rs:1-100` | 35+ 个 `mod` 声明 | 按功能分组，用 `mod xxx;` + `pub use xxx::*;` |
-| `lib.rs:119-1826` | 初始化逻辑太长 | 拆分成 `init_database()`, `init_plugins()`, `register_commands()` |
-| `App.tsx:1-100` | 14 个视图在 switch 里 | 用 React Router 或状态机 |
-| `codex_config.rs` 全文 | 66.5KB 太大 | 拆分成 `codex_config/read.rs`, `codex_config/write.rs`, `codex_config/migrate.rs` |
+| `lib.rs:1-36` | 35+ 个 `mod` 声明全在顶层 | 按功能分组：core/、tools/、ui/ 子目录 |
+| `lib.rs:284-1070` | `.setup()` 闭包 786 行 | 拆分成 `init_database()`, `init_plugins()`, `seed_data()`, `restore_state()` |
+| `lib.rs:1072-1377` | 305 个命令注册在一行 | 按模块分组，每组一个 `invoke_handler` 或用宏 |
+| `lib.rs:1513-1547` | `cleanup_before_exit()` 放在 lib.rs | 移到 `services/proxy.rs` |
+| `lib.rs:1558-1598` | `restore_proxy_state_on_startup()` 放在 lib.rs | 移到 `services/proxy.rs` |
+| `lib.rs:1601-1678` | `initialize_common_config_snippets()` 放在 lib.rs | 移到 `services/config.rs` |
+| `lib.rs:1685-1691` | `is_chinese_locale()` 放在 lib.rs | 移到 `config.rs` 或 `utils/` |
+| `App.tsx:1-1605` | 14 个视图在 switch 里 | 用 React Router 或状态机库 |
+| `codex_config.rs` 全文 | 66.5KB 太大 | 拆分成 `codex/` 目录（read.rs, write.rs, migrate.rs） |
 | `claude_desktop_config.rs` 全文 | 61.5KB 太大 | 同上 |
-| 7 个 config 模块 | 重复的读写逻辑 | 抽取 `ConfigReader` trait |
+| `services/proxy.rs:55` | `ProxyService` 3910 行 | 拆分成 takeover.rs, hot_switch.rs, config.rs |
+| 7 个 config 模块 | 重复的读写逻辑 | 抽取 `ToolConfig` trait |
 | 7 个 preset 文件 | 287KB TypeScript 数据 | 移到 JSON 文件，运行时加载 |
-| `provider.rs` | `settings_config: Value` | 考虑用强类型 enum |
-
----
-
-## 第 7 章：重构路线图
-
-### 7.1 低风险清理（先做，1-2 天）
-
+| `provider.rs:14` | `settings_config: Value` 动态类型 | 考虑用强类型 enum |
+| `app_config.rs:24,66,441` | `AppType` match 重复 10+ 处 | 用 trait 或 visitor 模式统一 |
+| `error.rs:8` | `Config(String)` 太宽泛 | 拆分成更具体的变体 |
+| `settings.rs:5` | `OnceLock<RwLock<>>` + `unwrap()` | 用 `parking_lot::RwLock` 避免 poisoned panic |
 **删除死代码**：
 - 搜索 `#[allow(dead_code)]` 和未使用的函数
 - 删除注释掉的代码块
-
+- 删除 `lib.rs:38` 里重复的 `pub use` 导出（很多已经在 `commands/mod.rs` 里导出过）
 **统一命名**：
 - `get_xxx` / `read_xxx` / `fetch_xxx` 统一为 `read_xxx`
 - `xxx_config` / `xxx_settings` 统一为 `xxx_config`
-- 错误消息统一为英文（或统一为中文）
-
+- 错误消息统一为英文（或统一为中文），不要混用
 **提取重复模式**：
 - 7 个 config 模块的 `read → parse → modify → write` 骨架抽取为公共函数
 - 7 个 preset 文件的结构抽取为公共模板
-
+- `AppType` 的 match 分支（`app_config.rs:24,66,441`）抽取为 trait 方法
 ### 7.2 中等重构（3-5 天）
-
 **拆分过大的文件**：
-- `lib.rs` → `init.rs`（初始化）+ `commands.rs`（命令注册）+ `lib.rs`（模块声明）
-- `App.tsx` → 每个视图一个文件 + `AppRouter.tsx`
-- `codex_config.rs` → `codex/` 目录
-- `claude_desktop_config.rs` → `claude_desktop/` 目录
-
+- `lib.rs`（1826 行）→ `init.rs`（初始化逻辑 `lib.rs:284-1070`）+ `commands.rs`（命令注册 `lib.rs:1072-1377`）+ `lib.rs`（仅模块声明 `lib.rs:1-36`）
+- `App.tsx`（1605 行）→ 每个视图一个文件 + `AppRouter.tsx`
+- `codex_config.rs`（66.5KB）→ `codex/` 目录
+- `claude_desktop_config.rs`（61.5KB）→ `claude_desktop/` 目录
+- `services/proxy.rs`（3910 行）→ 拆分成 `takeover.rs`, `hot_switch.rs`, `config.rs`
 **统一 config 模块的结构**：
 
 ```rust
@@ -789,9 +789,10 @@ impl ToolConfig for ClaudeConfig { ... }
 **简化前端 hooks 层**：
 - 合并 `useSettings` + `useSettingsForm` + `useDirectorySettings`
 - 抽取公共的 `useTauriCommand` hook
-
+## 第 7 章：重构路线图
+### 7.1 低风险清理（先做，1-2 天）
 ### 7.3 架构级重构（最后做，慎重，1-2 周）
-
+### 7.2 中等重构（3-5 天）
 **Provider 管理的统一抽象**：
 - 定义 `ProviderManager` trait
 - 每个工具有自己的 `ProviderManager` 实现
