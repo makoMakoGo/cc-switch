@@ -523,6 +523,16 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**CustomEndpoint**（`settings.rs:14`）：
+```rust
+pub struct CustomEndpoint {  // settings.rs:14
+    pub url: String,           // 端点 URL
+    pub added_at: i64,         // 添加时间
+    pub last_used: Option<i64>, // 上次使用时间
+}
+```
+- 历史兼容，实际存储在 `provider.meta.custom_endpoints`
+- 用于自定义 API 端点管理
 **WebDavSyncStatus**（`settings.rs:82`）：
 ```rust
 pub struct WebDavSyncStatus {  // settings.rs:82
@@ -591,6 +601,16 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**CustomEndpoint**（`settings.rs:14`）：
+```rust
+pub struct CustomEndpoint {  // settings.rs:14
+    pub url: String,           // 端点 URL
+    pub added_at: i64,         // 添加时间
+    pub last_used: Option<i64>, // 上次使用时间
+}
+```
+- 历史兼容，实际存储在 `provider.meta.custom_endpoints`
+- 用于自定义 API 端点管理
 **WebDavSyncStatus**（`settings.rs:82`）：
 ```rust
 pub struct WebDavSyncStatus {  // settings.rs:82
