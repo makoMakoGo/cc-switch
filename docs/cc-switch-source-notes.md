@@ -1175,6 +1175,19 @@ CREATE TABLE IF NOT EXISTS providers (
     PRIMARY KEY (id, app_type)
 )
 ```
+**provider_endpoints 表**（`schema.rs:50`）：
+```sql
+CREATE TABLE IF NOT EXISTS provider_endpoints (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    provider_id TEXT NOT NULL,
+    app_type TEXT NOT NULL,
+    url TEXT NOT NULL,
+    added_at INTEGER,
+    FOREIGN KEY (provider_id, app_type) REFERENCES providers(id, app_type) ON DELETE CASCADE
+)
+```
+- 外键关联到 `providers` 表（`ON DELETE CASCADE`）
+- 用于存储自定义 API 端点
 **mcp_servers 表**（`schema.rs:64`）：
 ```sql
 CREATE TABLE IF NOT EXISTS mcp_servers (
