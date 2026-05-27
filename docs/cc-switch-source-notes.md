@@ -2305,6 +2305,24 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**Rust 代理类型**（`proxy/types.rs`，496 行）：
+```rust
+pub struct ProxyConfig {  // proxy/types.rs:5
+    pub listen_address: String,        // 默认 "127.0.0.1"
+    pub listen_port: u16,              // 默认 15721
+    pub max_retries: u8,               // 默认 3
+    pub request_timeout: u64,          // 已废弃，保留兼容
+    pub enable_logging: bool,          // 默认 true
+    pub live_takeover_active: bool,    // 是否正在接管
+    pub streaming_first_byte_timeout: u64,  // 默认 60 秒
+    pub streaming_idle_timeout: u64,   // 默认 120 秒
+    pub non_streaming_timeout: u64,    // 默认 600 秒
+}
+```
+- 默认监听端口：15721（较少占用的高位端口）
+- `streaming_first_byte_timeout`：等待首个数据块的最大时间（1-120 秒）
+- `streaming_idle_timeout`：两个数据块之间的最大间隔（60-600 秒）
+- `non_streaming_timeout`：非流式请求的总超时时间（60-1200 秒）
 **前端 API 类型**（`src/lib/api/types.ts`，10 行）：
 ```typescript
 export type AppId =  // types.ts:2
