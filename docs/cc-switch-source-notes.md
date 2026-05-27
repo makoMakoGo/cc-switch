@@ -1234,6 +1234,22 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**useImportExport**（`src/hooks/useImportExport.ts`，204 行）：
+```typescript
+export type ImportStatus = "idle" | "importing" | "success" | "partial-success" | "error";
+export interface UseImportExportResult {  // useImportExport.ts:18
+    selectedFile: string;
+    status: ImportStatus;
+    errorMessage: string | null;
+    backupId: string | null;
+    isImporting: boolean;
+    selectImportFile: () => Promise<void>;
+    importConfig: () => Promise<void>;
+    exportConfig: () => Promise<void>;
+}
+```
+- 状态机：idle → importing → success/partial-success/error
+- `syncCurrentProvidersLiveSafe` 在导入成功后同步 live 配置
 **useSkills**（`src/hooks/useSkills.ts`，359 行）：
 - `useInstalledSkills()`（`useSkills.ts:24`）— 查询所有已安装 Skills（`staleTime: Infinity`）
 - `useSkillBackups()`（`useSkills.ts:33`）— 查询 Skills 备份
