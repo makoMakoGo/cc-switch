@@ -558,6 +558,53 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**auth.ts**（`src/lib/api/auth.ts`，107 行）：
+```typescript
+// src/lib/api/auth.ts:3
+export type ManagedAuthProvider = "github_copilot" | "codex_oauth";
+// src/lib/api/auth.ts:5
+export interface ManagedAuthAccount {
+    id: string;
+    provider: ManagedAuthProvider;
+    login: string;
+    avatar_url: string | null;
+    authenticated_at: number;
+    is_default: boolean;
+    github_domain: string;
+}
+// src/lib/api/auth.ts:15
+export interface ManagedAuthStatus {
+    provider: ManagedAuthProvider;
+    authenticated: boolean;
+    default_account_id: string | null;
+    migration_error?: string | null;
+    accounts: ManagedAuthAccount[];
+}
+// src/lib/api/auth.ts:23
+export interface ManagedAuthDeviceCodeResponse {
+    provider: ManagedAuthProvider;
+    device_code: string;
+    user_code: string;
+    verification_uri: string;
+    expires_in: number;
+    interval: number;
+}
+export async function authStartLogin(authProvider: ManagedAuthProvider, githubDomain?: string): Promise<ManagedAuthDeviceCodeResponse>;
+export async function authPollForAccount(authProvider: ManagedAuthProvider, deviceCode: string): Promise<ManagedAuthAccount>;
+export async function authLogout(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
+export async function authSetDefault(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
+export async function authGetStatus(authProvider: ManagedAuthProvider): Promise<ManagedAuthStatus>;
+```
+- 统一的托管认证 API（支持 GitHub Copilot 和 Codex OAuth）
+- `ManagedAuthProvider` 类型：`"github_copilot"` 或 `"codex_oauth"`
+- `ManagedAuthAccount` — 托管认证账号（id、provider、login、avatar_url、authenticated_at、is_default、github_domain）
+- `ManagedAuthStatus` — 认证状态（authenticated、default_account_id、accounts）
+- `ManagedAuthDeviceCodeResponse` — 设备码流程响应
+- `authStartLogin()` — 启动登录流程
+- `authPollForAccount()` — 轮询账号
+- `authLogout()` — 登出
+- `authSetDefault()` — 设置默认账号
+- `authGetStatus()` — 获取认证状态
 **failoverApi**（`src/lib/api/failover.ts`，100 行）：
 ```typescript
 // src/lib/api/failover.ts:23
@@ -1025,6 +1072,53 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**auth.ts**（`src/lib/api/auth.ts`，107 行）：
+```typescript
+// src/lib/api/auth.ts:3
+export type ManagedAuthProvider = "github_copilot" | "codex_oauth";
+// src/lib/api/auth.ts:5
+export interface ManagedAuthAccount {
+    id: string;
+    provider: ManagedAuthProvider;
+    login: string;
+    avatar_url: string | null;
+    authenticated_at: number;
+    is_default: boolean;
+    github_domain: string;
+}
+// src/lib/api/auth.ts:15
+export interface ManagedAuthStatus {
+    provider: ManagedAuthProvider;
+    authenticated: boolean;
+    default_account_id: string | null;
+    migration_error?: string | null;
+    accounts: ManagedAuthAccount[];
+}
+// src/lib/api/auth.ts:23
+export interface ManagedAuthDeviceCodeResponse {
+    provider: ManagedAuthProvider;
+    device_code: string;
+    user_code: string;
+    verification_uri: string;
+    expires_in: number;
+    interval: number;
+}
+export async function authStartLogin(authProvider: ManagedAuthProvider, githubDomain?: string): Promise<ManagedAuthDeviceCodeResponse>;
+export async function authPollForAccount(authProvider: ManagedAuthProvider, deviceCode: string): Promise<ManagedAuthAccount>;
+export async function authLogout(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
+export async function authSetDefault(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
+export async function authGetStatus(authProvider: ManagedAuthProvider): Promise<ManagedAuthStatus>;
+```
+- 统一的托管认证 API（支持 GitHub Copilot 和 Codex OAuth）
+- `ManagedAuthProvider` 类型：`"github_copilot"` 或 `"codex_oauth"`
+- `ManagedAuthAccount` — 托管认证账号（id、provider、login、avatar_url、authenticated_at、is_default、github_domain）
+- `ManagedAuthStatus` — 认证状态（authenticated、default_account_id、accounts）
+- `ManagedAuthDeviceCodeResponse` — 设备码流程响应
+- `authStartLogin()` — 启动登录流程
+- `authPollForAccount()` — 轮询账号
+- `authLogout()` — 登出
+- `authSetDefault()` — 设置默认账号
+- `authGetStatus()` — 获取认证状态
 **failoverApi**（`src/lib/api/failover.ts`，100 行）：
 ```typescript
 // src/lib/api/failover.ts:23
@@ -1869,6 +1963,53 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**auth.ts**（`src/lib/api/auth.ts`，107 行）：
+```typescript
+// src/lib/api/auth.ts:3
+export type ManagedAuthProvider = "github_copilot" | "codex_oauth";
+// src/lib/api/auth.ts:5
+export interface ManagedAuthAccount {
+    id: string;
+    provider: ManagedAuthProvider;
+    login: string;
+    avatar_url: string | null;
+    authenticated_at: number;
+    is_default: boolean;
+    github_domain: string;
+}
+// src/lib/api/auth.ts:15
+export interface ManagedAuthStatus {
+    provider: ManagedAuthProvider;
+    authenticated: boolean;
+    default_account_id: string | null;
+    migration_error?: string | null;
+    accounts: ManagedAuthAccount[];
+}
+// src/lib/api/auth.ts:23
+export interface ManagedAuthDeviceCodeResponse {
+    provider: ManagedAuthProvider;
+    device_code: string;
+    user_code: string;
+    verification_uri: string;
+    expires_in: number;
+    interval: number;
+}
+export async function authStartLogin(authProvider: ManagedAuthProvider, githubDomain?: string): Promise<ManagedAuthDeviceCodeResponse>;
+export async function authPollForAccount(authProvider: ManagedAuthProvider, deviceCode: string): Promise<ManagedAuthAccount>;
+export async function authLogout(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
+export async function authSetDefault(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
+export async function authGetStatus(authProvider: ManagedAuthProvider): Promise<ManagedAuthStatus>;
+```
+- 统一的托管认证 API（支持 GitHub Copilot 和 Codex OAuth）
+- `ManagedAuthProvider` 类型：`"github_copilot"` 或 `"codex_oauth"`
+- `ManagedAuthAccount` — 托管认证账号（id、provider、login、avatar_url、authenticated_at、is_default、github_domain）
+- `ManagedAuthStatus` — 认证状态（authenticated、default_account_id、accounts）
+- `ManagedAuthDeviceCodeResponse` — 设备码流程响应
+- `authStartLogin()` — 启动登录流程
+- `authPollForAccount()` — 轮询账号
+- `authLogout()` — 登出
+- `authSetDefault()` — 设置默认账号
+- `authGetStatus()` — 获取认证状态
 **failoverApi**（`src/lib/api/failover.ts`，100 行）：
 ```typescript
 // src/lib/api/failover.ts:23
@@ -2334,6 +2475,53 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**auth.ts**（`src/lib/api/auth.ts`，107 行）：
+```typescript
+// src/lib/api/auth.ts:3
+export type ManagedAuthProvider = "github_copilot" | "codex_oauth";
+// src/lib/api/auth.ts:5
+export interface ManagedAuthAccount {
+    id: string;
+    provider: ManagedAuthProvider;
+    login: string;
+    avatar_url: string | null;
+    authenticated_at: number;
+    is_default: boolean;
+    github_domain: string;
+}
+// src/lib/api/auth.ts:15
+export interface ManagedAuthStatus {
+    provider: ManagedAuthProvider;
+    authenticated: boolean;
+    default_account_id: string | null;
+    migration_error?: string | null;
+    accounts: ManagedAuthAccount[];
+}
+// src/lib/api/auth.ts:23
+export interface ManagedAuthDeviceCodeResponse {
+    provider: ManagedAuthProvider;
+    device_code: string;
+    user_code: string;
+    verification_uri: string;
+    expires_in: number;
+    interval: number;
+}
+export async function authStartLogin(authProvider: ManagedAuthProvider, githubDomain?: string): Promise<ManagedAuthDeviceCodeResponse>;
+export async function authPollForAccount(authProvider: ManagedAuthProvider, deviceCode: string): Promise<ManagedAuthAccount>;
+export async function authLogout(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
+export async function authSetDefault(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
+export async function authGetStatus(authProvider: ManagedAuthProvider): Promise<ManagedAuthStatus>;
+```
+- 统一的托管认证 API（支持 GitHub Copilot 和 Codex OAuth）
+- `ManagedAuthProvider` 类型：`"github_copilot"` 或 `"codex_oauth"`
+- `ManagedAuthAccount` — 托管认证账号（id、provider、login、avatar_url、authenticated_at、is_default、github_domain）
+- `ManagedAuthStatus` — 认证状态（authenticated、default_account_id、accounts）
+- `ManagedAuthDeviceCodeResponse` — 设备码流程响应
+- `authStartLogin()` — 启动登录流程
+- `authPollForAccount()` — 轮询账号
+- `authLogout()` — 登出
+- `authSetDefault()` — 设置默认账号
+- `authGetStatus()` — 获取认证状态
 **failoverApi**（`src/lib/api/failover.ts`，100 行）：
 ```typescript
 // src/lib/api/failover.ts:23
@@ -4123,6 +4311,53 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**auth.ts**（`src/lib/api/auth.ts`，107 行）：
+```typescript
+// src/lib/api/auth.ts:3
+export type ManagedAuthProvider = "github_copilot" | "codex_oauth";
+// src/lib/api/auth.ts:5
+export interface ManagedAuthAccount {
+    id: string;
+    provider: ManagedAuthProvider;
+    login: string;
+    avatar_url: string | null;
+    authenticated_at: number;
+    is_default: boolean;
+    github_domain: string;
+}
+// src/lib/api/auth.ts:15
+export interface ManagedAuthStatus {
+    provider: ManagedAuthProvider;
+    authenticated: boolean;
+    default_account_id: string | null;
+    migration_error?: string | null;
+    accounts: ManagedAuthAccount[];
+}
+// src/lib/api/auth.ts:23
+export interface ManagedAuthDeviceCodeResponse {
+    provider: ManagedAuthProvider;
+    device_code: string;
+    user_code: string;
+    verification_uri: string;
+    expires_in: number;
+    interval: number;
+}
+export async function authStartLogin(authProvider: ManagedAuthProvider, githubDomain?: string): Promise<ManagedAuthDeviceCodeResponse>;
+export async function authPollForAccount(authProvider: ManagedAuthProvider, deviceCode: string): Promise<ManagedAuthAccount>;
+export async function authLogout(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
+export async function authSetDefault(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
+export async function authGetStatus(authProvider: ManagedAuthProvider): Promise<ManagedAuthStatus>;
+```
+- 统一的托管认证 API（支持 GitHub Copilot 和 Codex OAuth）
+- `ManagedAuthProvider` 类型：`"github_copilot"` 或 `"codex_oauth"`
+- `ManagedAuthAccount` — 托管认证账号（id、provider、login、avatar_url、authenticated_at、is_default、github_domain）
+- `ManagedAuthStatus` — 认证状态（authenticated、default_account_id、accounts）
+- `ManagedAuthDeviceCodeResponse` — 设备码流程响应
+- `authStartLogin()` — 启动登录流程
+- `authPollForAccount()` — 轮询账号
+- `authLogout()` — 登出
+- `authSetDefault()` — 设置默认账号
+- `authGetStatus()` — 获取认证状态
 **failoverApi**（`src/lib/api/failover.ts`，100 行）：
 ```typescript
 // src/lib/api/failover.ts:23
@@ -5113,6 +5348,53 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**auth.ts**（`src/lib/api/auth.ts`，107 行）：
+```typescript
+// src/lib/api/auth.ts:3
+export type ManagedAuthProvider = "github_copilot" | "codex_oauth";
+// src/lib/api/auth.ts:5
+export interface ManagedAuthAccount {
+    id: string;
+    provider: ManagedAuthProvider;
+    login: string;
+    avatar_url: string | null;
+    authenticated_at: number;
+    is_default: boolean;
+    github_domain: string;
+}
+// src/lib/api/auth.ts:15
+export interface ManagedAuthStatus {
+    provider: ManagedAuthProvider;
+    authenticated: boolean;
+    default_account_id: string | null;
+    migration_error?: string | null;
+    accounts: ManagedAuthAccount[];
+}
+// src/lib/api/auth.ts:23
+export interface ManagedAuthDeviceCodeResponse {
+    provider: ManagedAuthProvider;
+    device_code: string;
+    user_code: string;
+    verification_uri: string;
+    expires_in: number;
+    interval: number;
+}
+export async function authStartLogin(authProvider: ManagedAuthProvider, githubDomain?: string): Promise<ManagedAuthDeviceCodeResponse>;
+export async function authPollForAccount(authProvider: ManagedAuthProvider, deviceCode: string): Promise<ManagedAuthAccount>;
+export async function authLogout(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
+export async function authSetDefault(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
+export async function authGetStatus(authProvider: ManagedAuthProvider): Promise<ManagedAuthStatus>;
+```
+- 统一的托管认证 API（支持 GitHub Copilot 和 Codex OAuth）
+- `ManagedAuthProvider` 类型：`"github_copilot"` 或 `"codex_oauth"`
+- `ManagedAuthAccount` — 托管认证账号（id、provider、login、avatar_url、authenticated_at、is_default、github_domain）
+- `ManagedAuthStatus` — 认证状态（authenticated、default_account_id、accounts）
+- `ManagedAuthDeviceCodeResponse` — 设备码流程响应
+- `authStartLogin()` — 启动登录流程
+- `authPollForAccount()` — 轮询账号
+- `authLogout()` — 登出
+- `authSetDefault()` — 设置默认账号
+- `authGetStatus()` — 获取认证状态
 **failoverApi**（`src/lib/api/failover.ts`，100 行）：
 ```typescript
 // src/lib/api/failover.ts:23
