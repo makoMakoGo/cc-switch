@@ -3342,6 +3342,29 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**gemini_url.rs**（`proxy/gemini_url.rs`，704 行，25.8KB）：
+```rust
+// proxy/gemini_url.rs:17
+pub fn normalize_gemini_model_id(model: &str) -> &str {
+    let trimmed = model.strip_prefix('/').unwrap_or(model);
+    trimmed.strip_prefix("models/").unwrap_or(trimmed)
+}
+pub fn resolve_gemini_native_url(base_url: &str, endpoint: &str, is_full_url: bool) -> String;
+```
+- Gemini Native URL 辅助模块
+- 将 legacy Gemini/OpenAI-compatible base URL 规范化为 Gemini Native `models/*:generateContent` 端点
+- `normalize_gemini_model_id()` — 规范化 Gemini 模型标识符（剥离 `models/` 前缀）
+- `resolve_gemini_native_url()` — 解析 Gemini Native URL
+- 处理 URL 合并和查询参数合并
+**model_mapper.rs**（`proxy/model_mapper.rs`，312 行，10.4KB）：
+- 模型映射器
+- 将请求中的模型名称映射到实际的模型标识符
+**body_filter.rs**（`proxy/body_filter.rs`，339 行，10.5KB）：
+- 请求体过滤器
+- 过滤和修改请求体中的字段
+**cache_injector.rs**（`proxy/cache_injector.rs`，377 行，12.0KB）：
+- 缓存注入器
+- 向请求中注入缓存控制头
 **thinking_rectifier.rs**（`proxy/thinking_rectifier.rs`，716 行，23.1KB）：
 ```rust
 // proxy/thinking_rectifier.rs:11
@@ -3842,6 +3865,29 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**gemini_url.rs**（`proxy/gemini_url.rs`，704 行，25.8KB）：
+```rust
+// proxy/gemini_url.rs:17
+pub fn normalize_gemini_model_id(model: &str) -> &str {
+    let trimmed = model.strip_prefix('/').unwrap_or(model);
+    trimmed.strip_prefix("models/").unwrap_or(trimmed)
+}
+pub fn resolve_gemini_native_url(base_url: &str, endpoint: &str, is_full_url: bool) -> String;
+```
+- Gemini Native URL 辅助模块
+- 将 legacy Gemini/OpenAI-compatible base URL 规范化为 Gemini Native `models/*:generateContent` 端点
+- `normalize_gemini_model_id()` — 规范化 Gemini 模型标识符（剥离 `models/` 前缀）
+- `resolve_gemini_native_url()` — 解析 Gemini Native URL
+- 处理 URL 合并和查询参数合并
+**model_mapper.rs**（`proxy/model_mapper.rs`，312 行，10.4KB）：
+- 模型映射器
+- 将请求中的模型名称映射到实际的模型标识符
+**body_filter.rs**（`proxy/body_filter.rs`，339 行，10.5KB）：
+- 请求体过滤器
+- 过滤和修改请求体中的字段
+**cache_injector.rs**（`proxy/cache_injector.rs`，377 行，12.0KB）：
+- 缓存注入器
+- 向请求中注入缓存控制头
 **thinking_rectifier.rs**（`proxy/thinking_rectifier.rs`，716 行，23.1KB）：
 ```rust
 // proxy/thinking_rectifier.rs:11
