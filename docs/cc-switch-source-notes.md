@@ -1152,6 +1152,29 @@ pub struct Database {  // database/mod.rs:76
     pub(crate) conn: Mutex<Connection>,
 }
 ```
+**schema.rs 模块**（`database/schema.rs`，2051 行，77.8KB）：
+- `create_tables()`（`schema.rs:18`）— 创建所有数据库表
+- `create_tables_on_conn()`（`schema.rs:24`）— 在指定连接上创建表（供迁移和测试使用）
+**providers 表结构**（`schema.rs:27`）：
+```sql
+CREATE TABLE IF NOT EXISTS providers (
+    id TEXT NOT NULL,
+    app_type TEXT NOT NULL,
+    name TEXT NOT NULL,
+    settings_config TEXT NOT NULL,
+    website_url TEXT,
+    category TEXT,
+    created_at INTEGER,
+    sort_index INTEGER,
+    notes TEXT,
+    icon TEXT,
+    icon_color TEXT,
+    meta TEXT NOT NULL DEFAULT '{}',
+    is_current BOOLEAN NOT NULL DEFAULT 0,
+    in_failover_queue BOOLEAN NOT NULL DEFAULT 0,
+    PRIMARY KEY (id, app_type)
+)
+```
 **Database::init()**（`database/mod.rs:95`）— 初始化流程：
 ```rust
 pub fn init() -> Result<Self, AppError> {  // database/mod.rs:95
