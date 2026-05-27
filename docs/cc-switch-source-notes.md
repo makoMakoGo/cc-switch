@@ -1175,6 +1175,44 @@ CREATE TABLE IF NOT EXISTS providers (
     PRIMARY KEY (id, app_type)
 )
 ```
+**mcp_servers 表**（`schema.rs:64`）：
+```sql
+CREATE TABLE IF NOT EXISTS mcp_servers (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    server_config TEXT NOT NULL,
+    description TEXT,
+    homepage TEXT,
+    docs TEXT,
+    tags TEXT NOT NULL DEFAULT '[]',
+    enabled_claude BOOLEAN NOT NULL DEFAULT 0,
+    enabled_codex BOOLEAN NOT NULL DEFAULT 0,
+    enabled_gemini BOOLEAN NOT NULL DEFAULT 0,
+    enabled_opencode BOOLEAN NOT NULL DEFAULT 0,
+    enabled_hermes BOOLEAN NOT NULL DEFAULT 0
+)
+```
+**skills 表**（`schema.rs:84`）：
+```sql
+CREATE TABLE IF NOT EXISTS skills (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    directory TEXT NOT NULL,
+    repo_owner TEXT,
+    repo_name TEXT,
+    repo_branch TEXT DEFAULT 'main',
+    readme_url TEXT,
+    enabled_claude BOOLEAN NOT NULL DEFAULT 0,
+    enabled_codex BOOLEAN NOT NULL DEFAULT 0,
+    enabled_gemini BOOLEAN NOT NULL DEFAULT 0,
+    enabled_opencode BOOLEAN NOT NULL DEFAULT 0,
+    enabled_hermes BOOLEAN NOT NULL DEFAULT 0,
+    installed_at INTEGER NOT NULL DEFAULT 0,
+    content_hash TEXT,
+    updated_at INTEGER NOT NULL DEFAULT 0
+)
+```
 **Database::init()**（`database/mod.rs:95`）— 初始化流程：
 ```rust
 pub fn init() -> Result<Self, AppError> {  // database/mod.rs:95
