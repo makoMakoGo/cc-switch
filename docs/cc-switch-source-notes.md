@@ -1210,6 +1210,40 @@ CREATE TABLE IF NOT EXISTS mcp_servers (
     enabled_hermes BOOLEAN NOT NULL DEFAULT 0
 )
 ```
+**proxy_request_logs 表**（`schema.rs:184`）：
+```sql
+CREATE TABLE IF NOT EXISTS proxy_request_logs (
+    request_id TEXT PRIMARY KEY,
+    provider_id TEXT NOT NULL,
+    app_type TEXT NOT NULL,
+    model TEXT NOT NULL,
+    request_model TEXT,
+    input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens INTEGER NOT NULL DEFAULT 0,
+    cache_read_tokens INTEGER NOT NULL DEFAULT 0,
+    cache_creation_tokens INTEGER NOT NULL DEFAULT 0,
+    input_cost_usd TEXT NOT NULL DEFAULT '0',
+    output_cost_usd TEXT NOT NULL DEFAULT '0',
+    total_cost_usd TEXT NOT NULL DEFAULT '0',
+    latency_ms INTEGER NOT NULL,
+    first_token_ms INTEGER,
+    duration_ms INTEGER,
+    status_code INTEGER NOT NULL,
+    error_message TEXT,
+    session_id TEXT,
+    provider_type TEXT,
+    is_streaming INTEGER NOT NULL DEFAULT 0,
+    cost_multiplier TEXT NOT NULL DEFAULT '1.0',
+    created_at INTEGER NOT NULL,
+    data_source TEXT NOT NULL DEFAULT 'proxy'
+)
+```
+**索引**（`schema.rs:198-216`）：
+- `idx_request_logs_provider`（`provider_id, app_type`）
+- `idx_request_logs_created_at`（`created_at`）
+- `idx_request_logs_model`（`model`）
+- `idx_request_logs_session`（`session_id`）
+- `idx_request_logs_status`（`status_code`）
 **settings 表**（`schema.rs:118`）：
 ```sql
 CREATE TABLE IF NOT EXISTS settings (
