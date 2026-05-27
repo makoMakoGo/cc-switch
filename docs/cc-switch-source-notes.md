@@ -1234,6 +1234,11 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**useMcp**（`src/hooks/useMcp.ts`，75 行）：
+- `useAllMcpServers()`（`useMcp.ts:9`）— 查询所有 MCP 服务器（统一管理）
+- `useUpsertMcpServer()`（`useMcp.ts:19`）— 添加/更新 MCP 服务器
+- `useToggleMcpApp()`（`useMcp.ts:32`）— 切换 MCP 服务器在特定应用的启用状态
+- 使用 `mcpApi.getAllServers()` / `mcpApi.upsertUnifiedServer()` / `mcpApi.toggleApp()`
 **useGlobalProxy**（`src/hooks/useGlobalProxy.ts`，110 行）：
 - `useGlobalProxyUrl()`（`useGlobalProxy.ts:24`）— 获取全局代理 URL（`staleTime: 30s`）
 - `useSetGlobalProxyUrl()`（`useGlobalProxy.ts:35`）— 设置全局代理 URL
