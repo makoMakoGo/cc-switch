@@ -2305,6 +2305,35 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**providersApi**（`src/lib/api/providers.ts`，237 行）：
+```typescript
+export const providersApi = {  // providers.ts:49
+    async getAll(appId: AppId): Promise<Record<string, Provider>> {
+        return await invoke("get_providers", { app: appId });
+    },
+    async getCurrent(appId: AppId): Promise<string> {
+        return await invoke("get_current_provider", { app: appId });
+    },
+    async add(appId: AppId, provider: Omit<Provider, "id">): Promise<Provider> {
+        return await invoke("add_provider", { app: appId, ...provider });
+    },
+    async update(provider: Provider): Promise<void> {
+        return await invoke("update_provider", { provider });
+    },
+    async remove(providerId: string): Promise<void> {
+        return await invoke("delete_provider", { providerId });
+    },
+    async switch(appType: AppId, providerId: string): Promise<SwitchResult> {
+        return await invoke("switch_provider", { appType, providerId });
+    },
+    // ... 更多方法
+};
+```
+- `ProviderSortUpdate`（`providers.ts:10`）— 排序更新接口
+- `ProviderSwitchEvent`（`providers.ts:15`）— 切换事件接口
+- `SwitchResult`（`providers.ts:20`）— 切换结果（含 warnings）
+- `ClaudeDesktopStatus`（`providers.ts:28`）— Claude Desktop 状态接口
+- `ClaudeDesktopDefaultRoute`（`providers.ts:43`）— Claude Desktop 默认路由
 **核心 Query Hooks**（`src/lib/query/queries.ts`）：
 ```typescript
 // src/lib/query/queries.ts:54
