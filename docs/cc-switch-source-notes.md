@@ -2305,6 +2305,19 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**前端 API 类型**（`src/lib/api/types.ts`，10 行）：
+```typescript
+export type AppId =  // types.ts:2
+  | "claude"
+  | "claude-desktop"
+  | "codex"
+  | "gemini"
+  | "opencode"
+  | "openclaw"
+  | "hermes";
+```
+- 前端统一使用 `AppId` 作为应用标识（与后端命令参数 `app` 一致）
+- 与后端 `AppType` 枚举对应（`app_config.rs:341`）
 **前端 Query 层**（`src/lib/query/`，10 个文件）：
 - `queries.ts`（4.2KB）— 查询 hooks（useProvidersQuery, useSettingsQuery, useUsageQuery, useSessionsQuery）
 - `mutations.ts`（10.2KB）— 变更 hooks（useAddProviderMutation, useUpdateProviderMutation, useDeleteProviderMutation, useSwitchProviderMutation）
