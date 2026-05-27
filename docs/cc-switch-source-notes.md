@@ -558,6 +558,32 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
+```typescript
+// src/lib/query/subscription.ts:8
+const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+// src/lib/query/subscription.ts:10
+export const subscriptionKeys = {
+    all: ["subscription"] as const,
+    quota: (appId: AppId) => [...subscriptionKeys.all, "quota", appId] as const,
+};
+// src/lib/query/subscription.ts:15
+export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery = false) {
+    return useQuery({
+        queryKey: subscriptionKeys.quota(appId),
+        queryFn: () => subscriptionApi.getQuota(appId),
+        enabled: enabled && ["claude", "codex", "gemini"].includes(appId),
+        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
+        staleTime: REFETCH_INTERVAL,
+        retry: 1,
+    });
+}
+```
+- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
+- `subscriptionKeys` 定义查询键（`all` 和 `quota`）
+- `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
+- `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
+- 支持自动轮询（5 分钟）与窗口 focus 重取
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 pub struct ProxyState {  // proxy/server.rs:34
@@ -851,6 +877,32 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
+```typescript
+// src/lib/query/subscription.ts:8
+const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+// src/lib/query/subscription.ts:10
+export const subscriptionKeys = {
+    all: ["subscription"] as const,
+    quota: (appId: AppId) => [...subscriptionKeys.all, "quota", appId] as const,
+};
+// src/lib/query/subscription.ts:15
+export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery = false) {
+    return useQuery({
+        queryKey: subscriptionKeys.quota(appId),
+        queryFn: () => subscriptionApi.getQuota(appId),
+        enabled: enabled && ["claude", "codex", "gemini"].includes(appId),
+        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
+        staleTime: REFETCH_INTERVAL,
+        retry: 1,
+    });
+}
+```
+- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
+- `subscriptionKeys` 定义查询键（`all` 和 `quota`）
+- `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
+- `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
+- 支持自动轮询（5 分钟）与窗口 focus 重取
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 pub struct ProxyState {  // proxy/server.rs:34
@@ -1521,6 +1573,32 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
+```typescript
+// src/lib/query/subscription.ts:8
+const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+// src/lib/query/subscription.ts:10
+export const subscriptionKeys = {
+    all: ["subscription"] as const,
+    quota: (appId: AppId) => [...subscriptionKeys.all, "quota", appId] as const,
+};
+// src/lib/query/subscription.ts:15
+export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery = false) {
+    return useQuery({
+        queryKey: subscriptionKeys.quota(appId),
+        queryFn: () => subscriptionApi.getQuota(appId),
+        enabled: enabled && ["claude", "codex", "gemini"].includes(appId),
+        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
+        staleTime: REFETCH_INTERVAL,
+        retry: 1,
+    });
+}
+```
+- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
+- `subscriptionKeys` 定义查询键（`all` 和 `quota`）
+- `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
+- `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
+- 支持自动轮询（5 分钟）与窗口 focus 重取
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 pub struct ProxyState {  // proxy/server.rs:34
@@ -1812,6 +1890,32 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
+```typescript
+// src/lib/query/subscription.ts:8
+const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+// src/lib/query/subscription.ts:10
+export const subscriptionKeys = {
+    all: ["subscription"] as const,
+    quota: (appId: AppId) => [...subscriptionKeys.all, "quota", appId] as const,
+};
+// src/lib/query/subscription.ts:15
+export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery = false) {
+    return useQuery({
+        queryKey: subscriptionKeys.quota(appId),
+        queryFn: () => subscriptionApi.getQuota(appId),
+        enabled: enabled && ["claude", "codex", "gemini"].includes(appId),
+        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
+        staleTime: REFETCH_INTERVAL,
+        retry: 1,
+    });
+}
+```
+- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
+- `subscriptionKeys` 定义查询键（`all` 和 `quota`）
+- `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
+- `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
+- 支持自动轮询（5 分钟）与窗口 focus 重取
 **ProxyState**（`proxy/server.rs:34`）：
 
 ```rust
@@ -3427,6 +3531,32 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
+```typescript
+// src/lib/query/subscription.ts:8
+const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+// src/lib/query/subscription.ts:10
+export const subscriptionKeys = {
+    all: ["subscription"] as const,
+    quota: (appId: AppId) => [...subscriptionKeys.all, "quota", appId] as const,
+};
+// src/lib/query/subscription.ts:15
+export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery = false) {
+    return useQuery({
+        queryKey: subscriptionKeys.quota(appId),
+        queryFn: () => subscriptionApi.getQuota(appId),
+        enabled: enabled && ["claude", "codex", "gemini"].includes(appId),
+        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
+        staleTime: REFETCH_INTERVAL,
+        retry: 1,
+    });
+}
+```
+- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
+- `subscriptionKeys` 定义查询键（`all` 和 `quota`）
+- `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
+- `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
+- 支持自动轮询（5 分钟）与窗口 focus 重取
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 // proxy/server.rs:34
@@ -4243,6 +4373,32 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
+```typescript
+// src/lib/query/subscription.ts:8
+const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+// src/lib/query/subscription.ts:10
+export const subscriptionKeys = {
+    all: ["subscription"] as const,
+    quota: (appId: AppId) => [...subscriptionKeys.all, "quota", appId] as const,
+};
+// src/lib/query/subscription.ts:15
+export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery = false) {
+    return useQuery({
+        queryKey: subscriptionKeys.quota(appId),
+        queryFn: () => subscriptionApi.getQuota(appId),
+        enabled: enabled && ["claude", "codex", "gemini"].includes(appId),
+        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
+        staleTime: REFETCH_INTERVAL,
+        retry: 1,
+    });
+}
+```
+- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
+- `subscriptionKeys` 定义查询键（`all` 和 `quota`）
+- `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
+- `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
+- 支持自动轮询（5 分钟）与窗口 focus 重取
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 // proxy/server.rs:34
