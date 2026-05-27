@@ -683,12 +683,12 @@ pub struct SwitchResult {
 | stream_check.rs | 80.9KB | 流式检查 |
 | subscription.rs | 1.3KB | 订阅管理 |
 | coding_plan.rs | 607B | Coding Plan |
-| mcp.rs | 16.4KB | MCP 服务器管理 |
+| mcp.rs | 16.3KB | MCP 服务器管理 |
 | prompt.rs | 8.6KB | Prompt 管理 |
 | config.rs | 9.7KB | ConfigService（配置文件读写） |
 | speedtest.rs | 5.9KB | 端点速度测试 |
-| balance.rs | 418B | 余额查询 |
-| model_fetch.rs | 414B | 模型列表获取 |
+| balance.rs | 13.7KB | 余额查询 |
+| model_fetch.rs | 13.1KB | 模型列表获取 |
 | env_checker.rs | 168B | 环境变量检查 |
 | env_manager.rs | 240B | 环境变量管理 |
 | webdav.rs | 554B | WebDAV 客户端 |
@@ -1193,10 +1193,10 @@ trait ToolConfig {
 | proxy/thinking_budget_rectifier.rs | 11.1KB | — |
 | proxy/body_filter.rs | 10.5KB | — |
 | proxy/model_mapper.rs | 10.4KB | — |
-| database/mod.rs | 9.1KB | 271 |
-| database/schema.rs | 79.7KB | 2050 |
-| database/backup.rs | 32.5KB | 860 |
-| database/migration.rs | 9.5KB | 245 |
+| database/mod.rs | 8.9KB | 271 |
+| database/schema.rs | 77.8KB | 2050 |
+| database/backup.rs | 31.7KB | 860 |
+| database/migration.rs | 9.2KB | 245 |
 | claude_desktop_config.rs | 61.4KB | 1826 |
 | codex_config.rs | 66.4KB | 2024 |
 | hermes_config.rs | 69.0KB | 1947 |
