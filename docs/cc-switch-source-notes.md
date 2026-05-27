@@ -772,8 +772,21 @@ impl Drop for ActiveConnectionGuard {
 ```
 **命名不一致的 AI Slop**：
 - `PROXY_AUTH_PLACEHOLDER`（`forwarder.rs:35`）和 `PROXY_TOKEN_PLACEHOLDER`（`services/proxy.rs:22`）值都是 `"PROXY_MANAGED"`，但常量名不同
+**transform.rs 模块**（`proxy/providers/transform.rs`，1626 行，58.3KB）：
+- Anthropic ↔ OpenAI 格式转换，用于 OpenRouter 支持
+- `strip_leading_anthropic_billing_header()`（`transform.rs:18`）— 去掉 Claude Code 的计费头
+- `is_openai_o_series()`（`transform.rs:51`）— 检测 o1/o3/o4-mini 等推理模型
+- `supports_reasoning_effort()`（`transform.rs:62`）— 检测支持 reasoning_effort 的模型
+**transform_codex_chat.rs 模块**（`providers/transform_codex_chat.rs`，2074 行，71.1KB）：
+- Codex Responses API ↔ OpenAI Chat Completions API 转换
+- `responses_to_chat_completions()`（`transform_codex_chat.rs:38`）— 核心转换函数
+- `EXTRA_CHAT_PASSTHROUGH_FIELDS`（`transform_codex_chat.rs:20`）— 透传字段列表
+**transform_gemini.rs 模块**（`providers/transform_gemini.rs`，78.1KB）：
+- Gemini API ↔ 内部格式转换
+**transform_responses.rs 模块**（`providers/transform_responses.rs`，61.5KB）：
+- OpenAI Responses API 转换
 ### 4.2 ProxyState 和 ProxyServer
-**ProxyError 枚举**（`proxy/error.rs:10`）— 14 个变体：
+**ProxyError 枚举**（`proxy/error.rs:10`）— 20 个变体：
 ```rust
 #[derive(Debug, Error)]
 pub enum ProxyError {           // proxy/error.rs:10
