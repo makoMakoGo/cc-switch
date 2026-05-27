@@ -523,6 +523,24 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**InstalledSkill**（`app_config.rs:169`）：
+```rust
+pub struct InstalledSkill {  // app_config.rs:169
+    pub id: String,                    // 唯一标识 "owner/repo:directory"
+    pub name: String,                  // 显示名称
+    pub description: Option<String>,   // 描述
+    pub directory: String,             // 安装目录名
+    pub repo_owner: Option<String>,    // 仓库所有者
+    pub repo_name: Option<String>,     // 仓库名称
+    pub repo_branch: Option<String>,   // 仓库分支
+    pub readme_url: Option<String>,    // README URL
+    pub apps: SkillApps,               // 应用启用状态
+    pub installed_at: i64,             // 安装时间
+    pub content_hash: Option<String>,  // 内容哈希（SHA-256）
+    pub updated_at: i64,               // 最近更新时间
+}
+```
+- `UnmanagedSkill`（`app_config.rs:203`）— 在应用目录中发现但未被 CC Switch 管理的 Skill
 **SyncMethod 枚举**（`services/skill.rs:28`）：
 ```rust
 pub enum SyncMethod {  // services/skill.rs:28
@@ -639,6 +657,24 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**InstalledSkill**（`app_config.rs:169`）：
+```rust
+pub struct InstalledSkill {  // app_config.rs:169
+    pub id: String,                    // 唯一标识 "owner/repo:directory"
+    pub name: String,                  // 显示名称
+    pub description: Option<String>,   // 描述
+    pub directory: String,             // 安装目录名
+    pub repo_owner: Option<String>,    // 仓库所有者
+    pub repo_name: Option<String>,     // 仓库名称
+    pub repo_branch: Option<String>,   // 仓库分支
+    pub readme_url: Option<String>,    // README URL
+    pub apps: SkillApps,               // 应用启用状态
+    pub installed_at: i64,             // 安装时间
+    pub content_hash: Option<String>,  // 内容哈希（SHA-256）
+    pub updated_at: i64,               // 最近更新时间
+}
+```
+- `UnmanagedSkill`（`app_config.rs:203`）— 在应用目录中发现但未被 CC Switch 管理的 Skill
 **SyncMethod 枚举**（`services/skill.rs:28`）：
 ```rust
 pub enum SyncMethod {  // services/skill.rs:28
