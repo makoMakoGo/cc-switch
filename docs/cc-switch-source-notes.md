@@ -948,6 +948,25 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**providers/mod.rs 模块**（`proxy/providers/mod.rs`，518 行，24 个子模块）：
+- `adapter` — 定义 `ProviderAdapter` trait
+- `auth` — 认证类型和策略
+- `claude` / `codex` / `gemini` — 各供应商适配器
+- `streaming*` — 流式响应处理
+- `transform*` — API 格式转换
+**ProviderType 枚举**（`providers/mod.rs:61`）：
+```rust
+pub enum ProviderType {            // providers/mod.rs:61
+    Claude,                        // Anthropic 官方 API
+    ClaudeAuth,                    // Claude 中转服务
+    Codex,                         // OpenAI Codex Response API
+    Gemini,                        // Google Gemini API
+    GeminiCli,                     // Google Gemini CLI (OAuth)
+    OpenRouter,                    // OpenRouter
+    GitHubCopilot,                 // GitHub Copilot (OAuth)
+    CodexOAuth,                    // ChatGPT Plus/Pro OAuth
+}
+```
 **hyper_client 模块**（`proxy/hyper_client.rs`，740 行）：
 - Hyper-based HTTP client for proxy forwarding
 - `OriginalHeaderCases`（`hyper_client.rs:24`）— 保留原始 header casing
