@@ -1234,6 +1234,21 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**useOpenClaw**（`src/hooks/useOpenClaw.ts`，145 行）：
+```typescript
+export const openclawKeys = {  // useOpenClaw.ts:14
+    all: ["openclaw"] as const,
+    liveProviderIds: ["openclaw", "liveProviderIds"] as const,
+    defaultModel: ["openclaw", "defaultModel"] as const,
+    env: ["openclaw", "env"] as const,
+    tools: ["openclaw", "tools"] as const,
+    agentsDefaults: ["openclaw", "agentsDefaults"] as const,
+    health: ["openclaw", "health"] as const,
+};
+```
+- `useOpenClawLiveProviderIds()`（`useOpenClaw.ts:32`）— 查询 live provider IDs
+- `openclawKeys` 集中管理查询键（SSOT）
+- `OpenClawEnvConfig`、`OpenClawToolsConfig`、`OpenClawAgentsDefaults` 类型
 **useHermes**（`src/hooks/useHermes.ts`，175 行）：
 ```typescript
 export const HERMES_WEB_OFFLINE_ERROR = "hermes_web_offline";  // useHermes.ts:20
