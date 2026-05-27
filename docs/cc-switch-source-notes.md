@@ -948,6 +948,12 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**thinking_optimizer 模块**（`proxy/thinking_optimizer.rs`，272 行）：
+- `optimize()`（`thinking_optimizer.rs:12`）— 根据模型类型自动优化 thinking 配置
+- 三路径分发：
+  - `skip`：haiku 模型直接跳过
+  - `adaptive`：opus-4-7 / opus-4-6 / sonnet-4-6 使用 adaptive thinking
+  - `legacy`：其他模型注入 enabled thinking + budget_tokens
 **thinking_budget_rectifier 模块**（`proxy/thinking_budget_rectifier.rs`，360 行）：
 - `MAX_THINKING_BUDGET: u64 = 32000`（`thinking_budget_rectifier.rs:10`）
 - `MAX_TOKENS_VALUE: u64 = 64000`（`thinking_budget_rectifier.rs:13`）
