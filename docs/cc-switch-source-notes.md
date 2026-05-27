@@ -2305,6 +2305,31 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**前端使用统计类型**（`src/types/usage.ts`，247 行）：
+```typescript
+export interface TokenUsage {  // usage.ts:3
+    inputTokens: number;
+    outputTokens: number;
+    cacheReadTokens: number;
+    cacheCreationTokens: number;
+}
+export interface RequestLog {  // usage.ts:10
+    requestId: string;
+    providerId: string;
+    appType: string;
+    model: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalCostUsd: string;
+    latencyMs: number;
+    statusCode: number;
+    createdAt: number;
+    // ... 更多字段
+}
+```
+- `SessionSyncResult`（`usage.ts:37`）— 会话同步结果
+- `DataSourceSummary`（`usage.ts:44`）— 数据源摘要
+- `PaginatedLogs`（`usage.ts:50`）— 分页日志
 **前端类型定义**（`src/types.ts`，688 行）：
 ```typescript
 export type ProviderCategory =  // types.ts:1
