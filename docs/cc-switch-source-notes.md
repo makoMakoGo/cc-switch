@@ -3626,9 +3626,40 @@ pub type WebDavAuth = Option<(String, Option<String>)>;  // webdav.rs:18
 - 大文件传输使用 300 秒超时（`TRANSFER_TIMEOUT_SECS`）
 - 常规操作使用 30 秒超时（`DEFAULT_TIMEOUT_SECS`）
 **webdav_auto_sync.rs**（`services/webdav_auto_sync.rs`，274 行，8.0KB）：
+```rust
+// services/webdav_auto_sync.rs:15
+const AUTO_SYNC_DEBOUNCE_MS: u64 = 1000;
+pub(crate) const MAX_AUTO_SYNC_WAIT_MS: u64 = 10_000;
+static DB_CHANGE_TX: OnceLock<Sender<String>> = OnceLock::new();
+static AUTO_SYNC_SUPPRESS_DEPTH: AtomicUsize = AtomicUsize::new(0);
+pub(crate) struct AutoSyncSuppressionGuard;
+impl AutoSyncSuppressionGuard {
+    pub fn new() -> Self {
+        AUTO_SYNC_SUPPRESS_DEPTH.fetch_add(1, Ordering::SeqCst);
+        Self
+    }
+}
+impl Drop for AutoSyncSuppressionGuard {
+    fn drop(&mut self) {
+        AUTO_SYNC_SUPPRESS_DEPTH.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| {
+            Some(value.saturating_sub(1))
+        });
+    }
+}
+pub(crate) fn is_auto_sync_suppressed() -> bool {
+    AUTO_SYNC_SUPPRESS_DEPTH.load(Ordering::SeqCst) > 0
+}
+```
 - WebDAV 自动同步服务
-- 定时同步和启动时同步
-- 使用 `tokio::spawn` 运行后台同步任务
+- `AUTO_SYNC_DEBOUNCE_MS = 1000`（`webdav_auto_sync.rs:15`）— 防抖延迟 1 秒
+- `MAX_AUTO_SYNC_WAIT_MS = 10_000`（`webdav_auto_sync.rs:16`）— 最大等待时间 10 秒
+- `DB_CHANGE_TX`（`webdav_auto_sync.rs:18`）— 使用 `tokio::sync::mpsc` channel 发送数据库变更通知
+- `AutoSyncSuppressionGuard`（`webdav_auto_sync.rs:21`）— RAII 守卫，抑制自动同步（用于同步操作期间避免循环触发）
+- `AUTO_SYNC_SUPPRESS_DEPTH`（`webdav_auto_sync.rs:19`）— 原子计数器，支持嵌套抑制
+- `is_auto_sync_suppressed()`（`webdav_auto_sync.rs:39`）— 检查是否处于抑制状态
+- `should_trigger_for_table()`（`webdav_auto_sync.rs:43`）— 判断指定表的变更是否应触发自动同步
+- 使用 `OnceLock` 保证 channel 单例初始化
+- 使用 `AtomicUsize` 和 `Ordering::SeqCst` 保证线程安全
 **SpeedtestService**（`services/speedtest.rs`，187 行，5.9KB）：
 ```rust
 // services/speedtest.rs:8
@@ -4300,9 +4331,40 @@ pub type WebDavAuth = Option<(String, Option<String>)>;  // webdav.rs:18
 - 大文件传输使用 300 秒超时（`TRANSFER_TIMEOUT_SECS`）
 - 常规操作使用 30 秒超时（`DEFAULT_TIMEOUT_SECS`）
 **webdav_auto_sync.rs**（`services/webdav_auto_sync.rs`，274 行，8.0KB）：
+```rust
+// services/webdav_auto_sync.rs:15
+const AUTO_SYNC_DEBOUNCE_MS: u64 = 1000;
+pub(crate) const MAX_AUTO_SYNC_WAIT_MS: u64 = 10_000;
+static DB_CHANGE_TX: OnceLock<Sender<String>> = OnceLock::new();
+static AUTO_SYNC_SUPPRESS_DEPTH: AtomicUsize = AtomicUsize::new(0);
+pub(crate) struct AutoSyncSuppressionGuard;
+impl AutoSyncSuppressionGuard {
+    pub fn new() -> Self {
+        AUTO_SYNC_SUPPRESS_DEPTH.fetch_add(1, Ordering::SeqCst);
+        Self
+    }
+}
+impl Drop for AutoSyncSuppressionGuard {
+    fn drop(&mut self) {
+        AUTO_SYNC_SUPPRESS_DEPTH.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| {
+            Some(value.saturating_sub(1))
+        });
+    }
+}
+pub(crate) fn is_auto_sync_suppressed() -> bool {
+    AUTO_SYNC_SUPPRESS_DEPTH.load(Ordering::SeqCst) > 0
+}
+```
 - WebDAV 自动同步服务
-- 定时同步和启动时同步
-- 使用 `tokio::spawn` 运行后台同步任务
+- `AUTO_SYNC_DEBOUNCE_MS = 1000`（`webdav_auto_sync.rs:15`）— 防抖延迟 1 秒
+- `MAX_AUTO_SYNC_WAIT_MS = 10_000`（`webdav_auto_sync.rs:16`）— 最大等待时间 10 秒
+- `DB_CHANGE_TX`（`webdav_auto_sync.rs:18`）— 使用 `tokio::sync::mpsc` channel 发送数据库变更通知
+- `AutoSyncSuppressionGuard`（`webdav_auto_sync.rs:21`）— RAII 守卫，抑制自动同步（用于同步操作期间避免循环触发）
+- `AUTO_SYNC_SUPPRESS_DEPTH`（`webdav_auto_sync.rs:19`）— 原子计数器，支持嵌套抑制
+- `is_auto_sync_suppressed()`（`webdav_auto_sync.rs:39`）— 检查是否处于抑制状态
+- `should_trigger_for_table()`（`webdav_auto_sync.rs:43`）— 判断指定表的变更是否应触发自动同步
+- 使用 `OnceLock` 保证 channel 单例初始化
+- 使用 `AtomicUsize` 和 `Ordering::SeqCst` 保证线程安全
 **SpeedtestService**（`services/speedtest.rs`，187 行，5.9KB）：
 ```rust
 // services/speedtest.rs:8
