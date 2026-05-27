@@ -1234,6 +1234,18 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**useHermes**（`src/hooks/useHermes.ts`，175 行）：
+```typescript
+export const HERMES_WEB_OFFLINE_ERROR = "hermes_web_offline";  // useHermes.ts:20
+export const hermesKeys = {  // useHermes.ts:26
+    all: ["hermes"] as const,
+    liveProviderIds: ["hermes", "liveProviderIds"] as const,
+    modelConfig: ["hermes", "modelConfig"] as const,
+    memory: (kind: HermesMemoryKind) => ["hermes", "memory", kind] as const,
+};
+```
+- `invalidateHermesProviderCaches()`（`useHermes.ts:39`）— 并行失效所有 Hermes 缓存
+- `hermesKeys` 集中管理查询键（SSOT）
 **useImportExport**（`src/hooks/useImportExport.ts`，204 行）：
 ```typescript
 export type ImportStatus = "idle" | "importing" | "success" | "partial-success" | "error";
