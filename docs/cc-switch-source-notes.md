@@ -948,6 +948,12 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**streaming_responses 模块**（`proxy/providers/streaming_responses.rs`，1186 行）：
+- OpenAI Responses API SSE → Anthropic SSE 转换
+- Responses API 使用命名事件生命周期模型：`response.created → output_item.added → ...`
+- `response_object_from_event()`（`streaming_responses.rs:22`）— 从事件提取 response 对象
+- `content_part_key()`（`streaming_responses.rs:27`）— 生成 content part 复合键
+- 与 Chat Completions 的 delta chunk 模型完全不同，需要独立的状态机处理
 **streaming_gemini 模块**（`proxy/providers/streaming_gemini.rs`，1055 行）：
 - Gemini `streamGenerateContent?alt=sse` → Anthropic SSE 转换
 - `map_finish_reason()`（`streaming_gemini.rs:18`）— Gemini finish reason → Anthropic 映射
