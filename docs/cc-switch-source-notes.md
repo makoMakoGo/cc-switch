@@ -3342,6 +3342,34 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**ConfigService**（`services/config.rs`，262 行，9.7KB）：
+```rust
+// services/config.rs:10
+const MAX_BACKUPS: usize = 10;
+// services/config.rs:13
+pub struct ConfigService;
+impl ConfigService {
+    pub fn create_backup(config_path: &Path) -> Result<String, AppError> {
+        let timestamp = Utc::now().format("%Y%m%d_%H%M%S");
+        let backup_id = format!("backup_{timestamp}");
+        let backup_dir = config_path.parent().unwrap().join("backups");
+        fs::create_dir_all(&backup_dir)?;
+        let backup_path = backup_dir.join(format!("{backup_id}.json"));
+        fs::write(&backup_path, fs::read(config_path)?)?;
+        Self::cleanup_old_backups(&backup_dir, MAX_BACKUPS)?;
+        Ok(backup_id)
+    }
+    fn cleanup_old_backups(backup_dir: &Path, retain: usize) -> Result<(), AppError>;
+    pub fn export_providers(state: &AppState, app: AppType) -> Result<Vec<Provider>, AppError>;
+    pub fn import_providers(state: &AppState, app: AppType, providers: Vec<Provider>) -> Result<usize, AppError>;
+}
+```
+- `create_backup()`（`config.rs:17`）— 为 config.json 创建带时间戳的备份
+- `MAX_BACKUPS = 10`（`config.rs:10`）— 最多保留 10 个备份
+- `cleanup_old_backups()`（`config.rs:41`）— 清理旧备份，按时间排序保留最新的
+- `export_providers()` — 导出 providers 列表
+- `import_providers()` — 导入 providers 列表
+- 备份存储在 `backups/` 目录下，文件名格式 `backup_YYYYMMDD_HHMMSS.json`
 **omo.rs**（`services/omo.rs`，560 行，19.1KB）：
 ```rust
 // services/omo.rs:12
@@ -3524,6 +3552,34 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**ConfigService**（`services/config.rs`，262 行，9.7KB）：
+```rust
+// services/config.rs:10
+const MAX_BACKUPS: usize = 10;
+// services/config.rs:13
+pub struct ConfigService;
+impl ConfigService {
+    pub fn create_backup(config_path: &Path) -> Result<String, AppError> {
+        let timestamp = Utc::now().format("%Y%m%d_%H%M%S");
+        let backup_id = format!("backup_{timestamp}");
+        let backup_dir = config_path.parent().unwrap().join("backups");
+        fs::create_dir_all(&backup_dir)?;
+        let backup_path = backup_dir.join(format!("{backup_id}.json"));
+        fs::write(&backup_path, fs::read(config_path)?)?;
+        Self::cleanup_old_backups(&backup_dir, MAX_BACKUPS)?;
+        Ok(backup_id)
+    }
+    fn cleanup_old_backups(backup_dir: &Path, retain: usize) -> Result<(), AppError>;
+    pub fn export_providers(state: &AppState, app: AppType) -> Result<Vec<Provider>, AppError>;
+    pub fn import_providers(state: &AppState, app: AppType, providers: Vec<Provider>) -> Result<usize, AppError>;
+}
+```
+- `create_backup()`（`config.rs:17`）— 为 config.json 创建带时间戳的备份
+- `MAX_BACKUPS = 10`（`config.rs:10`）— 最多保留 10 个备份
+- `cleanup_old_backups()`（`config.rs:41`）— 清理旧备份，按时间排序保留最新的
+- `export_providers()` — 导出 providers 列表
+- `import_providers()` — 导入 providers 列表
+- 备份存储在 `backups/` 目录下，文件名格式 `backup_YYYYMMDD_HHMMSS.json`
 **omo.rs**（`services/omo.rs`，560 行，19.1KB）：
 ```rust
 // services/omo.rs:12
