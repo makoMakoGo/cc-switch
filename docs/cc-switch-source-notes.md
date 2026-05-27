@@ -955,6 +955,7 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `ForwardFailed` → 502 Bad Gateway
 - `NoAvailableProvider` / `AllProvidersCircuitOpen` / `MaxRetriesExceeded` → 503 Service Unavailable
 - `DatabaseError` / `TransformError` → 500 Internal Server Error
+- `get_error_message()`（`error_mapper.rs:54`）— ProxyError → 用户友好错误消息
 **usage 模块**（`proxy/usage/`）：
 - `calculator` — 成本计算（`CostBreakdown`, `CostCalculator`, `ModelPricing`）
 - `logger` — 请求日志（`RequestLog`, `UsageLogger`）
