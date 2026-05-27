@@ -948,6 +948,11 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**streaming_codex_chat 模块**（`proxy/providers/streaming_codex_chat.rs`，1083 行）：
+- OpenAI Chat Completions SSE → OpenAI Responses SSE 转换
+- `TextItemState`（`streaming_codex_chat.rs:20`）— 文本项状态追踪
+- `ReasoningItemState`（`streaming_codex_chat.rs:29`）— 推理项状态追踪
+- `InlineThinkMode`（`streaming_codex_chat.rs:38`）— 内联思考模式（Detecting/Reasoning/Text）
 **streaming 模块**（`proxy/providers/streaming.rs`，1142 行）：
 - OpenAI SSE → Anthropic SSE 格式转换
 - `OpenAIStreamChunk`（`streaming.rs:14`）— OpenAI 流式响应数据结构
