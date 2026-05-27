@@ -2323,6 +2323,62 @@ pub struct ProxyConfig {  // proxy/types.rs:5
 - `streaming_first_byte_timeout`：等待首个数据块的最大时间（1-120 秒）
 - `streaming_idle_timeout`：两个数据块之间的最大间隔（60-600 秒）
 - `non_streaming_timeout`：非流式请求的总超时时间（60-1200 秒）
+**ProxyServerInfo**（`proxy/types.rs:104`）：
+```rust
+pub struct ProxyServerInfo {  // proxy/types.rs:104
+    pub address: String,
+    pub port: u16,
+    pub started_at: String,
+}
+```
+**ProxyTakeoverStatus**（`proxy/types.rs:112`）：
+```rust
+pub struct ProxyTakeoverStatus {  // proxy/types.rs:112
+    pub claude: bool,
+    pub codex: bool,
+    pub gemini: bool,
+    pub opencode: bool,
+    pub openclaw: bool,
+}
+```
+**ApiFormat 枚举**（`proxy/types.rs:123`）：
+```rust
+pub enum ApiFormat {  // proxy/types.rs:123
+    Claude,
+    OpenAI,
+    Gemini,
+}
+```
+**ProviderHealth**（`proxy/types.rs:131`）：
+```rust
+pub struct ProviderHealth {  // proxy/types.rs:131
+    pub provider_id: String,
+    pub app_type: String,
+    pub is_healthy: bool,
+    pub consecutive_failures: u32,
+    pub last_success_at: Option<String>,
+    pub last_failure_at: Option<String>,
+    pub last_error: Option<String>,
+    pub updated_at: String,
+}
+```
+**LiveBackup**（`proxy/types.rs:144`）：
+```rust
+pub struct LiveBackup {  // proxy/types.rs:144
+    pub app_type: String,
+    pub original_config: String,
+    pub backed_up_at: String,
+}
+```
+**GlobalProxyConfig**（`proxy/types.rs:156`）：
+```rust
+pub struct GlobalProxyConfig {  // proxy/types.rs:156
+    pub proxy_enabled: bool,
+    pub listen_address: String,
+    pub listen_port: u16,
+    pub enable_logging: bool,
+}
+```
 **LogConfig**（`proxy/types.rs:337`）：
 ```rust
 pub struct LogConfig {  // proxy/types.rs:337
