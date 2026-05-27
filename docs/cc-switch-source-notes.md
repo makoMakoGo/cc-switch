@@ -3429,9 +3429,36 @@ pub trait ProviderAdapter: Send + Sync {
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
 **usage/ 目录**（`proxy/usage/`，4 个文件）：
 - `calculator.rs`（9.0KB）— 费用计算器（`CostCalculator`、`ModelPricing`）
-- `logger.rs`（13.7KB）— 使用量日志记录器
 - `parser.rs`（33.5KB）— 使用量解析器（`TokenUsage`）
 - `mod.rs`（446B）— 模块导出
+**UsageLogger**（`proxy/usage/logger.rs`，431 行，13.7KB）：
+```rust
+// proxy/usage/logger.rs:13
+pub struct RequestLog {
+    pub request_id: String,
+    pub provider_id: String,
+    pub app_type: String,
+    pub model: String,
+    pub request_model: String,
+    pub usage: TokenUsage,
+    pub cost: Option<CostBreakdown>,
+    pub latency_ms: u64,
+    pub first_token_ms: Option<u64>,
+    pub status_code: u16,
+    pub error_message: Option<String>,
+    pub session_id: Option<String>,
+    pub provider_type: Option<String>,  // claude, claude_auth, codex, gemini, gemini_cli, openrouter
+    pub is_streaming: bool,
+    pub cost_multiplier: String,
+}
+pub struct UsageLogger<'a> {  // logger.rs:35
+    db: &'a Database,
+}
+```
+- `RequestLog` 记录每个 API 请求的完整使用情况
+- `UsageLogger` 使用 `CostCalculator` 计算费用并写入数据库
+- 支持 `PRICING_SOURCE_REQUEST` 和 `PRICING_SOURCE_RESPONSE` 两种定价来源
+- `is_placeholder_pricing_model()` 检查是否为占位符定价模型
 **response_handler.rs**（`proxy/response_handler.rs`，232 行，7.2KB）：
 - 响应处理器模块
 - 处理代理响应的后处理逻辑
@@ -4134,9 +4161,36 @@ pub trait ProviderAdapter: Send + Sync {
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
 **usage/ 目录**（`proxy/usage/`，4 个文件）：
 - `calculator.rs`（9.0KB）— 费用计算器（`CostCalculator`、`ModelPricing`）
-- `logger.rs`（13.7KB）— 使用量日志记录器
 - `parser.rs`（33.5KB）— 使用量解析器（`TokenUsage`）
 - `mod.rs`（446B）— 模块导出
+**UsageLogger**（`proxy/usage/logger.rs`，431 行，13.7KB）：
+```rust
+// proxy/usage/logger.rs:13
+pub struct RequestLog {
+    pub request_id: String,
+    pub provider_id: String,
+    pub app_type: String,
+    pub model: String,
+    pub request_model: String,
+    pub usage: TokenUsage,
+    pub cost: Option<CostBreakdown>,
+    pub latency_ms: u64,
+    pub first_token_ms: Option<u64>,
+    pub status_code: u16,
+    pub error_message: Option<String>,
+    pub session_id: Option<String>,
+    pub provider_type: Option<String>,  // claude, claude_auth, codex, gemini, gemini_cli, openrouter
+    pub is_streaming: bool,
+    pub cost_multiplier: String,
+}
+pub struct UsageLogger<'a> {  // logger.rs:35
+    db: &'a Database,
+}
+```
+- `RequestLog` 记录每个 API 请求的完整使用情况
+- `UsageLogger` 使用 `CostCalculator` 计算费用并写入数据库
+- 支持 `PRICING_SOURCE_REQUEST` 和 `PRICING_SOURCE_RESPONSE` 两种定价来源
+- `is_placeholder_pricing_model()` 检查是否为占位符定价模型
 **response_handler.rs**（`proxy/response_handler.rs`，232 行，7.2KB）：
 - 响应处理器模块
 - 处理代理响应的后处理逻辑
