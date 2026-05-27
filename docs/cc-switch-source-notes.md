@@ -3342,6 +3342,32 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**ProxyError**（`proxy/error.rs`，206 行，6.9KB）：
+```rust
+// proxy/error.rs:10
+#[derive(Debug, Error)]
+pub enum ProxyError {
+    #[error("服务器已在运行")] AlreadyRunning,
+    #[error("服务器未运行")] NotRunning,
+    #[error("地址绑定失败: {0}")] BindFailed(String),
+    #[error("停止超时")] StopTimeout,
+    #[error("停止失败: {0}")] StopFailed(String),
+    #[error("请求转发失败: {0}")] ForwardFailed(String),
+    #[error("无可用的Provider")] NoAvailableProvider,
+    #[error("所有供应商已熔断，无可用渠道")] AllProvidersCircuitOpen,
+    #[error("未配置供应商")] NoProvidersConfigured,
+    #[error("Provider不健康: {0}")] ProviderUnhealthy(String),
+    #[error("上游错误 (状态码 {status}): {body:?}")] UpstreamError { status: u16, body: Option<String> },
+    #[error("超过最大重试次数")] MaxRetriesExceeded,
+    #[error("数据库错误: {0}")] DatabaseError(String),
+    #[error("配置错误: {0}")] ConfigError(String),
+    // ... 更多变体
+}
+```
+- 使用 `thiserror::Error` derive macro 定义错误类型
+- 实现 `IntoResponse` trait，可直接作为 Axum 响应返回
+- 14+ 个错误变体，覆盖代理服务器的所有错误场景
+- `UpstreamError` 包含上游错误的状态码和响应体
 **adapter.rs**（`proxy/providers/adapter.rs`，70 行，2.5KB）：
 ```rust
 // proxy/providers/adapter.rs:16
@@ -3966,6 +3992,32 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**ProxyError**（`proxy/error.rs`，206 行，6.9KB）：
+```rust
+// proxy/error.rs:10
+#[derive(Debug, Error)]
+pub enum ProxyError {
+    #[error("服务器已在运行")] AlreadyRunning,
+    #[error("服务器未运行")] NotRunning,
+    #[error("地址绑定失败: {0}")] BindFailed(String),
+    #[error("停止超时")] StopTimeout,
+    #[error("停止失败: {0}")] StopFailed(String),
+    #[error("请求转发失败: {0}")] ForwardFailed(String),
+    #[error("无可用的Provider")] NoAvailableProvider,
+    #[error("所有供应商已熔断，无可用渠道")] AllProvidersCircuitOpen,
+    #[error("未配置供应商")] NoProvidersConfigured,
+    #[error("Provider不健康: {0}")] ProviderUnhealthy(String),
+    #[error("上游错误 (状态码 {status}): {body:?}")] UpstreamError { status: u16, body: Option<String> },
+    #[error("超过最大重试次数")] MaxRetriesExceeded,
+    #[error("数据库错误: {0}")] DatabaseError(String),
+    #[error("配置错误: {0}")] ConfigError(String),
+    // ... 更多变体
+}
+```
+- 使用 `thiserror::Error` derive macro 定义错误类型
+- 实现 `IntoResponse` trait，可直接作为 Axum 响应返回
+- 14+ 个错误变体，覆盖代理服务器的所有错误场景
+- `UpstreamError` 包含上游错误的状态码和响应体
 **adapter.rs**（`proxy/providers/adapter.rs`，70 行，2.5KB）：
 ```rust
 // proxy/providers/adapter.rs:16
