@@ -558,6 +558,20 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| schema.rs | 77.8KB | 数据库 schema 定义（18 张表的 SQL） |
+| backup.rs | 31.7KB | 数据库备份和恢复 |
+| tests.rs | 22.7KB | 数据库测试 |
+| mod.rs | 8.9KB | Database 结构体和初始化 |
+| migration.rs | 9.2KB | 数据库迁移 |
+| dao/ | — | 数据访问对象（12 个模块） |
+- `Database` 结构体（`database/mod.rs:76`）— 数据库连接和操作
+- `SCHEMA_VERSION = 10`（`database/mod.rs:52`）— 当前 schema 版本
+- `lock_conn!` 宏（`database/mod.rs:61`）— 获取数据库连接
+- `init()`（`database/mod.rs:95`）— 初始化数据库
+- `dao/` 子目录包含 12 个 DAO 模块：providers、settings、mcp_servers、prompts、skills、proxy_config、proxy_request_logs、session_usage、subscription、usage_cache、universal_providers、stream_check
 **commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
@@ -1324,6 +1338,20 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| schema.rs | 77.8KB | 数据库 schema 定义（18 张表的 SQL） |
+| backup.rs | 31.7KB | 数据库备份和恢复 |
+| tests.rs | 22.7KB | 数据库测试 |
+| mod.rs | 8.9KB | Database 结构体和初始化 |
+| migration.rs | 9.2KB | 数据库迁移 |
+| dao/ | — | 数据访问对象（12 个模块） |
+- `Database` 结构体（`database/mod.rs:76`）— 数据库连接和操作
+- `SCHEMA_VERSION = 10`（`database/mod.rs:52`）— 当前 schema 版本
+- `lock_conn!` 宏（`database/mod.rs:61`）— 获取数据库连接
+- `init()`（`database/mod.rs:95`）— 初始化数据库
+- `dao/` 子目录包含 12 个 DAO 模块：providers、settings、mcp_servers、prompts、skills、proxy_config、proxy_request_logs、session_usage、subscription、usage_cache、universal_providers、stream_check
 **commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
@@ -2467,6 +2495,20 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| schema.rs | 77.8KB | 数据库 schema 定义（18 张表的 SQL） |
+| backup.rs | 31.7KB | 数据库备份和恢复 |
+| tests.rs | 22.7KB | 数据库测试 |
+| mod.rs | 8.9KB | Database 结构体和初始化 |
+| migration.rs | 9.2KB | 数据库迁移 |
+| dao/ | — | 数据访问对象（12 个模块） |
+- `Database` 结构体（`database/mod.rs:76`）— 数据库连接和操作
+- `SCHEMA_VERSION = 10`（`database/mod.rs:52`）— 当前 schema 版本
+- `lock_conn!` 宏（`database/mod.rs:61`）— 获取数据库连接
+- `init()`（`database/mod.rs:95`）— 初始化数据库
+- `dao/` 子目录包含 12 个 DAO 模块：providers、settings、mcp_servers、prompts、skills、proxy_config、proxy_request_logs、session_usage、subscription、usage_cache、universal_providers、stream_check
 **commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
@@ -3231,6 +3273,20 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| schema.rs | 77.8KB | 数据库 schema 定义（18 张表的 SQL） |
+| backup.rs | 31.7KB | 数据库备份和恢复 |
+| tests.rs | 22.7KB | 数据库测试 |
+| mod.rs | 8.9KB | Database 结构体和初始化 |
+| migration.rs | 9.2KB | 数据库迁移 |
+| dao/ | — | 数据访问对象（12 个模块） |
+- `Database` 结构体（`database/mod.rs:76`）— 数据库连接和操作
+- `SCHEMA_VERSION = 10`（`database/mod.rs:52`）— 当前 schema 版本
+- `lock_conn!` 宏（`database/mod.rs:61`）— 获取数据库连接
+- `init()`（`database/mod.rs:95`）— 初始化数据库
+- `dao/` 子目录包含 12 个 DAO 模块：providers、settings、mcp_servers、prompts、skills、proxy_config、proxy_request_logs、session_usage、subscription、usage_cache、universal_providers、stream_check
 **commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
@@ -5319,6 +5375,20 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| schema.rs | 77.8KB | 数据库 schema 定义（18 张表的 SQL） |
+| backup.rs | 31.7KB | 数据库备份和恢复 |
+| tests.rs | 22.7KB | 数据库测试 |
+| mod.rs | 8.9KB | Database 结构体和初始化 |
+| migration.rs | 9.2KB | 数据库迁移 |
+| dao/ | — | 数据访问对象（12 个模块） |
+- `Database` 结构体（`database/mod.rs:76`）— 数据库连接和操作
+- `SCHEMA_VERSION = 10`（`database/mod.rs:52`）— 当前 schema 版本
+- `lock_conn!` 宏（`database/mod.rs:61`）— 获取数据库连接
+- `init()`（`database/mod.rs:95`）— 初始化数据库
+- `dao/` 子目录包含 12 个 DAO 模块：providers、settings、mcp_servers、prompts、skills、proxy_config、proxy_request_logs、session_usage、subscription、usage_cache、universal_providers、stream_check
 **commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
@@ -6608,6 +6678,20 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| schema.rs | 77.8KB | 数据库 schema 定义（18 张表的 SQL） |
+| backup.rs | 31.7KB | 数据库备份和恢复 |
+| tests.rs | 22.7KB | 数据库测试 |
+| mod.rs | 8.9KB | Database 结构体和初始化 |
+| migration.rs | 9.2KB | 数据库迁移 |
+| dao/ | — | 数据访问对象（12 个模块） |
+- `Database` 结构体（`database/mod.rs:76`）— 数据库连接和操作
+- `SCHEMA_VERSION = 10`（`database/mod.rs:52`）— 当前 schema 版本
+- `lock_conn!` 宏（`database/mod.rs:61`）— 获取数据库连接
+- `init()`（`database/mod.rs:95`）— 初始化数据库
+- `dao/` 子目录包含 12 个 DAO 模块：providers、settings、mcp_servers、prompts、skills、proxy_config、proxy_request_logs、session_usage、subscription、usage_cache、universal_providers、stream_check
 **commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
