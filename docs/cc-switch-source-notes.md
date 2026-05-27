@@ -2475,6 +2475,26 @@ export type AppId =  // types.ts:2
 ```
 - 前端统一使用 `AppId` 作为应用标识（与后端命令参数 `app` 一致）
 - 与后端 `AppType` 枚举对应（`app_config.rs:341`）
+**usage.ts Query Keys**（`src/lib/query/usage.ts`，320 行）：
+```typescript
+export const usageKeys = {  // usage.ts:32
+    all: ["usage"] as const,
+    summary: (preset, customStartDate, customEndDate, appType?) =>
+        [...usageKeys.all, "summary", preset, customStartDate ?? 0, customEndDate ?? 0, appType ?? "all"] as const,
+    summaryByApp: (preset, customStartDate, customEndDate) =>
+        [...usageKeys.all, "summaryByApp", preset, customStartDate ?? 0, customEndDate ?? 0] as const,
+    trends: (preset, customStartDate, customEndDate) =>
+        [...usageKeys.all, "trends", preset, customStartDate ?? 0, customEndDate ?? 0] as const,
+    requestLogs: (args) =>
+        [...usageKeys.all, "requestLogs", args] as const,
+};
+```
+- `DEFAULT_REFETCH_INTERVAL_MS = 30000`（`usage.ts:6`）— 默认 30 秒刷新间隔
+- `UsageQueryOptions`（`usage.ts:8`）— 查询选项
+- `RequestLogsQueryArgs`（`usage.ts:13`）— 请求日志查询参数
+- `RequestLogsKey`（`usage.ts:21`）— 请求日志查询键
+- `LogFilters`（`types/usage.ts`）— 日志过滤器
+- `UsageRangeSelection`（`types/usage.ts`）— 用量范围选择
 **前端 API 层**（`src/lib/api/`，25 个文件）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
