@@ -2495,6 +2495,44 @@ export const usageKeys = {  // usage.ts:32
 - `RequestLogsKey`（`usage.ts:21`）— 请求日志查询键
 - `LogFilters`（`types/usage.ts`）— 日志过滤器
 - `UsageRangeSelection`（`types/usage.ts`）— 用量范围选择
+**openclawApi**（`src/lib/api/openclaw.ts`，122 行）：
+```typescript
+export const openclawApi = {  // openclaw.ts:20
+    // Agents Configuration
+    async getDefaultModel(): Promise<OpenClawDefaultModel | null> {
+        return await invoke("get_openclaw_default_model");
+    },
+    async setDefaultModel(model: OpenClawDefaultModel): Promise<OpenClawWriteOutcome> {
+        return await invoke("set_openclaw_default_model", { model });
+    },
+    async getModelCatalog(): Promise<Record<string, OpenClawModelCatalogEntry> | null> {
+        return await invoke("get_openclaw_model_catalog");
+    },
+    async setModelCatalog(catalog: Record<string, OpenClawModelCatalogEntry>): Promise<OpenClawWriteOutcome> {
+        return await invoke("set_openclaw_model_catalog", { catalog });
+    },
+    // Environment Configuration
+    async getEnv(): Promise<OpenClawEnvConfig | null> {
+        return await invoke("get_openclaw_env");
+    },
+    async setEnv(env: OpenClawEnvConfig): Promise<OpenClawWriteOutcome> {
+        return await invoke("set_openclaw_env", { env });
+    },
+    // Tools Configuration
+    async getTools(): Promise<OpenClawToolsConfig | null> {
+        return await invoke("get_openclaw_tools");
+    },
+    async setTools(tools: OpenClawToolsConfig): Promise<OpenClawWriteOutcome> {
+        return await invoke("set_openclaw_tools", { tools });
+    },
+};
+```
+- 管理 `~/.openclaw/openclaw.json` 的 3 个 section：agents.defaults、env、tools
+- `OpenClawDefaultModel`（`types.ts`）— 默认模型配置
+- `OpenClawModelCatalogEntry`（`types.ts`）— 模型目录条目
+- `OpenClawEnvConfig`（`types.ts`）— 环境变量配置
+- `OpenClawToolsConfig`（`types.ts`）— 工具权限配置
+- `OpenClawWriteOutcome`（`types.ts`）— 写入结果
 **hermesApi**（`src/lib/api/hermes.ts`，68 行）：
 ```typescript
 export const hermesApi = {  // hermes.ts:18
