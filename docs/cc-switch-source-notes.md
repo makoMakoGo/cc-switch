@@ -1451,7 +1451,11 @@ impl ToolConfig for ClaudeConfig {
 - 切换逻辑统一处理，不再分散在各个 config 模块
 
 **代理子系统的简化**：
-- `forwarder.rs`（122.1KB）拆分成多个职责单一的模块
+- `forwarder.rs`（122.1KB，3100 行）→ 拆分建议：
+  - `forwarder.rs` — `RequestForwarder` 核心结构和 `forward_with_retry()`
+  - `connection_guard.rs` — `ActiveConnectionGuard` RAII 模式
+  - `retry.rs` — 重试逻辑
+  - `transform_dispatch.rs` — 格式转换分发
 - 抽取公共的 API 格式转换框架
 - 统一错误处理和日志记录
 **重构优先级排序**（按收益/风险比）：
