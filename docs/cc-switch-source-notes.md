@@ -1234,6 +1234,12 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**useSkills**（`src/hooks/useSkills.ts`，359 行）：
+- `useInstalledSkills()`（`useSkills.ts:24`）— 查询所有已安装 Skills（`staleTime: Infinity`）
+- `useSkillBackups()`（`useSkills.ts:33`）— 查询 Skills 备份
+- `useDeleteSkillBackup()`（`useSkills.ts:41`）— 删除 Skills 备份
+- `mergeImportedSkills()`（`useSkills.helpers.ts`）— 合并导入的 Skills
+- 使用 `keepPreviousData` 避免闪烁
 **useDirectorySettings**（`src/hooks/useDirectorySettings.ts`，374 行）：
 ```typescript
 export type DirectoryAppId = Exclude<AppId, "claude-desktop">;
