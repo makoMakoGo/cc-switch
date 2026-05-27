@@ -3342,6 +3342,37 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**PromptService**（`services/prompt.rs`，242 行，8.6KB）：
+```rust
+// services/prompt.rs:18
+pub struct PromptService;
+impl PromptService {
+    pub fn get_prompts(state: &AppState, app: AppType) -> Result<IndexMap<String, Prompt>, AppError> {
+        state.db.get_prompts(app.as_str())
+    }
+    pub fn upsert_prompt(state: &AppState, app: AppType, _id: &str, prompt: Prompt) -> Result<(), AppError> {
+        state.db.save_prompt(app.as_str(), &prompt)?;
+        if prompt.enabled {
+            // 启用提示词：写入内容到文件
+            let target_path = prompt_file_path(&app)?;
+            write_text_file(&target_path, &prompt.content)?;
+        } else {
+            // 禁用提示词：检查是否还有其他已启用的提示词
+            let prompts = state.db.get_prompts(app.as_str())?;
+            let any_enabled = prompts.values().any(|p| p.enabled);
+            if !any_enabled {
+                // 所有提示词都已禁用，清空文件
+                write_text_file(&target_path, "")?;
+            }
+        }
+        Ok(())
+    }
+}
+```
+- `PromptService` 管理各工具的自定义提示词（存储在数据库中）
+- 启用提示词时写入文件，禁用时检查是否还有其他已启用的提示词
+- 使用 `prompt_file_path()` 获取各工具的提示词文件路径
+- `get_unix_timestamp()`（`prompt.rs:11`）— 安全地获取当前 Unix 时间戳
 **model_fetch.rs**（`services/model_fetch.rs`，414 行，13.2KB）：
 ```rust
 // services/model_fetch.rs:14
@@ -3453,6 +3484,37 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**PromptService**（`services/prompt.rs`，242 行，8.6KB）：
+```rust
+// services/prompt.rs:18
+pub struct PromptService;
+impl PromptService {
+    pub fn get_prompts(state: &AppState, app: AppType) -> Result<IndexMap<String, Prompt>, AppError> {
+        state.db.get_prompts(app.as_str())
+    }
+    pub fn upsert_prompt(state: &AppState, app: AppType, _id: &str, prompt: Prompt) -> Result<(), AppError> {
+        state.db.save_prompt(app.as_str(), &prompt)?;
+        if prompt.enabled {
+            // 启用提示词：写入内容到文件
+            let target_path = prompt_file_path(&app)?;
+            write_text_file(&target_path, &prompt.content)?;
+        } else {
+            // 禁用提示词：检查是否还有其他已启用的提示词
+            let prompts = state.db.get_prompts(app.as_str())?;
+            let any_enabled = prompts.values().any(|p| p.enabled);
+            if !any_enabled {
+                // 所有提示词都已禁用，清空文件
+                write_text_file(&target_path, "")?;
+            }
+        }
+        Ok(())
+    }
+}
+```
+- `PromptService` 管理各工具的自定义提示词（存储在数据库中）
+- 启用提示词时写入文件，禁用时检查是否还有其他已启用的提示词
+- 使用 `prompt_file_path()` 获取各工具的提示词文件路径
+- `get_unix_timestamp()`（`prompt.rs:11`）— 安全地获取当前 Unix 时间戳
 **model_fetch.rs**（`services/model_fetch.rs`，414 行，13.2KB）：
 ```rust
 // services/model_fetch.rs:14
