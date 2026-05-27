@@ -523,6 +523,19 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**SkillApps**（`app_config.rs:78`）：
+```rust
+pub struct SkillApps {  // app_config.rs:78
+    pub claude: bool,
+    pub codex: bool,
+    pub gemini: bool,
+    pub opencode: bool,
+    pub hermes: bool,
+}
+```
+- `is_enabled_for(&self, app: &AppType)`（`app_config.rs:93`）— 检查指定应用是否启用
+- OpenClaw 不支持 Skills（`app_config.rs:100`）
+- ClaudeDesktop 不支持 Skills（`app_config.rs:101`）
 **McpApps**（`app_config.rs:9`）：
 ```rust
 pub struct McpApps {  // app_config.rs:9
@@ -734,6 +747,19 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**SkillApps**（`app_config.rs:78`）：
+```rust
+pub struct SkillApps {  // app_config.rs:78
+    pub claude: bool,
+    pub codex: bool,
+    pub gemini: bool,
+    pub opencode: bool,
+    pub hermes: bool,
+}
+```
+- `is_enabled_for(&self, app: &AppType)`（`app_config.rs:93`）— 检查指定应用是否启用
+- OpenClaw 不支持 Skills（`app_config.rs:100`）
+- ClaudeDesktop 不支持 Skills（`app_config.rs:101`）
 **McpApps**（`app_config.rs:9`）：
 ```rust
 pub struct McpApps {  // app_config.rs:9
