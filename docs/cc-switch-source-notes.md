@@ -558,6 +558,26 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
+```typescript
+// src/lib/authBinding.ts:3
+export function resolveManagedAccountId(
+    meta: ProviderMeta | undefined,
+    authProvider: string,
+): string | null {
+    const binding = meta?.authBinding;
+    if (binding?.source === "managed_account" && binding.authProvider === authProvider) {
+        return binding.accountId ?? null;
+    }
+    if (authProvider === "github_copilot") {
+        return meta?.githubAccountId ?? null;
+    }
+    return null;
+}
+```
+- 解析托管账号 ID（用于 OAuth 认证绑定）
+- 支持两种绑定来源：`managed_account`（通过 `authBinding` 字段）和 `github_copilot`（通过 `githubAccountId` 字段）
+- `ProviderMeta.authBinding` 包含 `source`、`authProvider`、`accountId` 字段
 **usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
 ```typescript
 // src/lib/usageRange.ts:3
@@ -933,6 +953,26 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
+```typescript
+// src/lib/authBinding.ts:3
+export function resolveManagedAccountId(
+    meta: ProviderMeta | undefined,
+    authProvider: string,
+): string | null {
+    const binding = meta?.authBinding;
+    if (binding?.source === "managed_account" && binding.authProvider === authProvider) {
+        return binding.accountId ?? null;
+    }
+    if (authProvider === "github_copilot") {
+        return meta?.githubAccountId ?? null;
+    }
+    return null;
+}
+```
+- 解析托管账号 ID（用于 OAuth 认证绑定）
+- 支持两种绑定来源：`managed_account`（通过 `authBinding` 字段）和 `github_copilot`（通过 `githubAccountId` 字段）
+- `ProviderMeta.authBinding` 包含 `source`、`authProvider`、`accountId` 字段
 **usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
 ```typescript
 // src/lib/usageRange.ts:3
@@ -1685,6 +1725,26 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
+```typescript
+// src/lib/authBinding.ts:3
+export function resolveManagedAccountId(
+    meta: ProviderMeta | undefined,
+    authProvider: string,
+): string | null {
+    const binding = meta?.authBinding;
+    if (binding?.source === "managed_account" && binding.authProvider === authProvider) {
+        return binding.accountId ?? null;
+    }
+    if (authProvider === "github_copilot") {
+        return meta?.githubAccountId ?? null;
+    }
+    return null;
+}
+```
+- 解析托管账号 ID（用于 OAuth 认证绑定）
+- 支持两种绑定来源：`managed_account`（通过 `authBinding` 字段）和 `github_copilot`（通过 `githubAccountId` 字段）
+- `ProviderMeta.authBinding` 包含 `source`、`authProvider`、`accountId` 字段
 **usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
 ```typescript
 // src/lib/usageRange.ts:3
@@ -2058,6 +2118,26 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
+```typescript
+// src/lib/authBinding.ts:3
+export function resolveManagedAccountId(
+    meta: ProviderMeta | undefined,
+    authProvider: string,
+): string | null {
+    const binding = meta?.authBinding;
+    if (binding?.source === "managed_account" && binding.authProvider === authProvider) {
+        return binding.accountId ?? null;
+    }
+    if (authProvider === "github_copilot") {
+        return meta?.githubAccountId ?? null;
+    }
+    return null;
+}
+```
+- 解析托管账号 ID（用于 OAuth 认证绑定）
+- 支持两种绑定来源：`managed_account`（通过 `authBinding` 字段）和 `github_copilot`（通过 `githubAccountId` 字段）
+- `ProviderMeta.authBinding` 包含 `source`、`authProvider`、`accountId` 字段
 **usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
 ```typescript
 // src/lib/usageRange.ts:3
@@ -3755,6 +3835,26 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
+```typescript
+// src/lib/authBinding.ts:3
+export function resolveManagedAccountId(
+    meta: ProviderMeta | undefined,
+    authProvider: string,
+): string | null {
+    const binding = meta?.authBinding;
+    if (binding?.source === "managed_account" && binding.authProvider === authProvider) {
+        return binding.accountId ?? null;
+    }
+    if (authProvider === "github_copilot") {
+        return meta?.githubAccountId ?? null;
+    }
+    return null;
+}
+```
+- 解析托管账号 ID（用于 OAuth 认证绑定）
+- 支持两种绑定来源：`managed_account`（通过 `authBinding` 字段）和 `github_copilot`（通过 `githubAccountId` 字段）
+- `ProviderMeta.authBinding` 包含 `source`、`authProvider`、`accountId` 字段
 **usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
 ```typescript
 // src/lib/usageRange.ts:3
@@ -4653,6 +4753,26 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
+```typescript
+// src/lib/authBinding.ts:3
+export function resolveManagedAccountId(
+    meta: ProviderMeta | undefined,
+    authProvider: string,
+): string | null {
+    const binding = meta?.authBinding;
+    if (binding?.source === "managed_account" && binding.authProvider === authProvider) {
+        return binding.accountId ?? null;
+    }
+    if (authProvider === "github_copilot") {
+        return meta?.githubAccountId ?? null;
+    }
+    return null;
+}
+```
+- 解析托管账号 ID（用于 OAuth 认证绑定）
+- 支持两种绑定来源：`managed_account`（通过 `authBinding` 字段）和 `github_copilot`（通过 `githubAccountId` 字段）
+- `ProviderMeta.authBinding` 包含 `source`、`authProvider`、`accountId` 字段
 **usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
 ```typescript
 // src/lib/usageRange.ts:3
