@@ -146,6 +146,16 @@ pub struct AppState {           // src-tauri/src/store.rs:6
 `Arc<T>` = 原子引用计数，允许多个地方共享同一份数据（`store.rs:3`）。
 `Database` 内部用 `Mutex<Connection>` 包装（`database/mod.rs:76`），因为 `rusqlite::Connection` 不是 `Sync` 的。
 
+**SwitchLockManager**（`proxy/switch_lock.rs:14`）：
+```rust
+pub struct SwitchLockManager {  // proxy/switch_lock.rs:14
+    locks: Arc<RwLock<HashMap<String, Arc<Mutex<()>>>>>,
+}
+```
+- `lock_for_app(&self, app_type: &str)`（`switch_lock.rs:26`）— 获取指定应用的切换锁
+- 每个应用类型一把互斥锁，保证同一应用的切换操作串行执行
+- 不同应用之间（如 Claude 和 Codex）可以并行切换
+- 返回 `OwnedMutexGuard`，持有期间同一 `app_type` 的其他切换会排队等待
 **ProxyService**（`services/proxy.rs:55`）：
 
 ```rust
@@ -523,6 +533,16 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**SwitchLockManager**（`proxy/switch_lock.rs:14`）：
+```rust
+pub struct SwitchLockManager {  // proxy/switch_lock.rs:14
+    locks: Arc<RwLock<HashMap<String, Arc<Mutex<()>>>>>,
+}
+```
+- `lock_for_app(&self, app_type: &str)`（`switch_lock.rs:26`）— 获取指定应用的切换锁
+- 每个应用类型一把互斥锁，保证同一应用的切换操作串行执行
+- 不同应用之间（如 Claude 和 Codex）可以并行切换
+- 返回 `OwnedMutexGuard`，持有期间同一 `app_type` 的其他切换会排队等待
 **ProxyService**（`services/proxy.rs:55`）：
 ```rust
 pub struct ProxyService {  // services/proxy.rs:55
@@ -806,6 +826,16 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**SwitchLockManager**（`proxy/switch_lock.rs:14`）：
+```rust
+pub struct SwitchLockManager {  // proxy/switch_lock.rs:14
+    locks: Arc<RwLock<HashMap<String, Arc<Mutex<()>>>>>,
+}
+```
+- `lock_for_app(&self, app_type: &str)`（`switch_lock.rs:26`）— 获取指定应用的切换锁
+- 每个应用类型一把互斥锁，保证同一应用的切换操作串行执行
+- 不同应用之间（如 Claude 和 Codex）可以并行切换
+- 返回 `OwnedMutexGuard`，持有期间同一 `app_type` 的其他切换会排队等待
 **ProxyService**（`services/proxy.rs:55`）：
 ```rust
 pub struct ProxyService {  // services/proxy.rs:55
@@ -1173,6 +1203,16 @@ pub struct ProviderService;  // 空结构体，纯方法集合
 - `endpoints.rs` — 自定义端点管理
 - `gemini_auth.rs` — Gemini 认证
 - `usage.rs` — 用量脚本验证
+**SwitchLockManager**（`proxy/switch_lock.rs:14`）：
+```rust
+pub struct SwitchLockManager {  // proxy/switch_lock.rs:14
+    locks: Arc<RwLock<HashMap<String, Arc<Mutex<()>>>>>,
+}
+```
+- `lock_for_app(&self, app_type: &str)`（`switch_lock.rs:26`）— 获取指定应用的切换锁
+- 每个应用类型一把互斥锁，保证同一应用的切换操作串行执行
+- 不同应用之间（如 Claude 和 Codex）可以并行切换
+- 返回 `OwnedMutexGuard`，持有期间同一 `app_type` 的其他切换会排队等待
 **ProxyService**（`services/proxy.rs:55`）：
 ```rust
 pub struct ProxyService {  // services/proxy.rs:55
@@ -1454,6 +1494,16 @@ pub enum ClientFormat {            // proxy/session.rs:19
 **response_processor 模块**（`proxy/response_processor.rs`）：
 - `process_response()` — 处理非流式响应
 - `create_logged_passthrough_stream()` — 创建带日志的透传流
+**SwitchLockManager**（`proxy/switch_lock.rs:14`）：
+```rust
+pub struct SwitchLockManager {  // proxy/switch_lock.rs:14
+    locks: Arc<RwLock<HashMap<String, Arc<Mutex<()>>>>>,
+}
+```
+- `lock_for_app(&self, app_type: &str)`（`switch_lock.rs:26`）— 获取指定应用的切换锁
+- 每个应用类型一把互斥锁，保证同一应用的切换操作串行执行
+- 不同应用之间（如 Claude 和 Codex）可以并行切换
+- 返回 `OwnedMutexGuard`，持有期间同一 `app_type` 的其他切换会排队等待
 **ProxyService**（`services/proxy.rs:55`）：
 ```rust
 pub struct ProxyService {  // services/proxy.rs:55
