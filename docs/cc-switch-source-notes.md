@@ -558,6 +558,10 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**index.ts**（`src/lib/api/index.ts`，31 行）：
+- API 层统一导出入口
+- 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
+- 导出类型：AppId、ProviderSwitchEvent、Prompt、CopilotDeviceCodeResponse、CopilotAuthStatus、GitHubAccount、ManagedAuthProvider、ManagedAuthAccount、ManagedAuthStatus、ManagedAuthDeviceCodeResponse
 **config.ts**（`src/lib/api/config.ts`，78 行）：
 ```typescript
 // src/lib/api/config.ts:4
@@ -1114,6 +1118,10 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**index.ts**（`src/lib/api/index.ts`，31 行）：
+- API 层统一导出入口
+- 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
+- 导出类型：AppId、ProviderSwitchEvent、Prompt、CopilotDeviceCodeResponse、CopilotAuthStatus、GitHubAccount、ManagedAuthProvider、ManagedAuthAccount、ManagedAuthStatus、ManagedAuthDeviceCodeResponse
 **config.ts**（`src/lib/api/config.ts`，78 行）：
 ```typescript
 // src/lib/api/config.ts:4
@@ -2047,6 +2055,10 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**index.ts**（`src/lib/api/index.ts`，31 行）：
+- API 层统一导出入口
+- 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
+- 导出类型：AppId、ProviderSwitchEvent、Prompt、CopilotDeviceCodeResponse、CopilotAuthStatus、GitHubAccount、ManagedAuthProvider、ManagedAuthAccount、ManagedAuthStatus、ManagedAuthDeviceCodeResponse
 **config.ts**（`src/lib/api/config.ts`，78 行）：
 ```typescript
 // src/lib/api/config.ts:4
@@ -2601,6 +2613,10 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**index.ts**（`src/lib/api/index.ts`，31 行）：
+- API 层统一导出入口
+- 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
+- 导出类型：AppId、ProviderSwitchEvent、Prompt、CopilotDeviceCodeResponse、CopilotAuthStatus、GitHubAccount、ManagedAuthProvider、ManagedAuthAccount、ManagedAuthStatus、ManagedAuthDeviceCodeResponse
 **config.ts**（`src/lib/api/config.ts`，78 行）：
 ```typescript
 // src/lib/api/config.ts:4
@@ -4479,6 +4495,10 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**index.ts**（`src/lib/api/index.ts`，31 行）：
+- API 层统一导出入口
+- 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
+- 导出类型：AppId、ProviderSwitchEvent、Prompt、CopilotDeviceCodeResponse、CopilotAuthStatus、GitHubAccount、ManagedAuthProvider、ManagedAuthAccount、ManagedAuthStatus、ManagedAuthDeviceCodeResponse
 **config.ts**（`src/lib/api/config.ts`，78 行）：
 ```typescript
 // src/lib/api/config.ts:4
@@ -5558,6 +5578,10 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**index.ts**（`src/lib/api/index.ts`，31 行）：
+- API 层统一导出入口
+- 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
+- 导出类型：AppId、ProviderSwitchEvent、Prompt、CopilotDeviceCodeResponse、CopilotAuthStatus、GitHubAccount、ManagedAuthProvider、ManagedAuthAccount、ManagedAuthStatus、ManagedAuthDeviceCodeResponse
 **config.ts**（`src/lib/api/config.ts`，78 行）：
 ```typescript
 // src/lib/api/config.ts:4
