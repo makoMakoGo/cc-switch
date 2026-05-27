@@ -3342,6 +3342,36 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**provider_router.rs**（`proxy/provider_router.rs`，523 行，18.8KB）：
+```rust
+// proxy/provider_router.rs:16
+pub struct ProviderRouter {
+    db: Arc<Database>,
+    circuit_breakers: Arc<RwLock<HashMap<String, Arc<CircuitBreaker>>>>,
+}
+impl ProviderRouter {
+    pub fn new(db: Arc<Database>) -> Self;
+    pub async fn select_providers(&self, app_type: &str) -> Result<Vec<Provider>, AppError>;
+}
+```
+- 供应商路由器（选择和管理代理目标供应商，实现智能故障转移）
+- `circuit_breakers`（`provider_router.rs:20`）— 熔断器管理器，key 格式：`"app_type:provider_id"`
+- `select_providers()`（`provider_router.rs:37`）— 选择可用的供应商（支持故障转移）
+  - 故障转移关闭时：仅返回当前供应商
+  - 故障转移开启时：仅使用故障转移队列，按队列顺序依次尝试（P1 → P2 → ...）
+- 检查该应用的自动故障转移开关是否开启（从 `proxy_config` 表读取）
+**circuit_breaker.rs**（`proxy/circuit_breaker.rs`，495 行，17.4KB）：
+- 熔断器实现
+- `CircuitBreaker`（`circuit_breaker.rs:76`）— 熔断器结构体
+- `CircuitBreakerConfig`（`circuit_breaker.rs:38`）— 熔断器配置
+- `AllowResult` 枚举：允许请求、拒绝请求（熔断器打开）
+- 三态：Closed（正常）、Open（熔断）、HalfOpen（半开）
+**failover_switch.rs**（`proxy/failover_switch.rs`，135 行，4.4KB）：
+- 故障转移开关管理
+- `FailoverSwitchManager`（`failover_switch.rs:19`）— 故障转移开关管理器
+**switch_lock.rs**（`proxy/switch_lock.rs`，42 行，1.3KB）：
+- 切换锁管理
+- `SwitchLockManager`（`switch_lock.rs:14`）— 切换锁管理器
 **http_client.rs**（`proxy/http_client.rs`，449 行，14.6KB）：
 ```rust
 // proxy/http_client.rs:14
@@ -3891,6 +3921,36 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**provider_router.rs**（`proxy/provider_router.rs`，523 行，18.8KB）：
+```rust
+// proxy/provider_router.rs:16
+pub struct ProviderRouter {
+    db: Arc<Database>,
+    circuit_breakers: Arc<RwLock<HashMap<String, Arc<CircuitBreaker>>>>,
+}
+impl ProviderRouter {
+    pub fn new(db: Arc<Database>) -> Self;
+    pub async fn select_providers(&self, app_type: &str) -> Result<Vec<Provider>, AppError>;
+}
+```
+- 供应商路由器（选择和管理代理目标供应商，实现智能故障转移）
+- `circuit_breakers`（`provider_router.rs:20`）— 熔断器管理器，key 格式：`"app_type:provider_id"`
+- `select_providers()`（`provider_router.rs:37`）— 选择可用的供应商（支持故障转移）
+  - 故障转移关闭时：仅返回当前供应商
+  - 故障转移开启时：仅使用故障转移队列，按队列顺序依次尝试（P1 → P2 → ...）
+- 检查该应用的自动故障转移开关是否开启（从 `proxy_config` 表读取）
+**circuit_breaker.rs**（`proxy/circuit_breaker.rs`，495 行，17.4KB）：
+- 熔断器实现
+- `CircuitBreaker`（`circuit_breaker.rs:76`）— 熔断器结构体
+- `CircuitBreakerConfig`（`circuit_breaker.rs:38`）— 熔断器配置
+- `AllowResult` 枚举：允许请求、拒绝请求（熔断器打开）
+- 三态：Closed（正常）、Open（熔断）、HalfOpen（半开）
+**failover_switch.rs**（`proxy/failover_switch.rs`，135 行，4.4KB）：
+- 故障转移开关管理
+- `FailoverSwitchManager`（`failover_switch.rs:19`）— 故障转移开关管理器
+**switch_lock.rs**（`proxy/switch_lock.rs`，42 行，1.3KB）：
+- 切换锁管理
+- `SwitchLockManager`（`switch_lock.rs:14`）— 切换锁管理器
 **http_client.rs**（`proxy/http_client.rs`，449 行，14.6KB）：
 ```rust
 // proxy/http_client.rs:14
