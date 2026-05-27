@@ -641,10 +641,18 @@ src-tauri/src/proxy/
 │   ├── codex_oauth_auth.rs
 │   ├── gemini_shadow.rs
 │   └── ...
-├── transform_*.rs      # API 格式转换
-├── types.rs            # 共享类型定义
-├── log_codes.rs        # 日志代码常量
-└── http_client.rs      # 全局 HTTP 客户端
+├── providers/transform_codex_chat.rs  # 71.1KB，Codex Chat 格式转换
+├── providers/transform_gemini.rs      # 78.1KB，Gemini 格式转换
+├── providers/transform_responses.rs   # 61.5KB，通用响应转换
+├── providers/transform.rs             # 58.3KB，通用请求转换
+├── copilot_optimizer.rs               # 57.9KB，Copilot 优化器
+├── thinking_rectifier.rs              # 23.0KB，思维整流器
+├── thinking_budget_rectifier.rs       # 11.1KB，思维预算整流
+├── body_filter.rs                     # 10.5KB，请求体过滤
+├── model_mapper.rs                    # 10.4KB，模型映射
+├── types.rs                           # 共享类型定义
+├── log_codes.rs                       # 日志代码常量
+└── http_client.rs                     # 全局 HTTP 客户端
 ```
 
 **技术栈**：Axum（HTTP）+ Tower（中间件）+ Hyper（底层）+ Tokio（异步）
