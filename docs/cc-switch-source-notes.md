@@ -3342,6 +3342,49 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**McpService**（`services/mcp.rs`，438 行）：
+```rust
+// services/mcp.rs:10
+pub struct McpService;
+impl McpService {
+    pub fn get_all_servers(state: &AppState) -> Result<IndexMap<String, McpServer>, AppError> {
+        state.db.get_all_mcp_servers()
+    }
+    pub fn upsert_server(state: &AppState, server: McpServer) -> Result<(), AppError> {
+        // 读取旧状态：处理"编辑时取消勾选某个应用"的场景
+        let prev_apps = state.db.get_all_mcp_servers()?.get(&server.id).map(|s| s.apps.clone());
+        state.db.save_mcp_server(&server)?;
+        // 处理禁用：若旧版本启用但新版本取消，则需要从该应用的 live 配置移除
+        if prev_apps.claude && !server.apps.claude {
+            Self::remove_server_from_app(state, &server.id, &AppType::Claude)?;
+        }
+        // ... codex, gemini, opencode, hermes 同理
+        // 同步到各个启用的应用
+        Self::sync_server_to_apps(state, &server)?;
+        Ok(())
+    }
+    pub fn delete_server(state: &AppState, id: &str) -> Result<bool, AppError> {
+        let server = state.db.get_all_mcp_servers()?.shift_remove(id);
+        if let Some(server) = server {
+            state.db.delete_mcp_server(id)?;
+            Self::remove_server_from_all_apps(state, id, &server)?;
+            Ok(true)
+        } else { Ok(false) }
+    }
+    pub fn set_enabled(state: &AppState, app_ty: AppType, id: &str, enabled: bool) -> Result<(), AppError>;
+    pub fn toggle_app(state: &AppState, server_id: &str, app_ty: AppType, enabled: bool) -> Result<(), AppError>;
+    pub fn import_from_claude(state: &AppState) -> Result<usize, AppError>;
+    pub fn import_from_codex(state: &AppState) -> Result<usize, AppError>;
+    pub fn import_from_gemini(state: &AppState) -> Result<usize, AppError>;
+    pub fn import_from_opencode(state: &AppState) -> Result<usize, AppError>;
+    pub fn import_from_hermes(state: &AppState) -> Result<usize, AppError>;
+    pub fn sync_all_enabled(state: &AppState) -> Result<(), AppError>;
+}
+```
+- v3.7.0 统一结构 — MCP 服务器存储在数据库中，通过 `apps` 字段控制每个应用的启用状态
+- `upsert_server()` 处理"编辑时取消勾选某个应用"的场景 — 自动从对应 live 配置中移除
+- `import_from_*()` 从各工具的本地配置文件导入 MCP 服务器
+- `sync_all_enabled()` 在 provider 切换时调用（`live.rs:908`、`live.rs:944`、`mod.rs:1423`、`mod.rs:1774`）
 **ProviderService**（`services/provider/mod.rs`，2767 行，105.5KB）：
 ```rust
 // services/provider/mod.rs:46
