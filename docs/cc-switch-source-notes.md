@@ -3325,4 +3325,40 @@ impl ToolConfig for ClaudeConfig {
 | App.tsx | 1604 行 |
 | hooks/ 合计 | 3642 行（25 个文件） |
 | components/ 合计 | 186 个文件 |
+| — proxy/ | 8 个文件（ProxyPanel 25.6KB 最大） |
+| — settings/ | Settings 视图组件 |
+| — providers/ | Provider 卡片和列表组件 |
+| — skills/ | Skills 管理组件 |
+| — mcp/ | MCP 服务器管理组件 |
+| — usage/ | 用量统计组件 |
+| — universal/ | 通用 Provider 组件 |
+| — agents/ | Agent 配置组件 |
+| — hermes/ | Hermes 配置组件 |
+| — openclaw/ | OpenClaw 配置组件 |
+| — common/ | 通用 UI 组件 |
+| — prompts/ | Prompt 管理组件 |
+| — sessions/ | 会话管理组件 |
+| — deeplink/ | 深度链接组件 |
+| — workspace/ | 工作区组件 |
+| — icons/ | 图标组件 |
+| — ui/ | 基础 UI 组件（shadcn/ui） |
+**ProxyPanel**（`components/proxy/ProxyPanel.tsx`，733 行）：
+```typescript
+// ProxyPanel.tsx:40
+export function ProxyPanel({ enableLocalProxy, onEnableLocalProxyChange, onToggleProxy, isProxyPending }: ProxyPanelProps) {
+    const { status, isRunning } = useProxyStatus();
+    const { data: takeoverStatus } = useProxyTakeoverStatus();
+    const setTakeoverForApp = useSetProxyTakeoverForApp();
+    const { data: globalConfig } = useGlobalProxyConfig();
+    const updateGlobalConfig = useUpdateGlobalProxyConfig();
+    const [listenAddress, setListenAddress] = useState("127.0.0.1");
+    const [listenPort, setListenPort] = useState("15721");
+    // ...
+}
+```
+- 使用 `useProxyStatus()` hook 获取代理状态
+- 使用 `useProxyTakeoverStatus()` 获取应用接管状态
+- 使用 `useGlobalProxyConfig()` 获取全局代理配置
+- 默认监听地址 `127.0.0.1:15721`
+- 包含 `AutoFailoverConfigPanel`、`CircuitBreakerConfigPanel`、`FailoverQueueManager` 子组件
 | config/ presets 合计 | 237.3KB（8 个文件） |
