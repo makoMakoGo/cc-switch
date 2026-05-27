@@ -523,6 +523,12 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**SwitchResult**（`services/provider/mod.rs:51`）：
+```rust
+pub struct SwitchResult {  // services/provider/mod.rs:51
+    pub warnings: Vec<String>,  // 切换操作的非致命警告
+}
+```
 **ProviderManager**（`provider.rs:114`）：
 ```rust
 pub struct ProviderManager {  // provider.rs:114
@@ -765,6 +771,12 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**SwitchResult**（`services/provider/mod.rs:51`）：
+```rust
+pub struct SwitchResult {  // services/provider/mod.rs:51
+    pub warnings: Vec<String>,  // 切换操作的非致命警告
+}
+```
 **ProviderManager**（`provider.rs:114`）：
 ```rust
 pub struct ProviderManager {  // provider.rs:114
