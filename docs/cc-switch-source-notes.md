@@ -3431,6 +3431,39 @@ pub trait ProviderAdapter: Send + Sync {
 - `calculator.rs`（9.0KB）— 费用计算器（`CostCalculator`、`ModelPricing`）
 - `parser.rs`（33.5KB）— 使用量解析器（`TokenUsage`）
 - `mod.rs`（446B）— 模块导出
+**parser.rs**（`proxy/usage/parser.rs`，937 行，33.5KB）：
+```rust
+// proxy/usage/parser.rs:13
+pub const SESSION_REQUEST_ID_PREFIX: &str = "session:";
+// proxy/usage/parser.rs:17
+pub struct TokenUsage {
+    pub input_tokens: u32,
+    pub output_tokens: u32,
+    pub cache_read_tokens: u32,
+    pub cache_creation_tokens: u32,
+    pub model: Option<String>,
+    #[serde(skip)]
+    pub message_id: Option<String>,
+}
+impl TokenUsage {
+    pub fn dedup_request_id(&self) -> String {
+        self.message_id
+            .as_ref()
+            .map(|mid| format!("{SESSION_REQUEST_ID_PREFIX}{mid}"))
+            .unwrap_or_else(|| uuid::Uuid::new_v4().to_string())
+    }
+}
+// proxy/usage/parser.rs:45
+pub enum ApiType { Claude, OpenRouter, Codex, Gemini }
+```
+- Response Parser — 从 API 响应中提取 token 使用量
+- 支持多种 API 格式：Claude API（非流式和流式）、OpenRouter（OpenAI 格式）、Codex API（非流式和流式）、Gemini API（非流式和流式）
+- `TokenUsage` 存储 token 使用量统计（input、output、cache_read、cache_creation）
+- `dedup_request_id()` 生成与 session 日志共享的 request_id，用于跨源去重
+  - 有 `message_id` 时返回 `session:{id}`
+  - 否则回退到随机 UUID
+- `SESSION_REQUEST_ID_PREFIX = "session:"`（`parser.rs:13`）— 与 session_usage.rs 中的格式保持一致
+- `ApiType` 枚举：Claude、OpenRouter、Codex、Gemini
 **CostCalculator**（`proxy/usage/calculator.rs`，271 行，9.0KB）：
 ```rust
 // proxy/usage/calculator.rs:11
@@ -4191,6 +4224,39 @@ pub trait ProviderAdapter: Send + Sync {
 - `calculator.rs`（9.0KB）— 费用计算器（`CostCalculator`、`ModelPricing`）
 - `parser.rs`（33.5KB）— 使用量解析器（`TokenUsage`）
 - `mod.rs`（446B）— 模块导出
+**parser.rs**（`proxy/usage/parser.rs`，937 行，33.5KB）：
+```rust
+// proxy/usage/parser.rs:13
+pub const SESSION_REQUEST_ID_PREFIX: &str = "session:";
+// proxy/usage/parser.rs:17
+pub struct TokenUsage {
+    pub input_tokens: u32,
+    pub output_tokens: u32,
+    pub cache_read_tokens: u32,
+    pub cache_creation_tokens: u32,
+    pub model: Option<String>,
+    #[serde(skip)]
+    pub message_id: Option<String>,
+}
+impl TokenUsage {
+    pub fn dedup_request_id(&self) -> String {
+        self.message_id
+            .as_ref()
+            .map(|mid| format!("{SESSION_REQUEST_ID_PREFIX}{mid}"))
+            .unwrap_or_else(|| uuid::Uuid::new_v4().to_string())
+    }
+}
+// proxy/usage/parser.rs:45
+pub enum ApiType { Claude, OpenRouter, Codex, Gemini }
+```
+- Response Parser — 从 API 响应中提取 token 使用量
+- 支持多种 API 格式：Claude API（非流式和流式）、OpenRouter（OpenAI 格式）、Codex API（非流式和流式）、Gemini API（非流式和流式）
+- `TokenUsage` 存储 token 使用量统计（input、output、cache_read、cache_creation）
+- `dedup_request_id()` 生成与 session 日志共享的 request_id，用于跨源去重
+  - 有 `message_id` 时返回 `session:{id}`
+  - 否则回退到随机 UUID
+- `SESSION_REQUEST_ID_PREFIX = "session:"`（`parser.rs:13`）— 与 session_usage.rs 中的格式保持一致
+- `ApiType` 枚举：Claude、OpenRouter、Codex、Gemini
 **CostCalculator**（`proxy/usage/calculator.rs`，271 行，9.0KB）：
 ```rust
 // proxy/usage/calculator.rs:11
