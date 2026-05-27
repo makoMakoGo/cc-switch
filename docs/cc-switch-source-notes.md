@@ -523,6 +523,24 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**PromptConfig**（`app_config.rs:304`）：
+```rust
+pub struct PromptConfig {  // app_config.rs:304
+    pub prompts: HashMap<String, crate::prompt::Prompt>,
+}
+```
+**PromptRoot**（`app_config.rs:311`）— 按客户端分开维护：
+```rust
+pub struct PromptRoot {  // app_config.rs:311
+    pub claude: PromptConfig,
+    pub claude_desktop: PromptConfig,  // 别名 claude-desktop, claudeDesktop
+    pub codex: PromptConfig,
+    pub gemini: PromptConfig,
+    pub opencode: PromptConfig,
+    pub openclaw: PromptConfig,
+    pub hermes: PromptConfig,
+}
+```
 **MultiAppConfig**（`app_config.rs:469`）— 旧版 JSON 配置格式（用于迁移）：
 ```rust
 pub struct MultiAppConfig {  // app_config.rs:469
@@ -703,6 +721,24 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**PromptConfig**（`app_config.rs:304`）：
+```rust
+pub struct PromptConfig {  // app_config.rs:304
+    pub prompts: HashMap<String, crate::prompt::Prompt>,
+}
+```
+**PromptRoot**（`app_config.rs:311`）— 按客户端分开维护：
+```rust
+pub struct PromptRoot {  // app_config.rs:311
+    pub claude: PromptConfig,
+    pub claude_desktop: PromptConfig,  // 别名 claude-desktop, claudeDesktop
+    pub codex: PromptConfig,
+    pub gemini: PromptConfig,
+    pub opencode: PromptConfig,
+    pub openclaw: PromptConfig,
+    pub hermes: PromptConfig,
+}
+```
 **MultiAppConfig**（`app_config.rs:469`）— 旧版 JSON 配置格式（用于迁移）：
 ```rust
 pub struct MultiAppConfig {  // app_config.rs:469
