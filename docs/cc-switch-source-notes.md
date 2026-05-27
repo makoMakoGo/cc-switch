@@ -558,6 +558,42 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
+```typescript
+// src/lib/api/sessions.ts:4
+export interface DeleteSessionOptions {
+    providerId: string;
+    sessionId: string;
+    sourcePath: string;
+}
+export interface DeleteSessionResult extends DeleteSessionOptions {
+    success: boolean;
+    error?: string;
+}
+// src/lib/api/sessions.ts:15
+export const sessionsApi = {
+    async list(): Promise<SessionMeta[]> { return await invoke("list_sessions"); },
+    async getMessages(providerId: string, sourcePath: string): Promise<SessionMessage[]> {
+        return await invoke("get_session_messages", { providerId, sourcePath });
+    },
+    async delete(options: DeleteSessionOptions): Promise<boolean> {
+        return await invoke("delete_session", { providerId, sessionId, sourcePath });
+    },
+    async deleteMany(items: DeleteSessionOptions[]): Promise<DeleteSessionResult[]> {
+        return await invoke("delete_sessions", { items });
+    },
+    async launchTerminal(options: { command: string; cwd: string }): Promise<void> {
+        return await invoke("launch_terminal", options);
+    },
+};
+```
+- `DeleteSessionOptions`（`sessions.ts:4`）— 删除会话选项（providerId、sessionId、sourcePath）
+- `DeleteSessionResult`（`sessions.ts:10`）— 删除结果（继承 DeleteSessionOptions + success + error）
+- `list()` — 获取会话列表
+- `getMessages()` — 获取会话消息
+- `delete()` — 删除单个会话
+- `deleteMany()` — 批量删除会话
+- `launchTerminal()` — 启动终端
 **authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
 ```typescript
 // src/lib/authBinding.ts:3
@@ -953,6 +989,42 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
+```typescript
+// src/lib/api/sessions.ts:4
+export interface DeleteSessionOptions {
+    providerId: string;
+    sessionId: string;
+    sourcePath: string;
+}
+export interface DeleteSessionResult extends DeleteSessionOptions {
+    success: boolean;
+    error?: string;
+}
+// src/lib/api/sessions.ts:15
+export const sessionsApi = {
+    async list(): Promise<SessionMeta[]> { return await invoke("list_sessions"); },
+    async getMessages(providerId: string, sourcePath: string): Promise<SessionMessage[]> {
+        return await invoke("get_session_messages", { providerId, sourcePath });
+    },
+    async delete(options: DeleteSessionOptions): Promise<boolean> {
+        return await invoke("delete_session", { providerId, sessionId, sourcePath });
+    },
+    async deleteMany(items: DeleteSessionOptions[]): Promise<DeleteSessionResult[]> {
+        return await invoke("delete_sessions", { items });
+    },
+    async launchTerminal(options: { command: string; cwd: string }): Promise<void> {
+        return await invoke("launch_terminal", options);
+    },
+};
+```
+- `DeleteSessionOptions`（`sessions.ts:4`）— 删除会话选项（providerId、sessionId、sourcePath）
+- `DeleteSessionResult`（`sessions.ts:10`）— 删除结果（继承 DeleteSessionOptions + success + error）
+- `list()` — 获取会话列表
+- `getMessages()` — 获取会话消息
+- `delete()` — 删除单个会话
+- `deleteMany()` — 批量删除会话
+- `launchTerminal()` — 启动终端
 **authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
 ```typescript
 // src/lib/authBinding.ts:3
@@ -1725,6 +1797,42 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
+```typescript
+// src/lib/api/sessions.ts:4
+export interface DeleteSessionOptions {
+    providerId: string;
+    sessionId: string;
+    sourcePath: string;
+}
+export interface DeleteSessionResult extends DeleteSessionOptions {
+    success: boolean;
+    error?: string;
+}
+// src/lib/api/sessions.ts:15
+export const sessionsApi = {
+    async list(): Promise<SessionMeta[]> { return await invoke("list_sessions"); },
+    async getMessages(providerId: string, sourcePath: string): Promise<SessionMessage[]> {
+        return await invoke("get_session_messages", { providerId, sourcePath });
+    },
+    async delete(options: DeleteSessionOptions): Promise<boolean> {
+        return await invoke("delete_session", { providerId, sessionId, sourcePath });
+    },
+    async deleteMany(items: DeleteSessionOptions[]): Promise<DeleteSessionResult[]> {
+        return await invoke("delete_sessions", { items });
+    },
+    async launchTerminal(options: { command: string; cwd: string }): Promise<void> {
+        return await invoke("launch_terminal", options);
+    },
+};
+```
+- `DeleteSessionOptions`（`sessions.ts:4`）— 删除会话选项（providerId、sessionId、sourcePath）
+- `DeleteSessionResult`（`sessions.ts:10`）— 删除结果（继承 DeleteSessionOptions + success + error）
+- `list()` — 获取会话列表
+- `getMessages()` — 获取会话消息
+- `delete()` — 删除单个会话
+- `deleteMany()` — 批量删除会话
+- `launchTerminal()` — 启动终端
 **authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
 ```typescript
 // src/lib/authBinding.ts:3
@@ -2118,6 +2226,42 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
+```typescript
+// src/lib/api/sessions.ts:4
+export interface DeleteSessionOptions {
+    providerId: string;
+    sessionId: string;
+    sourcePath: string;
+}
+export interface DeleteSessionResult extends DeleteSessionOptions {
+    success: boolean;
+    error?: string;
+}
+// src/lib/api/sessions.ts:15
+export const sessionsApi = {
+    async list(): Promise<SessionMeta[]> { return await invoke("list_sessions"); },
+    async getMessages(providerId: string, sourcePath: string): Promise<SessionMessage[]> {
+        return await invoke("get_session_messages", { providerId, sourcePath });
+    },
+    async delete(options: DeleteSessionOptions): Promise<boolean> {
+        return await invoke("delete_session", { providerId, sessionId, sourcePath });
+    },
+    async deleteMany(items: DeleteSessionOptions[]): Promise<DeleteSessionResult[]> {
+        return await invoke("delete_sessions", { items });
+    },
+    async launchTerminal(options: { command: string; cwd: string }): Promise<void> {
+        return await invoke("launch_terminal", options);
+    },
+};
+```
+- `DeleteSessionOptions`（`sessions.ts:4`）— 删除会话选项（providerId、sessionId、sourcePath）
+- `DeleteSessionResult`（`sessions.ts:10`）— 删除结果（继承 DeleteSessionOptions + success + error）
+- `list()` — 获取会话列表
+- `getMessages()` — 获取会话消息
+- `delete()` — 删除单个会话
+- `deleteMany()` — 批量删除会话
+- `launchTerminal()` — 启动终端
 **authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
 ```typescript
 // src/lib/authBinding.ts:3
@@ -3835,6 +3979,42 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
+```typescript
+// src/lib/api/sessions.ts:4
+export interface DeleteSessionOptions {
+    providerId: string;
+    sessionId: string;
+    sourcePath: string;
+}
+export interface DeleteSessionResult extends DeleteSessionOptions {
+    success: boolean;
+    error?: string;
+}
+// src/lib/api/sessions.ts:15
+export const sessionsApi = {
+    async list(): Promise<SessionMeta[]> { return await invoke("list_sessions"); },
+    async getMessages(providerId: string, sourcePath: string): Promise<SessionMessage[]> {
+        return await invoke("get_session_messages", { providerId, sourcePath });
+    },
+    async delete(options: DeleteSessionOptions): Promise<boolean> {
+        return await invoke("delete_session", { providerId, sessionId, sourcePath });
+    },
+    async deleteMany(items: DeleteSessionOptions[]): Promise<DeleteSessionResult[]> {
+        return await invoke("delete_sessions", { items });
+    },
+    async launchTerminal(options: { command: string; cwd: string }): Promise<void> {
+        return await invoke("launch_terminal", options);
+    },
+};
+```
+- `DeleteSessionOptions`（`sessions.ts:4`）— 删除会话选项（providerId、sessionId、sourcePath）
+- `DeleteSessionResult`（`sessions.ts:10`）— 删除结果（继承 DeleteSessionOptions + success + error）
+- `list()` — 获取会话列表
+- `getMessages()` — 获取会话消息
+- `delete()` — 删除单个会话
+- `deleteMany()` — 批量删除会话
+- `launchTerminal()` — 启动终端
 **authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
 ```typescript
 // src/lib/authBinding.ts:3
@@ -4753,6 +4933,42 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
+```typescript
+// src/lib/api/sessions.ts:4
+export interface DeleteSessionOptions {
+    providerId: string;
+    sessionId: string;
+    sourcePath: string;
+}
+export interface DeleteSessionResult extends DeleteSessionOptions {
+    success: boolean;
+    error?: string;
+}
+// src/lib/api/sessions.ts:15
+export const sessionsApi = {
+    async list(): Promise<SessionMeta[]> { return await invoke("list_sessions"); },
+    async getMessages(providerId: string, sourcePath: string): Promise<SessionMessage[]> {
+        return await invoke("get_session_messages", { providerId, sourcePath });
+    },
+    async delete(options: DeleteSessionOptions): Promise<boolean> {
+        return await invoke("delete_session", { providerId, sessionId, sourcePath });
+    },
+    async deleteMany(items: DeleteSessionOptions[]): Promise<DeleteSessionResult[]> {
+        return await invoke("delete_sessions", { items });
+    },
+    async launchTerminal(options: { command: string; cwd: string }): Promise<void> {
+        return await invoke("launch_terminal", options);
+    },
+};
+```
+- `DeleteSessionOptions`（`sessions.ts:4`）— 删除会话选项（providerId、sessionId、sourcePath）
+- `DeleteSessionResult`（`sessions.ts:10`）— 删除结果（继承 DeleteSessionOptions + success + error）
+- `list()` — 获取会话列表
+- `getMessages()` — 获取会话消息
+- `delete()` — 删除单个会话
+- `deleteMany()` — 批量删除会话
+- `launchTerminal()` — 启动终端
 **authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
 ```typescript
 // src/lib/authBinding.ts:3
