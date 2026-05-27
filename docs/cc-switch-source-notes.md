@@ -558,6 +558,42 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**failoverApi**（`src/lib/api/failover.ts`，100 行）：
+```typescript
+// src/lib/api/failover.ts:23
+export const failoverApi = {
+    // 熔断器 API
+    async getProviderHealth(providerId: string, appType: string): Promise<ProviderHealth> {
+        return invoke("get_provider_health", { providerId, appType });
+    },
+    async resetCircuitBreaker(providerId: string, appType: string): Promise<void> {
+        return invoke("reset_circuit_breaker", { providerId, appType });
+    },
+    async getCircuitBreakerConfig(): Promise<CircuitBreakerConfig> {
+        return invoke("get_circuit_breaker_config");
+    },
+    async updateCircuitBreakerConfig(config: CircuitBreakerConfig): Promise<void> {
+        return invoke("update_circuit_breaker_config", { config });
+    },
+    async getCircuitBreakerStats(providerId: string, appType: string): Promise<CircuitBreakerStats> {
+        return invoke("get_circuit_breaker_stats", { providerId, appType });
+    },
+    // 故障转移队列 API
+    async getFailoverQueue(appType: string): Promise<FailoverQueueItem[]> {
+        return invoke("get_failover_queue", { appType });
+    },
+    async updateFailoverQueue(appType: string, queue: FailoverQueueItem[]): Promise<void> {
+        return invoke("update_failover_queue", { appType, queue });
+    },
+};
+```
+- 3 个 API 分组：熔断器、故障转移队列、熔断器配置
+- `getProviderHealth()` — 获取供应商健康状态
+- `resetCircuitBreaker()` — 重置熔断器
+- `getCircuitBreakerConfig()` / `updateCircuitBreakerConfig()` — 获取/更新熔断器配置
+- `getCircuitBreakerStats()` — 获取熔断器统计
+- `getFailoverQueue()` / `updateFailoverQueue()` — 获取/更新故障转移队列
+- `ProviderHealth`、`CircuitBreakerConfig`、`CircuitBreakerStats`、`FailoverQueueItem` 类型定义在 `types/proxy.ts`
 **sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
 ```typescript
 // src/lib/api/sessions.ts:4
@@ -989,6 +1025,42 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**failoverApi**（`src/lib/api/failover.ts`，100 行）：
+```typescript
+// src/lib/api/failover.ts:23
+export const failoverApi = {
+    // 熔断器 API
+    async getProviderHealth(providerId: string, appType: string): Promise<ProviderHealth> {
+        return invoke("get_provider_health", { providerId, appType });
+    },
+    async resetCircuitBreaker(providerId: string, appType: string): Promise<void> {
+        return invoke("reset_circuit_breaker", { providerId, appType });
+    },
+    async getCircuitBreakerConfig(): Promise<CircuitBreakerConfig> {
+        return invoke("get_circuit_breaker_config");
+    },
+    async updateCircuitBreakerConfig(config: CircuitBreakerConfig): Promise<void> {
+        return invoke("update_circuit_breaker_config", { config });
+    },
+    async getCircuitBreakerStats(providerId: string, appType: string): Promise<CircuitBreakerStats> {
+        return invoke("get_circuit_breaker_stats", { providerId, appType });
+    },
+    // 故障转移队列 API
+    async getFailoverQueue(appType: string): Promise<FailoverQueueItem[]> {
+        return invoke("get_failover_queue", { appType });
+    },
+    async updateFailoverQueue(appType: string, queue: FailoverQueueItem[]): Promise<void> {
+        return invoke("update_failover_queue", { appType, queue });
+    },
+};
+```
+- 3 个 API 分组：熔断器、故障转移队列、熔断器配置
+- `getProviderHealth()` — 获取供应商健康状态
+- `resetCircuitBreaker()` — 重置熔断器
+- `getCircuitBreakerConfig()` / `updateCircuitBreakerConfig()` — 获取/更新熔断器配置
+- `getCircuitBreakerStats()` — 获取熔断器统计
+- `getFailoverQueue()` / `updateFailoverQueue()` — 获取/更新故障转移队列
+- `ProviderHealth`、`CircuitBreakerConfig`、`CircuitBreakerStats`、`FailoverQueueItem` 类型定义在 `types/proxy.ts`
 **sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
 ```typescript
 // src/lib/api/sessions.ts:4
@@ -1797,6 +1869,42 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**failoverApi**（`src/lib/api/failover.ts`，100 行）：
+```typescript
+// src/lib/api/failover.ts:23
+export const failoverApi = {
+    // 熔断器 API
+    async getProviderHealth(providerId: string, appType: string): Promise<ProviderHealth> {
+        return invoke("get_provider_health", { providerId, appType });
+    },
+    async resetCircuitBreaker(providerId: string, appType: string): Promise<void> {
+        return invoke("reset_circuit_breaker", { providerId, appType });
+    },
+    async getCircuitBreakerConfig(): Promise<CircuitBreakerConfig> {
+        return invoke("get_circuit_breaker_config");
+    },
+    async updateCircuitBreakerConfig(config: CircuitBreakerConfig): Promise<void> {
+        return invoke("update_circuit_breaker_config", { config });
+    },
+    async getCircuitBreakerStats(providerId: string, appType: string): Promise<CircuitBreakerStats> {
+        return invoke("get_circuit_breaker_stats", { providerId, appType });
+    },
+    // 故障转移队列 API
+    async getFailoverQueue(appType: string): Promise<FailoverQueueItem[]> {
+        return invoke("get_failover_queue", { appType });
+    },
+    async updateFailoverQueue(appType: string, queue: FailoverQueueItem[]): Promise<void> {
+        return invoke("update_failover_queue", { appType, queue });
+    },
+};
+```
+- 3 个 API 分组：熔断器、故障转移队列、熔断器配置
+- `getProviderHealth()` — 获取供应商健康状态
+- `resetCircuitBreaker()` — 重置熔断器
+- `getCircuitBreakerConfig()` / `updateCircuitBreakerConfig()` — 获取/更新熔断器配置
+- `getCircuitBreakerStats()` — 获取熔断器统计
+- `getFailoverQueue()` / `updateFailoverQueue()` — 获取/更新故障转移队列
+- `ProviderHealth`、`CircuitBreakerConfig`、`CircuitBreakerStats`、`FailoverQueueItem` 类型定义在 `types/proxy.ts`
 **sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
 ```typescript
 // src/lib/api/sessions.ts:4
@@ -2226,6 +2334,42 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**failoverApi**（`src/lib/api/failover.ts`，100 行）：
+```typescript
+// src/lib/api/failover.ts:23
+export const failoverApi = {
+    // 熔断器 API
+    async getProviderHealth(providerId: string, appType: string): Promise<ProviderHealth> {
+        return invoke("get_provider_health", { providerId, appType });
+    },
+    async resetCircuitBreaker(providerId: string, appType: string): Promise<void> {
+        return invoke("reset_circuit_breaker", { providerId, appType });
+    },
+    async getCircuitBreakerConfig(): Promise<CircuitBreakerConfig> {
+        return invoke("get_circuit_breaker_config");
+    },
+    async updateCircuitBreakerConfig(config: CircuitBreakerConfig): Promise<void> {
+        return invoke("update_circuit_breaker_config", { config });
+    },
+    async getCircuitBreakerStats(providerId: string, appType: string): Promise<CircuitBreakerStats> {
+        return invoke("get_circuit_breaker_stats", { providerId, appType });
+    },
+    // 故障转移队列 API
+    async getFailoverQueue(appType: string): Promise<FailoverQueueItem[]> {
+        return invoke("get_failover_queue", { appType });
+    },
+    async updateFailoverQueue(appType: string, queue: FailoverQueueItem[]): Promise<void> {
+        return invoke("update_failover_queue", { appType, queue });
+    },
+};
+```
+- 3 个 API 分组：熔断器、故障转移队列、熔断器配置
+- `getProviderHealth()` — 获取供应商健康状态
+- `resetCircuitBreaker()` — 重置熔断器
+- `getCircuitBreakerConfig()` / `updateCircuitBreakerConfig()` — 获取/更新熔断器配置
+- `getCircuitBreakerStats()` — 获取熔断器统计
+- `getFailoverQueue()` / `updateFailoverQueue()` — 获取/更新故障转移队列
+- `ProviderHealth`、`CircuitBreakerConfig`、`CircuitBreakerStats`、`FailoverQueueItem` 类型定义在 `types/proxy.ts`
 **sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
 ```typescript
 // src/lib/api/sessions.ts:4
@@ -3979,6 +4123,42 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**failoverApi**（`src/lib/api/failover.ts`，100 行）：
+```typescript
+// src/lib/api/failover.ts:23
+export const failoverApi = {
+    // 熔断器 API
+    async getProviderHealth(providerId: string, appType: string): Promise<ProviderHealth> {
+        return invoke("get_provider_health", { providerId, appType });
+    },
+    async resetCircuitBreaker(providerId: string, appType: string): Promise<void> {
+        return invoke("reset_circuit_breaker", { providerId, appType });
+    },
+    async getCircuitBreakerConfig(): Promise<CircuitBreakerConfig> {
+        return invoke("get_circuit_breaker_config");
+    },
+    async updateCircuitBreakerConfig(config: CircuitBreakerConfig): Promise<void> {
+        return invoke("update_circuit_breaker_config", { config });
+    },
+    async getCircuitBreakerStats(providerId: string, appType: string): Promise<CircuitBreakerStats> {
+        return invoke("get_circuit_breaker_stats", { providerId, appType });
+    },
+    // 故障转移队列 API
+    async getFailoverQueue(appType: string): Promise<FailoverQueueItem[]> {
+        return invoke("get_failover_queue", { appType });
+    },
+    async updateFailoverQueue(appType: string, queue: FailoverQueueItem[]): Promise<void> {
+        return invoke("update_failover_queue", { appType, queue });
+    },
+};
+```
+- 3 个 API 分组：熔断器、故障转移队列、熔断器配置
+- `getProviderHealth()` — 获取供应商健康状态
+- `resetCircuitBreaker()` — 重置熔断器
+- `getCircuitBreakerConfig()` / `updateCircuitBreakerConfig()` — 获取/更新熔断器配置
+- `getCircuitBreakerStats()` — 获取熔断器统计
+- `getFailoverQueue()` / `updateFailoverQueue()` — 获取/更新故障转移队列
+- `ProviderHealth`、`CircuitBreakerConfig`、`CircuitBreakerStats`、`FailoverQueueItem` 类型定义在 `types/proxy.ts`
 **sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
 ```typescript
 // src/lib/api/sessions.ts:4
@@ -4933,6 +5113,42 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**failoverApi**（`src/lib/api/failover.ts`，100 行）：
+```typescript
+// src/lib/api/failover.ts:23
+export const failoverApi = {
+    // 熔断器 API
+    async getProviderHealth(providerId: string, appType: string): Promise<ProviderHealth> {
+        return invoke("get_provider_health", { providerId, appType });
+    },
+    async resetCircuitBreaker(providerId: string, appType: string): Promise<void> {
+        return invoke("reset_circuit_breaker", { providerId, appType });
+    },
+    async getCircuitBreakerConfig(): Promise<CircuitBreakerConfig> {
+        return invoke("get_circuit_breaker_config");
+    },
+    async updateCircuitBreakerConfig(config: CircuitBreakerConfig): Promise<void> {
+        return invoke("update_circuit_breaker_config", { config });
+    },
+    async getCircuitBreakerStats(providerId: string, appType: string): Promise<CircuitBreakerStats> {
+        return invoke("get_circuit_breaker_stats", { providerId, appType });
+    },
+    // 故障转移队列 API
+    async getFailoverQueue(appType: string): Promise<FailoverQueueItem[]> {
+        return invoke("get_failover_queue", { appType });
+    },
+    async updateFailoverQueue(appType: string, queue: FailoverQueueItem[]): Promise<void> {
+        return invoke("update_failover_queue", { appType, queue });
+    },
+};
+```
+- 3 个 API 分组：熔断器、故障转移队列、熔断器配置
+- `getProviderHealth()` — 获取供应商健康状态
+- `resetCircuitBreaker()` — 重置熔断器
+- `getCircuitBreakerConfig()` / `updateCircuitBreakerConfig()` — 获取/更新熔断器配置
+- `getCircuitBreakerStats()` — 获取熔断器统计
+- `getFailoverQueue()` / `updateFailoverQueue()` — 获取/更新故障转移队列
+- `ProviderHealth`、`CircuitBreakerConfig`、`CircuitBreakerStats`、`FailoverQueueItem` 类型定义在 `types/proxy.ts`
 **sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
 ```typescript
 // src/lib/api/sessions.ts:4
