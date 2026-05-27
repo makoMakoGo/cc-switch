@@ -3427,6 +3427,29 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**ProxyState**（`proxy/server.rs:34`）：
+```rust
+// proxy/server.rs:34
+#[derive(Clone)]
+pub struct ProxyState {
+    pub db: Arc<Database>,
+    pub config: Arc<RwLock<ProxyConfig>>,
+    pub status: Arc<RwLock<ProxyStatus>>,
+    pub start_time: Arc<RwLock<Option<std::time::Instant>>>,
+    pub current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    pub provider_router: Arc<ProviderRouter>,
+    pub gemini_shadow: Arc<GeminiShadowStore>,
+    pub codex_chat_history: Arc<CodexChatHistoryStore>,
+    pub app_handle: Option<tauri::AppHandle>,
+}
+```
+- `ProxyState` 是代理服务器的共享状态（所有 handler 通过 `State<ProxyState>` 访问）
+- `provider_router`（`server.rs:42`）— 共享的 ProviderRouter（持有熔断器状态，跨请求保持）
+- `gemini_shadow`（`server.rs:44`）— Gemini Native shadow state，用于 thoughtSignature / tool call 回放
+- `codex_chat_history`（`server.rs:46`）— Codex Chat bridge history，用于恢复 previous_response_id 指向的 tool call
+- `current_providers`（`server.rs:40`）— 每个应用类型当前使用的 provider (app_type -> (provider_id, provider_name))
+- 使用 `HeaderCaseMap` 保持原始 header-name casing（`preserve_header_case(true)`）
+- 基于 Axum 的 HTTP 服务器，使用手动 hyper HTTP/1.1 accept loop
 **usage/ 目录**（`proxy/usage/`，4 个文件）：
 - `calculator.rs`（9.0KB）— 费用计算器（`CostCalculator`、`ModelPricing`）
 - `parser.rs`（33.5KB）— 使用量解析器（`TokenUsage`）
@@ -4220,6 +4243,29 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**ProxyState**（`proxy/server.rs:34`）：
+```rust
+// proxy/server.rs:34
+#[derive(Clone)]
+pub struct ProxyState {
+    pub db: Arc<Database>,
+    pub config: Arc<RwLock<ProxyConfig>>,
+    pub status: Arc<RwLock<ProxyStatus>>,
+    pub start_time: Arc<RwLock<Option<std::time::Instant>>>,
+    pub current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    pub provider_router: Arc<ProviderRouter>,
+    pub gemini_shadow: Arc<GeminiShadowStore>,
+    pub codex_chat_history: Arc<CodexChatHistoryStore>,
+    pub app_handle: Option<tauri::AppHandle>,
+}
+```
+- `ProxyState` 是代理服务器的共享状态（所有 handler 通过 `State<ProxyState>` 访问）
+- `provider_router`（`server.rs:42`）— 共享的 ProviderRouter（持有熔断器状态，跨请求保持）
+- `gemini_shadow`（`server.rs:44`）— Gemini Native shadow state，用于 thoughtSignature / tool call 回放
+- `codex_chat_history`（`server.rs:46`）— Codex Chat bridge history，用于恢复 previous_response_id 指向的 tool call
+- `current_providers`（`server.rs:40`）— 每个应用类型当前使用的 provider (app_type -> (provider_id, provider_name))
+- 使用 `HeaderCaseMap` 保持原始 header-name casing（`preserve_header_case(true)`）
+- 基于 Axum 的 HTTP 服务器，使用手动 hyper HTTP/1.1 accept loop
 **usage/ 目录**（`proxy/usage/`，4 个文件）：
 - `calculator.rs`（9.0KB）— 费用计算器（`CostCalculator`、`ModelPricing`）
 - `parser.rs`（33.5KB）— 使用量解析器（`TokenUsage`）
