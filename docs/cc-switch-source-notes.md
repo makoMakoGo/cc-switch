@@ -2323,6 +2323,33 @@ pub struct ProxyConfig {  // proxy/types.rs:5
 - `streaming_first_byte_timeout`：等待首个数据块的最大时间（1-120 秒）
 - `streaming_idle_timeout`：两个数据块之间的最大间隔（60-600 秒）
 - `non_streaming_timeout`：非流式请求的总超时时间（60-1200 秒）
+**AppProxyConfig**（`proxy/types.rs:170`）：
+```rust
+pub struct AppProxyConfig {  // proxy/types.rs:170
+    pub app_type: String,                    // "claude" | "codex" | "gemini"
+    pub enabled: bool,                       // 该 app 代理启用开关
+    pub auto_failover_enabled: bool,         // 自动故障转移开关
+    pub max_retries: u32,                    // 最大重试次数
+    pub streaming_first_byte_timeout: u32,   // 流式首字超时（秒）
+    pub streaming_idle_timeout: u32,         // 流式静默超时（秒）
+    pub non_streaming_timeout: u32,          // 非流式总超时（秒）
+    pub circuit_failure_threshold: u32,      // 熔断失败阈值
+    pub circuit_success_threshold: u32,      // 熔断恢复阈值
+    pub circuit_timeout_seconds: u32,        // 熔断恢复等待时间（秒）
+    pub circuit_error_rate_threshold: f64,   // 错误率阈值
+    pub circuit_min_requests: u32,           // 计算错误率的最小请求数
+}
+```
+**RectifierConfig**（`proxy/types.rs:202`）：
+```rust
+pub struct RectifierConfig {  // proxy/types.rs:202
+    pub enabled: bool,                       // 总开关（默认开启）
+    pub request_thinking_signature: bool,    // thinking 签名整流器（默认开启）
+    pub request_thinking_budget: bool,       // thinking budget 整流器（默认开启）
+}
+```
+- 处理错误：`Invalid 'signature' in 'thinking' block`
+- 处理错误：`budget_tokens + thinking` 相关约束
 **ProxyStatus**（`proxy/types.rs:60`）：
 ```rust
 pub struct ProxyStatus {  // proxy/types.rs:60
