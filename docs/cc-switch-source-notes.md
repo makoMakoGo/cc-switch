@@ -1606,14 +1606,22 @@ pub struct ProviderRouter {       // proxy/provider_router.rs:16
 **CircuitBreaker**（`proxy/circuit_breaker.rs:76`）：
 
 ```rust
-pub struct CircuitBreaker {
-    state: Arc<RwLock<CircuitState>>,
-    consecutive_failures: Arc<AtomicU32>,
-    consecutive_successes: Arc<AtomicU32>,
-    total_requests: Arc<AtomicU32>,
-    total_failures: Arc<AtomicU32>,
-    last_failure_time: Arc<RwLock<Option<Instant>>>,
-    config: CircuitBreakerConfig,
+pub struct CircuitBreaker {  // circuit_breaker.rs:76
+    state: Arc<RwLock<CircuitState>>,          // 当前状态
+    consecutive_failures: Arc<AtomicU32>,       // 连续失败计数
+    consecutive_successes: Arc<AtomicU32>,      // 连续成功计数
+    total_requests: Arc<AtomicU32>,             // 总请求计数
+    failed_requests: Arc<AtomicU32>,            // 失败请求计数
+    last_opened_at: Arc<RwLock<Option<Instant>>>,  // 上次打开时间
+    config: Arc<RwLock<CircuitBreakerConfig>>,  // 配置（支持热更新）
+    half_open_requests: Arc<AtomicU32>,         // 半开状态已放行请求数
+}
+```
+**AllowResult**（`circuit_breaker.rs:100`）：
+```rust
+pub struct AllowResult {  // circuit_breaker.rs:100
+    pub allowed: bool,                // 是否放行
+    pub used_half_open_permit: bool,  // 是否占用了 HalfOpen 探测名额
 }
 ```
 
