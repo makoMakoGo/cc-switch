@@ -1,6 +1,6 @@
 # CC Switch 源码学习笔记
 
-> 维护者入门参考。所有数据已逐行校验源码。
+> 维护者入门参考。所有数据已逐行校验源码（2026-05-27）。
 > 每个模块用"接口 → 实现 → 陷阱"三段式。
 
 ---
@@ -16,22 +16,22 @@
 ```text
 main.rs:4                         // 22 行，仅设置 Linux WebKit 环境变量
   └─ cc_switch_lib::run()         // src-tauri/src/lib.rs:203
-       ├─ panic_hook::setup()     // lib.rs:205
-       ├─ tauri::Builder::default() // lib.rs:207
-       ├─ .plugin(single_instance)  // lib.rs:211  防止多实例
-       ├─ .plugin(deep_link)        // lib.rs:252
-       ├─ .on_window_event()        // lib.rs:254  拦截关闭，最小化到托盘
-       ├─ .plugin(process)          // lib.rs:275
-       ├─ .plugin(dialog)           // lib.rs:276
-       ├─ .plugin(opener)           // lib.rs:277
-       ├─ .plugin(store)            // lib.rs:278  前端持久化存储
-       ├─ .plugin(window_state)     // lib.rs:279
-       ├─ .setup(|app| {           // lib.rs:284
-       │    ├─ app_store::refresh() // lib.rs:288
-       │    ├─ init log plugin      // lib.rs:317
-       │    ├─ Database::init()     // lib.rs:383  SQLite + schema 迁移
-       │    ├─ migrate_from_json()  // lib.rs:403  JSON→SQLite 迁移
-       │    ├─ AppState::new(db)    // lib.rs:423
+       ├─ panic_hook::setup_panic_hook()  // lib.rs:205
+       ├─ tauri::Builder::default()       // lib.rs:207
+       ├─ .plugin(single_instance)        // lib.rs:211  防止多实例
+       ├─ .plugin(deep_link)              // lib.rs:252
+       ├─ .on_window_event()              // lib.rs:254  拦截关闭，最小化到托盘
+       ├─ .plugin(process)                // lib.rs:275
+       ├─ .plugin(dialog)                 // lib.rs:276
+       ├─ .plugin(opener)                 // lib.rs:277
+       ├─ .plugin(store)                  // lib.rs:278  前端持久化存储
+       ├─ .plugin(window_state)           // lib.rs:279
+       ├─ .setup(|app| {                 // lib.rs:284
+       │    ├─ app_store::refresh()       // lib.rs:288
+       │    ├─ init log plugin            // lib.rs:317
+       │    ├─ Database::init()           // lib.rs:383  SQLite + schema 迁移
+       │    ├─ migrate_from_json()        // lib.rs:403  JSON→SQLite 迁移
+       │    ├─ AppState::new(db)          // lib.rs:423
        │    ├─ proxy_service.set_app_handle() // lib.rs:426
        │    ├─ init_default_skill_repos()     // lib.rs:433
        │    ├─ skills SSOT migration          // lib.rs:443
@@ -66,7 +66,7 @@ main.rs:4                         // 22 行，仅设置 Linux WebKit 环境变�
 **退出流程**（`lib.rs:1383`）：
 - 用户主动退出时，先保存窗口状态（`lib.rs:1401`）
 - 然后 `cleanup_before_exit()`（`lib.rs:1513`）恢复 live 配置
-- 使用 `stop_with_restore_keep_state()` 保留代理状态（`lib.rs:1531`）
+- 使用 `stop_with_restore_keep_state()`（`lib.rs:1531`）保留代理状态
 - 短暂等待 100ms 确保 I/O 刷新（`lib.rs:1406`）
 
 ### 1.2 数据流：一次 Provider Switch 的完整调用链
@@ -125,7 +125,7 @@ Additive 模式（OpenCode、OpenClaw、Hermes）：
   → ProxyService::hot_switch_provider()          // services/proxy.rs
     → switch_locks.acquire(app_type)             // 防止并发切换
     → 更新内存中的路由表（current_providers）
-    → 重写 live 配置，把 API key 替换为 PROXY_MANAGED 占位符
+    → 重写 live 配置，把 API key 替换为 PROXY_TOKEN_PLACEHOLDER 占位符
     → 设置 base URL 为 localhost:代理端口
     → 发射 Tauri 事件通知前端
     → 释放锁
@@ -157,16 +157,18 @@ pub struct ProxyService {       // src-tauri/src/services/proxy.rs:55
 }
 ```
 
-**设置缓存**（`settings.rs:5`）：
+**设置缓存**（`settings.rs:519`）：
 
 ```rust
-static APP_SETTINGS: OnceLock<RwLock<AppSettings>> = OnceLock::new();
+static SETTINGS_STORE: OnceLock<RwLock<AppSettings>> = OnceLock::new();  // settings.rs:519
 ```
 
 - `OnceLock` = 全局只初始化一次
 - `RwLock` = 读写锁，多读单写
-- 读流程：`read_settings()` 先读文件 → 反序列化 → 缓存到内存
-- 写流程：`mutate_settings()` → 读 → clone → 修改 → 写文件 → 更新内存缓存
+- 通过 `settings_store()` 函数访问（`settings.rs:521`）
+- 读流程：`load_from_file()` 先读文件 → 反序列化 → 缓存到内存
+- 写流程：`mutate_settings()`（`settings.rs:574`）→ 读 → clone → 修改 → 写文件 → 更新内存缓存
+- `mutate_settings` 是私有函数（非 `pub`），参数名是 `mutator` 不是 `f`
 
 **前端状态**（React）：
 
@@ -218,7 +220,7 @@ App.tsx
 |------|-----------|-------------------|
 | `Arc<T>` | 原子引用计数，多线程共享数据 | `AppState.db: Arc<Database>`（`store.rs:7`） |
 | `Mutex<T>` | 互斥锁，同一时间只有一个线程能访问 | `Database.conn: Mutex<Connection>`（`database/mod.rs:77`） |
-| `RwLock<T>` | 读写锁，多读单写 | `APP_SETTINGS: OnceLock<RwLock<AppSettings>>`（`settings.rs:5`） |
+| `RwLock<T>` | 读写锁，多读单写 | `SETTINGS_STORE: OnceLock<RwLock<AppSettings>>`（`settings.rs:519`） |
 | `OnceLock<T>` | 全局只初始化一次的值 | 同上 |
 | `Result<T, E>` | 可能成功(T)也可能失败(E)的返回值 | 几乎所有函数的返回类型 |
 | `?` 操作符 | 提前返回错误的语法糖 | `let config = read_json_file(path)?;` |
@@ -262,7 +264,7 @@ async fn get_providers(
 }
 ```
 
-**原子写入**（`config.rs:203`）：
+**原子写入**（`config.rs:204`）：
 
 ```rust
 pub fn atomic_write(path: &Path, data: &[u8]) -> Result<(), AppError> {
@@ -313,19 +315,25 @@ if matches!(app_type, AppType::OpenCode | AppType::OpenClaw | AppType::Hermes) {
 let db = Arc::new(Database::init()?);  // 创建 Arc
 let db_clone = db.clone();             // 克隆 Arc（增加引用计数）
 let conn = self.conn.lock()?;          // MutexGuard，离开作用域自动释放
-let mut settings = APP_SETTINGS.write()?; // 写锁
+let mut settings = settings_store().write()?; // 写锁
 ```
 
-**闭包作为参数**（`settings.rs`）：
+**闭包作为参数**（`settings.rs:574`）：
 
 ```rust
-pub fn mutate_settings<F>(f: F) -> Result<(), AppError>
+fn mutate_settings<F>(mutator: F) -> Result<(), AppError>  // 注意：不是 pub，参数名是 mutator
 where
     F: FnOnce(&mut AppSettings),
 {
-    let mut settings = APP_SETTINGS.get().unwrap().write().unwrap();
-    f(&mut settings);
-    write_settings_to_file(&settings)?;
+    let mut guard = settings_store().write().unwrap_or_else(|e| {
+        log::warn!("设置锁已毒化，使用恢复值: {e}");
+        e.into_inner()  // 即使锁被 poisoned 也能恢复
+    });
+    let mut next = guard.clone();
+    mutator(&mut next);
+    next.normalize_paths();
+    save_settings_file(&next)?;
+    *guard = next;
     Ok(())
 }
 ```
@@ -336,32 +344,32 @@ where
 
 按依赖顺序读，不是按文件大小。
 
-### 3.1 config.rs — 路径解析和文件 I/O（14.3KB）
+### 3.1 config.rs — 路径解析和文件 I/O（13.9KB，424 行）
 
 **接口**：提供所有模块需要的路径解析和文件读写工具函数。
 
 **核心函数**：
 - `get_home_dir()` → `~` 目录（支持 `CC_SWITCH_TEST_HOME` 测试覆盖）
-- `get_app_config_dir()` → `~/.cc-switch/`（`config.rs:89`）
+- `get_app_config_dir()` → `~/.cc-switch/`（`config.rs:90`）
 - `get_claude_config_dir()` → `~/.claude/`（`config.rs:37`）
-- `get_claude_settings_path()` → `~/.claude/settings.json`（`config.rs:73`）
-- `read_json_file<T>(path)` → 读文件并反序列化（`config.rs:152`）
-- `write_json_file<T>(path, data)` → 序列化并写入，键按字母排序（`config.rs:180`）
-- `atomic_write(path, data)` → 临时文件 + rename 的安全写入（`config.rs:203`）
-- `write_text_file(path, data)` → 原子写入纯文本（`config.rs:195`）
-- `copy_file(from, to)` → 复制文件（`config.rs:393`）
-- `delete_file(path)` → 删除文件（`config.rs:402`）
+- `get_claude_settings_path()` → `~/.claude/settings.json`（`config.rs:74`）
+- `read_json_file<T>(path)` → 读文件并反序列化（`config.rs:153`）
+- `write_json_file<T>(path, data)` → 序列化并写入，键按字母排序（`config.rs:181`）
+- `atomic_write(path, data)` → 临时文件 + rename 的安全写入（`config.rs:204`）
+- `write_text_file(path, data)` → 原子写入纯文本（`config.rs:196`）
+- `copy_file(from, to)` → 复制文件（`config.rs:394`）
+- `delete_file(path)` → 删除文件（`config.rs:403`）
 
 **实现亮点**：
 - 所有路径函数都支持环境变量覆盖（`CC_SWITCH_TEST_HOME`），方便测试
 - `atomic_write` 用 `write_to_tmp + rename` 避免写入中断导致文件损坏
-- `write_json_file` 会递归排序 JSON 键（`sort_json_keys`，`config.rs:163`），确保确定性输出
+- `write_json_file` 会递归排序 JSON 键（`sort_json_keys`，`config.rs:164`），确保确定性输出
 
 **陷阱**：
 - `get_home_dir()` 在 Windows 上使用 `dirs::home_dir()`，不使用 `HOME` 环境变量（可能被 Git/Cygwin 注入）
 - 路径硬编码了 `~/.claude` 等，如果用户自定义了配置目录会出问题
 
-### 3.2 error.rs — 错误模型（3.6KB）
+### 3.2 error.rs — 错误模型（3.4KB，146 行）
 
 **接口**：统一的错误类型 `AppError`（`error.rs:6`），所有后端函数都用它。
 
@@ -380,14 +388,14 @@ where
 | `McpValidation(String)` | :43 | MCP 校验失败 |
 | `Message(String)` | :45 | 通用消息 |
 | `HttpStatus { status, body }` | :47 | HTTP 错误 |
-| `Localized { key, zh, en }` | :49 | 中英双语错误 |
-| `Database(String)` | :55 | 数据库错误 |
-| `OmoConfigNotFound` | :57 | OMO 配置不存在 |
-| `AllProvidersCircuitOpen` | :59 | 所有供应商已熔断 |
-| `NoProvidersConfigured` | :61 | 未配置供应商 |
+| `Localized { key, zh, en }` | :50 | 中英双语错误 |
+| `Database(String)` | :56 | 数据库错误 |
+| `OmoConfigNotFound` | :58 | OMO 配置不存在 |
+| `AllProvidersCircuitOpen` | :60 | 所有供应商已熔断 |
+| `NoProvidersConfigured` | :62 | 未配置供应商 |
 
 **亮点**：
-- `Localized` 变体支持中英双语错误消息（`error.rs:49`），前端根据语言选择显示
+- `Localized` 变体支持中英双语错误消息（`error.rs:50`），前端根据语言选择显示
 - `Io` 变体包含文件路径，方便调试
 - `From<PoisonError<T>>` 自动转换（`error.rs:96`）
 - `From<rusqlite::Error>` 自动转换（`error.rs:102`）
@@ -397,7 +405,7 @@ where
 - `Config(String)` 太宽泛，很多不同类型的错误都往这里塞
 - 错误消息不一致，有的用英文有的用中文
 
-### 3.3 app_config.rs — 多应用配置模型（42.0KB）
+### 3.3 app_config.rs — 多应用配置模型（41.0KB，1183 行）
 
 **接口**：定义 cc-switch 管理的 7 个 AI 工具的抽象。
 
@@ -434,15 +442,15 @@ pub fn is_additive_mode(&self) -> bool {
 - `McpApps`（`app_config.rs:9`）— 哪些工具支持 MCP server 配置
 - `SkillApps`（`app_config.rs:78`）— 哪些工具支持 skills
 - `CommonConfigSnippets`（`app_config.rs:419`）— 跨工具共享的配置片段
-- `MultiAppConfig`（`app_config.rs:468`）— 旧版 JSON 配置格式（用于迁移）
+- `MultiAppConfig`（`app_config.rs:469`）— 旧版 JSON 配置格式（用于迁移）
 - `McpServer`（`app_config.rs:222`）— MCP 服务器定义
 - `McpRoot`（`app_config.rs:254`）— MCP 根配置（新旧结构并存）
 
 **陷阱**：
-- 42KB 太大，包含了太多职责
-- `AppType` 的 match 到处都是（`McpApps:24`、`VisibleApps:66`、`CommonConfigSnippets:441`），加新工具需要改 10+ 处
+- 41KB 太大，包含了太多职责
+- `AppType` 的 match 到处都是（`McpApps:24`、`VisibleApps:66`、`CommonConfigSnippets:439`），加新工具需要改 10+ 处
 
-### 3.4 provider.rs — 核心数据模型（41.5KB）
+### 3.4 provider.rs — 核心数据模型（40.5KB，1153 行）
 
 **接口**：Provider 是 cc-switch 的核心数据单元（`provider.rs:10`）。
 
@@ -477,9 +485,14 @@ pub struct Provider {
 - Provider 和 AppType 的关系是 N:1，但代码里很多地方假设 1:1
 - `ProviderMeta` 的类型定义很深，阅读困难
 
-### 3.5 settings.rs — 设置管理（29.6KB）
+### 3.5 settings.rs — 设置管理（28.8KB，877 行）
 
 **接口**：全局应用设置的读写（`settings.rs:5`）。
+
+**核心机制**：
+- `SETTINGS_STORE: OnceLock<RwLock<AppSettings>>`（`settings.rs:519`）— 全局设置缓存
+- `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
+- `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
 **VisibleApps**（`settings.rs:28`）：
 
@@ -495,28 +508,24 @@ pub struct VisibleApps {
 }
 ```
 
-**WebDavSyncStatus**（`settings.rs:80`）：
-- `last_sync_at` — 上次同步时间
-- `last_error` — 上次错误信息
-- `last_remote_etag` — 远程 ETag
-
 **陷阱**：
-- `unwrap()` 在锁获取时，如果锁被 poisoned 会 panic
+- `mutate_settings` 是私有函数，外部模块不能直接调用
+- `unwrap_or_else` 处理锁中毒（`settings.rs:578`），但仍然可能 panic
 - 写入失败时内存缓存和文件可能不一致
 
 ### 3.6 各工具 config 模块对比
 
 | 工具 | 文件 | 实际大小 | 配置路径 |
 |------|------|---------|---------|
-| Claude Code | services/provider/mod.rs | 108KB | `~/.claude/settings.json` |
-| Claude Desktop | claude_desktop_config.rs | 62.9KB | 平台相关 |
-| Codex CLI | codex_config.rs | 68.1KB | `~/.codex/config.json` |
-| Gemini CLI | gemini_config.rs | 20.9KB | `~/.gemini/settings.json` |
-| OpenCode | opencode_config.rs | 7.1KB | `~/.opencode/config.json` |
-| OpenClaw | openclaw_config.rs | 35.8KB | `~/.openclaw/config.json` |
-| Hermes | hermes_config.rs | 70.7KB | `~/.hermes/config.yaml` |
+| Claude Code | services/provider/mod.rs | 105.5KB | `~/.claude/settings.json` |
+| Claude Desktop | claude_desktop_config.rs | 61.4KB | 平台相关 |
+| Codex CLI | codex_config.rs | 66.4KB | `~/.codex/config.json` |
+| Gemini CLI | gemini_config.rs | 20.4KB | `~/.gemini/settings.json` |
+| OpenCode | opencode_config.rs | 6.9KB | `~/.opencode/config.json` |
+| OpenClaw | openclaw_config.rs | 34.9KB | `~/.openclaw/config.json` |
+| Hermes | hermes_config.rs | 69.0KB | `~/.hermes/config.yaml` |
 
-**注意**：Claude Code 没有独立的 `claude_config.rs` 文件！它的配置管理在 `services/provider/mod.rs`（108KB）中。
+**注意**：Claude Code 没有独立的 `claude_config.rs` 文件！它的配置管理在 `services/provider/mod.rs`（105.5KB）中。
 
 **共同模式（每个模块都有）**：
 1. `read_xxx_config()` — 读取工具的配置文件
@@ -527,7 +536,7 @@ pub struct VisibleApps {
 
 **AI Slop 特征**：
 - 每个模块的 `switch_provider()` 逻辑高度相似，但没有抽取公共函数
-- `codex_config.rs`（68.1KB）和 `hermes_config.rs`（70.7KB）明显过大
+- `codex_config.rs`（66.4KB）和 `hermes_config.rs`（69.0KB）明显过大
 - 没有统一的 config trait 或接口
 
 ### 3.7 database/ — 数据持久化（SQLite）
@@ -545,15 +554,19 @@ pub struct Database {
 - `schema.rs`（79.7KB）— 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`mod.rs:52`）
 - `backup.rs`（32.5KB）— SQL 导入导出 + 快照备份
 - `migration.rs`（9.5KB）— JSON → SQLite 数据迁移
-- `dao/` — 数据访问对象：
+- `dao/` — 数据访问对象（12 个文件）：
   - `providers.rs`（786 行）— Provider CRUD
   - `proxy.rs`（952 行）— 代理配置
   - `usage_rollup.rs`（377 行）— 用量统计
   - `settings.rs`（327 行）— 通用设置
   - `skills.rs`（263 行）— Skills 管理
+  - `failover.rs`（149 行）— 故障转移队列
   - `mcp.rs`（106 行）— MCP 服务器配置
   - `prompts.rs`（88 行）— Prompt 管理
-  - `failover.rs`（149 行）— 故障转移队列
+  - `providers_seed.rs`（94 行）— 官方预设种子数据
+  - `stream_check.rs`（74 行）— 流式检查配置
+  - `universal_providers.rs`（74 行）— 通用 Provider
+  - `mod.rs`（19 行）— 模块声明
 
 **关键设计**：
 - `lock_conn!` 宏（`mod.rs:61`）安全获取 Mutex 锁，避免 unwrap panic
@@ -574,19 +587,19 @@ pub struct Database {
 
 **模块结构**（`services/mod.rs`，25 个子模块）：
 
-| 模块 | 大小 | 职责 |
-|------|------|------|
-| provider/mod.rs | 108KB | Provider 业务逻辑（CRUD、切换、导入导出） |
-| proxy.rs | 145KB | ProxyService（启动、停止、接管、热切换） |
-| usage_stats.rs | 117KB | 用量统计 |
-| skill.rs | 107KB | Skills 管理 |
-| stream_check.rs | 83KB | 流式检查 |
+| 模块 | 实际大小 | 职责 |
+|------|---------|------|
+| provider/mod.rs | 105.5KB | Provider 业务逻辑（CRUD、切换、导入导出） |
+| proxy.rs | 141.3KB | ProxyService（启动、停止、接管、热切换） |
+| usage_stats.rs | 114.6KB | 用量统计 |
+| skill.rs | 104.7KB | Skills 管理 |
+| stream_check.rs | 80.9KB | 流式检查 |
 | subscription.rs | 1.3KB | 订阅管理 |
 | coding_plan.rs | 607B | Coding Plan |
-| mcp.rs | 16.8KB | MCP 服务器管理 |
-| prompt.rs | 8.9KB | Prompt 管理 |
-| config.rs | 9.9KB | ConfigService（配置文件读写） |
-| speedtest.rs | 6.1KB | 端点速度测试 |
+| mcp.rs | 16.4KB | MCP 服务器管理 |
+| prompt.rs | 8.6KB | Prompt 管理 |
+| config.rs | 9.7KB | ConfigService（配置文件读写） |
+| speedtest.rs | 5.9KB | 端点速度测试 |
 | balance.rs | 418B | 余额查询 |
 | model_fetch.rs | 414B | 模型列表获取 |
 | env_checker.rs | 168B | 环境变量检查 |
@@ -600,7 +613,7 @@ pub struct Database {
 | omo.rs | 560B | OMO 集成 |
 
 **陷阱**：
-- `provider/mod.rs`（108KB）和 `proxy.rs`（145KB）太大，应该拆分
+- `provider/mod.rs`（105.5KB）和 `proxy.rs`（141.3KB）太大，应该拆分
 - 有些逻辑直接放在 `commands/` 里，没有经过 services 层
 - 没有统一的 service trait 或接口
 
@@ -615,7 +628,7 @@ pub struct Database {
 ```text
 src-tauri/src/proxy/
 ├── server.rs           # 388 行，HTTP 服务器（Axum）
-├── forwarder.rs        # 3100 行，请求转发
+├── forwarder.rs        # 3100 行，请求转发（122.1KB）
 ├── circuit_breaker.rs  # 495 行，熔断器
 ├── provider_router.rs  # 523 行，多 provider 路由
 ├── failover_switch.rs  # 故障转移切换
@@ -726,7 +739,7 @@ HalfOpen（半开）
 4. 备份 live 配置到数据库
 5. 修改 live 配置：
    - 设置 base_url 为 http://localhost:代理端口
-   - 设置 api_key 为 PROXY_MANAGED 占位符（services/proxy.rs:22）
+   - 设置 api_key 为 PROXY_TOKEN_PLACEHOLDER 占位符（services/proxy.rs:22）
    - 设置模型别名（claude-haiku-4-5, claude-sonnet-4-6, claude-opus-4-7）
 6. 写入修改后的 live 配置
 7. 启动代理服务器（如果还没启动）
@@ -750,7 +763,7 @@ HalfOpen（半开）
 
 前端是 React + TypeScript，通过 Tauri IPC 与 Rust 后端通信。
 
-### 5.1 App.tsx — 视图路由机制（1605 行）
+### 5.1 App.tsx — 视图路由机制（1604 行）
 
 **App.tsx** 是前端的"上帝文件"（`src/App.tsx`）。
 
@@ -765,13 +778,13 @@ const [currentView, setCurrentView] = useState(
 所有视图都在一个 switch 语句里，没有使用 React Router。
 
 **AI Slop 特征**：
-- 1605 行的单文件，应该拆分
+- 1604 行的单文件，应该拆分
 - 所有视图都在一个 switch 里，没有用路由库
 - 没有代码分割，首屏加载慢
 
 ### 5.2 hooks/ — 状态管理层
 
-**核心 hooks**（`src/hooks/`）：
+**核心 hooks**（`src/hooks/`，25 个文件，3642 行）：
 
 | Hook | 文件 | 行数 | 职责 |
 |------|------|------|------|
@@ -789,10 +802,17 @@ const [currentView, setCurrentView] = useState(
 | useDragSort | useDragSort.ts | 119 | 拖拽排序 |
 | useGlobalProxy | useGlobalProxy.ts | 109 | 全局代理 |
 | useMcp | useMcp.ts | 74 | MCP 管理 |
+| useSessionSearch | useSessionSearch.ts | 72 | 会话搜索 |
+| useSettingsMetadata | useSettingsMetadata.ts | 61 | 设置元数据 |
+| useBackupManager | useBackupManager.ts | 59 | 备份管理 |
+| useAutoCompact | useAutoCompact.ts | 52 | 自动压缩 |
+| useProxyConfig | useProxyConfig.ts | 48 | 代理配置 |
+| useUsageCacheBridge | useUsageCacheBridge.ts | 43 | 用量缓存桥接 |
 | useTauriEvent | useTauriEvent.ts | 39 | 监听 Tauri 后端事件 |
 | useDarkMode | useDarkMode.ts | 29 | 暗色模式 |
-| useAutoCompact | useAutoCompact.ts | 52 | 自动压缩 |
-| useUsageCacheBridge | useUsageCacheBridge.ts | 43 | 用量缓存桥接 |
+| useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
+| useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
+| useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
 
 **前端 → 后端调用模式**：
 
@@ -813,19 +833,19 @@ useTauriEvent("provider-changed", (event) => {
 
 | 文件 | 实际大小 |
 |------|---------|
-| openclawProviderPresets.ts | 53.7KB |
-| opencodeProviderPresets.ts | 43.6KB |
-| codexProviderPresets.ts | 33.3KB |
-| claudeProviderPresets.ts | 36.5KB |
-| claudeDesktopProviderPresets.ts | 27.6KB |
-| hermesProviderPresets.ts | 36.0KB |
-| geminiProviderPresets.ts | 9.5KB |
-| universalProviderPresets.ts | 3.1KB |
-| **合计** | **243.3KB** |
+| openclawProviderPresets.ts | 52.4KB |
+| opencodeProviderPresets.ts | 42.6KB |
+| codexProviderPresets.ts | 32.5KB |
+| claudeProviderPresets.ts | 35.6KB |
+| claudeDesktopProviderPresets.ts | 26.9KB |
+| hermesProviderPresets.ts | 35.1KB |
+| geminiProviderPresets.ts | 9.2KB |
+| universalProviderPresets.ts | 3.0KB |
+| **合计** | **237.3KB** |
 
 **AI Slop 特征**：
 - 8 个文件结构几乎一样，但没有抽取公共模板
-- 243KB 的 TypeScript 数据，可以移到 JSON 文件
+- 237KB 的 TypeScript 数据，可以移到 JSON 文件
 - 没有类型检查，preset 数据的结构没有 TypeScript 类型定义
 
 ### 5.4 前端组件结构
@@ -853,16 +873,16 @@ useTauriEvent("provider-changed", (event) => {
 | 文件 | 行数/大小 | 问题 |
 |------|----------|------|
 | `lib.rs` | 1825 行 | 模块声明 + 插件注册 + 命令注册 + 初始化逻辑全混在一起 |
-| `services/proxy.rs` | 145KB (3909 行) | ProxyService 所有方法全在一个文件 |
-| `proxy/forwarder.rs` | 125KB (3100 行) | 请求转发 + 格式转换 + 错误处理全在一起 |
-| `provider/mod.rs` (services) | 108KB (2766 行) | ProviderService 所有方法 |
-| `skill.rs` (services) | 107KB (3127 行) | SkillService 所有方法 |
-| `usage_stats.rs` (services) | 117KB (3250 行) | UsageStatsService 所有方法 |
-| `stream_check.rs` (services) | 83KB (2166 行) | StreamCheckService 所有方法 |
-| `hermes_config.rs` | 70.7KB | Hermes 配置读写 |
-| `codex_config.rs` | 68.1KB | Codex 配置读写 |
-| `claude_desktop_config.rs` | 62.9KB | Claude Desktop 配置读写 |
-| `App.tsx` | 1605 行 | 14 个视图 + 事件处理 + 状态管理全在一个文件 |
+| `services/proxy.rs` | 141.3KB (3909 行) | ProxyService 所有方法全在一个文件 |
+| `proxy/forwarder.rs` | 122.1KB (3100 行) | 请求转发 + 格式转换 + 错误处理全在一起 |
+| `provider/mod.rs` (services) | 105.5KB (2766 行) | ProviderService 所有方法 |
+| `skill.rs` (services) | 104.7KB (3127 行) | SkillService 所有方法 |
+| `usage_stats.rs` (services) | 114.6KB (3250 行) | UsageStatsService 所有方法 |
+| `stream_check.rs` (services) | 80.9KB (2166 行) | StreamCheckService 所有方法 |
+| `hermes_config.rs` | 69.0KB | Hermes 配置读写 |
+| `codex_config.rs` | 66.4KB | Codex 配置读写 |
+| `claude_desktop_config.rs` | 61.4KB | Claude Desktop 配置读写 |
+| `App.tsx` | 1604 行 | 14 个视图 + 事件处理 + 状态管理全在一个文件 |
 
 **复制粘贴的 config 模块**：
 - 7 个工具的 config 模块结构几乎一样
@@ -870,7 +890,7 @@ useTauriEvent("provider-changed", (event) => {
 - 没有公共的 config trait 或接口
 
 **冗余的 match 分支**：
-- `AppType` 的 match 在 `McpApps`（`app_config.rs:24`）、`VisibleApps`（`settings.rs:66`）、`CommonConfigSnippets`（`app_config.rs:441`）里重复出现
+- `AppType` 的 match 在 `McpApps`（`app_config.rs:24`）、`VisibleApps`（`settings.rs:66`）、`CommonConfigSnippets`（`app_config.rs:439`）里重复出现
 - 每次加新工具都要改 10+ 个 match
 
 ### 6.2 过度抽象模式
@@ -888,7 +908,7 @@ useTauriEvent("provider-changed", (event) => {
 **不一致的命名约定**：
 - 有的用 `xxx_config`，有的用 `xxx_settings`
 - 有的函数叫 `get_xxx`，有的叫 `read_xxx`，有的叫 `fetch_xxx`
-- 错误消息有的中文有的英文（`error.rs:49` 的 `Localized` 变体试图解决这个问题，但不彻底）
+- 错误消息有的中文有的英文（`error.rs:50` 的 `Localized` 变体试图解决这个问题，但不彻底）
 
 **模糊的模块边界**：
 - `services/` 和 `commands/` 的职责划分不清晰
@@ -908,10 +928,10 @@ useTauriEvent("provider-changed", (event) => {
 | `lib.rs:1072-1377` | 271 个命令注册 | 按模块分组 |
 | `services/proxy.rs:55` | ProxyService 3909 行 | 拆分成 `takeover.rs`, `hot_switch.rs`, `config.rs` |
 | 7 个 config 模块 | 重复的读写逻辑 | 抽取 `ToolConfig` trait |
-| 8 个 preset 文件 | 243KB TypeScript 数据 | 移到 JSON 文件 |
+| 8 个 preset 文件 | 237KB TypeScript 数据 | 移到 JSON 文件 |
 | `provider.rs:14` | `settings_config: Value` 动态类型 | 考虑用强类型 enum |
 | `error.rs:8` | `Config(String)` 太宽泛 | 拆分成更具体的变体 |
-| `settings.rs:5` | `OnceLock<RwLock<>>` + `unwrap()` | 用 `parking_lot::RwLock` 避免 poisoned panic |
+| `settings.rs:519` | `OnceLock<RwLock<>>` + `unwrap_or_else` | 用 `parking_lot::RwLock` 避免 poisoned panic |
 
 ---
 
@@ -937,12 +957,12 @@ useTauriEvent("provider-changed", (event) => {
 
 **拆分过大的文件**：
 - `lib.rs`（1825 行）→ `init.rs`（初始化逻辑 `lib.rs:284-1070`）+ `lib.rs`（仅模块声明 `lib.rs:1-36`）
-- `services/proxy.rs`（145KB）→ 拆分成 `takeover.rs`, `hot_switch.rs`, `config.rs`
-- `provider/mod.rs`（108KB）→ 拆分成多个子模块
-- `App.tsx`（1605 行）→ 每个视图一个文件 + `AppRouter.tsx`
-- `codex_config.rs`（68.1KB）→ `codex/` 目录
-- `hermes_config.rs`（70.7KB）→ `hermes/` 目录
-- `claude_desktop_config.rs`（62.9KB）→ `claude_desktop/` 目录
+- `services/proxy.rs`（141.3KB）→ 拆分成 `takeover.rs`, `hot_switch.rs`, `config.rs`
+- `provider/mod.rs`（105.5KB）→ 拆分成多个子模块
+- `App.tsx`（1604 行）→ 每个视图一个文件 + `AppRouter.tsx`
+- `codex_config.rs`（66.4KB）→ `codex/` 目录
+- `hermes_config.rs`（69.0KB）→ `hermes/` 目录
+- `claude_desktop_config.rs`（61.4KB）→ `claude_desktop/` 目录
 
 **统一 config 模块的结构**：
 
@@ -962,13 +982,13 @@ trait ToolConfig {
 - 切换逻辑统一处理，不再分散在各个 config 模块
 
 **代理子系统的简化**：
-- `forwarder.rs`（125KB）拆分成多个职责单一的模块
+- `forwarder.rs`（122.1KB）拆分成多个职责单一的模块
 - 抽取公共的 API 格式转换框架
 - 统一错误处理和日志记录
 
 ---
 
-## 附录：文件大小速查表（已验证）
+## 附录：文件大小速查表（已验证，2026-05-27）
 
 ### Rust 后端
 
@@ -977,17 +997,17 @@ trait ToolConfig {
 | lib.rs | — | 1825 |
 | main.rs | — | 22 |
 | store.rs | — | 23 |
-| error.rs | 3.6KB | 146 |
-| config.rs | 14.3KB | 424 |
-| settings.rs | 29.6KB | 876 |
-| provider.rs | 41.5KB | 1153 |
-| app_config.rs | 42.0KB | 1183 |
-| services/proxy.rs | 144.8KB | 3909 |
-| services/provider/mod.rs | 108.1KB | 2766 |
-| services/usage_stats.rs | 117.4KB | 3250 |
-| services/skill.rs | 107.3KB | 3127 |
-| services/stream_check.rs | 82.9KB | 2166 |
-| proxy/forwarder.rs | 125.1KB | 3100 |
+| error.rs | 3.4KB | 146 |
+| config.rs | 13.9KB | 424 |
+| settings.rs | 28.8KB | 877 |
+| provider.rs | 40.5KB | 1153 |
+| app_config.rs | 41.0KB | 1183 |
+| services/proxy.rs | 141.3KB | 3909 |
+| services/provider/mod.rs | 105.5KB | 2766 |
+| services/usage_stats.rs | 114.6KB | 3250 |
+| services/skill.rs | 104.7KB | 3127 |
+| services/stream_check.rs | 80.9KB | 2166 |
+| proxy/forwarder.rs | 122.1KB | 3100 |
 | proxy/circuit_breaker.rs | — | 495 |
 | proxy/provider_router.rs | — | 523 |
 | proxy/server.rs | — | 388 |
@@ -995,18 +1015,18 @@ trait ToolConfig {
 | database/schema.rs | 79.7KB | 2050 |
 | database/backup.rs | 32.5KB | 860 |
 | database/migration.rs | 9.5KB | 245 |
-| claude_desktop_config.rs | 62.9KB | 1826 |
-| codex_config.rs | 68.1KB | 2024 |
-| hermes_config.rs | 70.7KB | 1947 |
-| openclaw_config.rs | 35.8KB | 1089 |
-| gemini_config.rs | 20.9KB | 654 |
-| opencode_config.rs | 7.1KB | 233 |
+| claude_desktop_config.rs | 61.4KB | 1826 |
+| codex_config.rs | 66.4KB | 2024 |
+| hermes_config.rs | 69.0KB | 1947 |
+| openclaw_config.rs | 34.9KB | 1089 |
+| gemini_config.rs | 20.4KB | 654 |
+| opencode_config.rs | 6.9KB | 233 |
 
 ### 前端
 
 | 文件 | 实际大小 |
 |------|---------|
-| App.tsx | 1605 行 |
+| App.tsx | 1604 行 |
 | hooks/ 合计 | 3642 行（25 个文件） |
 | components/ 合计 | 186 个文件 |
-| config/ presets 合计 | 243.3KB（8 个文件） |
+| config/ presets 合计 | 237.3KB（8 个文件） |
