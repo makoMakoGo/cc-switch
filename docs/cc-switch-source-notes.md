@@ -3342,6 +3342,33 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**balance.rs**（`services/balance.rs`，418 行，13.8KB）：
+```rust
+// services/balance.rs:11
+enum BalanceProvider {
+    DeepSeek,
+    StepFun,
+    SiliconFlow,
+    SiliconFlowEn,
+    OpenRouter,
+    NovitaAI,
+}
+fn detect_provider(base_url: &str) -> Option<BalanceProvider> {
+    let url = base_url.to_lowercase();
+    if url.contains("api.deepseek.com") { Some(BalanceProvider::DeepSeek) }
+    else if url.contains("api.stepfun.ai") || url.contains("api.stepfun.com") { Some(BalanceProvider::StepFun) }
+    else if url.contains("api.siliconflow.cn") { Some(BalanceProvider::SiliconFlow) }
+    else if url.contains("api.siliconflow.com") { Some(BalanceProvider::SiliconFlowEn) }
+    else if url.contains("openrouter.ai") { Some(BalanceProvider::OpenRouter) }
+    else if url.contains("api.novita.ai") { Some(BalanceProvider::NovitaAI) }
+    else { None }
+}
+```
+- 支持 6 家供应商的账户余额查询
+- 通过 `base_url` 自动检测供应商类型
+- 返回 `UsageResult` 格式，与现有用量系统无缝对接
+- `make_error()`（`balance.rs:39`）— 构造错误结果
+- `make_auth_error()`（`balance.rs:47`）— 构造认证错误结果
 **subscription.rs**（`services/subscription.rs`，1323 行，41.1KB）：
 ```rust
 // services/subscription.rs:18
@@ -3404,6 +3431,33 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**balance.rs**（`services/balance.rs`，418 行，13.8KB）：
+```rust
+// services/balance.rs:11
+enum BalanceProvider {
+    DeepSeek,
+    StepFun,
+    SiliconFlow,
+    SiliconFlowEn,
+    OpenRouter,
+    NovitaAI,
+}
+fn detect_provider(base_url: &str) -> Option<BalanceProvider> {
+    let url = base_url.to_lowercase();
+    if url.contains("api.deepseek.com") { Some(BalanceProvider::DeepSeek) }
+    else if url.contains("api.stepfun.ai") || url.contains("api.stepfun.com") { Some(BalanceProvider::StepFun) }
+    else if url.contains("api.siliconflow.cn") { Some(BalanceProvider::SiliconFlow) }
+    else if url.contains("api.siliconflow.com") { Some(BalanceProvider::SiliconFlowEn) }
+    else if url.contains("openrouter.ai") { Some(BalanceProvider::OpenRouter) }
+    else if url.contains("api.novita.ai") { Some(BalanceProvider::NovitaAI) }
+    else { None }
+}
+```
+- 支持 6 家供应商的账户余额查询
+- 通过 `base_url` 自动检测供应商类型
+- 返回 `UsageResult` 格式，与现有用量系统无缝对接
+- `make_error()`（`balance.rs:39`）— 构造错误结果
+- `make_auth_error()`（`balance.rs:47`）— 构造认证错误结果
 **subscription.rs**（`services/subscription.rs`，1323 行，41.1KB）：
 - 订阅管理服务
 - 管理 GitHub Copilot 订阅状态
