@@ -558,6 +558,45 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| misc.rs | 176.0KB | 杂项命令（最大的命令文件） |
+| provider.rs | 32.3KB | Provider CRUD 和切换命令 |
+| config.rs | 12.6KB | 配置导入导出命令 |
+| proxy.rs | 13.6KB | 代理服务器控制命令 |
+| settings.rs | 12.1KB | 设置管理命令 |
+| webdav_sync.rs | 12.3KB | WebDAV 同步命令 |
+| stream_check.rs | 10.9KB | 流式检查命令 |
+| workspace.rs | 10.5KB | 工作区命令 |
+| auth.rs | 10.6KB | 认证命令 |
+| skill.rs | 9.5KB | Skills 管理命令 |
+| usage.rs | 8.9KB | 用量查询命令 |
+| global_proxy.rs | 7.5KB | 全局代理命令 |
+| copilot.rs | 6.7KB | Copilot OAuth 命令 |
+| mcp.rs | 6.5KB | MCP 管理命令 |
+| hermes.rs | 5.6KB | Hermes 命令 |
+| failover.rs | 5.5KB | 故障转移命令 |
+| import_export.rs | 5.6KB | 导入导出命令 |
+| openclaw.rs | 4.8KB | OpenClaw 命令 |
+| codex_oauth.rs | 3.2KB | Codex OAuth 命令 |
+| deeplink.rs | 3.1KB | 深度链接命令 |
+| sync_support.rs | 2.9KB | 同步支持命令 |
+| session_manager.rs | 2.6KB | 会话管理命令 |
+| omo.rs | 2.3KB | OMO 命令 |
+| prompt.rs | 1.9KB | Prompt 命令 |
+| subscription.rs | 1.8KB | 订阅命令 |
+| plugin.rs | 1.7KB | 插件命令 |
+| mod.rs | 1.1KB | 模块导出 |
+| env.rs | 739B | 环境变量命令 |
+| model_fetch.rs | 811B | 模型获取命令 |
+| lightweight.rs | 405B | 轻量级命令 |
+| coding_plan.rs | 278B | Coding Plan 命令 |
+| balance.rs | 217B | 余额查询命令 |
+- `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
+- `provider.rs`（32.3KB）包含 Provider CRUD 和切换命令
+- 所有命令通过 `#[tauri::command]` 宏注册
+- 命令参数从 JavaScript 通过 Tauri IPC 传递
 **lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
 ```rust
 // src-tauri/src/lib.rs:1-36
@@ -1285,6 +1324,45 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| misc.rs | 176.0KB | 杂项命令（最大的命令文件） |
+| provider.rs | 32.3KB | Provider CRUD 和切换命令 |
+| config.rs | 12.6KB | 配置导入导出命令 |
+| proxy.rs | 13.6KB | 代理服务器控制命令 |
+| settings.rs | 12.1KB | 设置管理命令 |
+| webdav_sync.rs | 12.3KB | WebDAV 同步命令 |
+| stream_check.rs | 10.9KB | 流式检查命令 |
+| workspace.rs | 10.5KB | 工作区命令 |
+| auth.rs | 10.6KB | 认证命令 |
+| skill.rs | 9.5KB | Skills 管理命令 |
+| usage.rs | 8.9KB | 用量查询命令 |
+| global_proxy.rs | 7.5KB | 全局代理命令 |
+| copilot.rs | 6.7KB | Copilot OAuth 命令 |
+| mcp.rs | 6.5KB | MCP 管理命令 |
+| hermes.rs | 5.6KB | Hermes 命令 |
+| failover.rs | 5.5KB | 故障转移命令 |
+| import_export.rs | 5.6KB | 导入导出命令 |
+| openclaw.rs | 4.8KB | OpenClaw 命令 |
+| codex_oauth.rs | 3.2KB | Codex OAuth 命令 |
+| deeplink.rs | 3.1KB | 深度链接命令 |
+| sync_support.rs | 2.9KB | 同步支持命令 |
+| session_manager.rs | 2.6KB | 会话管理命令 |
+| omo.rs | 2.3KB | OMO 命令 |
+| prompt.rs | 1.9KB | Prompt 命令 |
+| subscription.rs | 1.8KB | 订阅命令 |
+| plugin.rs | 1.7KB | 插件命令 |
+| mod.rs | 1.1KB | 模块导出 |
+| env.rs | 739B | 环境变量命令 |
+| model_fetch.rs | 811B | 模型获取命令 |
+| lightweight.rs | 405B | 轻量级命令 |
+| coding_plan.rs | 278B | Coding Plan 命令 |
+| balance.rs | 217B | 余额查询命令 |
+- `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
+- `provider.rs`（32.3KB）包含 Provider CRUD 和切换命令
+- 所有命令通过 `#[tauri::command]` 宏注册
+- 命令参数从 JavaScript 通过 Tauri IPC 传递
 **lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
 ```rust
 // src-tauri/src/lib.rs:1-36
@@ -2389,6 +2467,45 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| misc.rs | 176.0KB | 杂项命令（最大的命令文件） |
+| provider.rs | 32.3KB | Provider CRUD 和切换命令 |
+| config.rs | 12.6KB | 配置导入导出命令 |
+| proxy.rs | 13.6KB | 代理服务器控制命令 |
+| settings.rs | 12.1KB | 设置管理命令 |
+| webdav_sync.rs | 12.3KB | WebDAV 同步命令 |
+| stream_check.rs | 10.9KB | 流式检查命令 |
+| workspace.rs | 10.5KB | 工作区命令 |
+| auth.rs | 10.6KB | 认证命令 |
+| skill.rs | 9.5KB | Skills 管理命令 |
+| usage.rs | 8.9KB | 用量查询命令 |
+| global_proxy.rs | 7.5KB | 全局代理命令 |
+| copilot.rs | 6.7KB | Copilot OAuth 命令 |
+| mcp.rs | 6.5KB | MCP 管理命令 |
+| hermes.rs | 5.6KB | Hermes 命令 |
+| failover.rs | 5.5KB | 故障转移命令 |
+| import_export.rs | 5.6KB | 导入导出命令 |
+| openclaw.rs | 4.8KB | OpenClaw 命令 |
+| codex_oauth.rs | 3.2KB | Codex OAuth 命令 |
+| deeplink.rs | 3.1KB | 深度链接命令 |
+| sync_support.rs | 2.9KB | 同步支持命令 |
+| session_manager.rs | 2.6KB | 会话管理命令 |
+| omo.rs | 2.3KB | OMO 命令 |
+| prompt.rs | 1.9KB | Prompt 命令 |
+| subscription.rs | 1.8KB | 订阅命令 |
+| plugin.rs | 1.7KB | 插件命令 |
+| mod.rs | 1.1KB | 模块导出 |
+| env.rs | 739B | 环境变量命令 |
+| model_fetch.rs | 811B | 模型获取命令 |
+| lightweight.rs | 405B | 轻量级命令 |
+| coding_plan.rs | 278B | Coding Plan 命令 |
+| balance.rs | 217B | 余额查询命令 |
+- `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
+- `provider.rs`（32.3KB）包含 Provider CRUD 和切换命令
+- 所有命令通过 `#[tauri::command]` 宏注册
+- 命令参数从 JavaScript 通过 Tauri IPC 传递
 **lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
 ```rust
 // src-tauri/src/lib.rs:1-36
@@ -3114,6 +3231,45 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| misc.rs | 176.0KB | 杂项命令（最大的命令文件） |
+| provider.rs | 32.3KB | Provider CRUD 和切换命令 |
+| config.rs | 12.6KB | 配置导入导出命令 |
+| proxy.rs | 13.6KB | 代理服务器控制命令 |
+| settings.rs | 12.1KB | 设置管理命令 |
+| webdav_sync.rs | 12.3KB | WebDAV 同步命令 |
+| stream_check.rs | 10.9KB | 流式检查命令 |
+| workspace.rs | 10.5KB | 工作区命令 |
+| auth.rs | 10.6KB | 认证命令 |
+| skill.rs | 9.5KB | Skills 管理命令 |
+| usage.rs | 8.9KB | 用量查询命令 |
+| global_proxy.rs | 7.5KB | 全局代理命令 |
+| copilot.rs | 6.7KB | Copilot OAuth 命令 |
+| mcp.rs | 6.5KB | MCP 管理命令 |
+| hermes.rs | 5.6KB | Hermes 命令 |
+| failover.rs | 5.5KB | 故障转移命令 |
+| import_export.rs | 5.6KB | 导入导出命令 |
+| openclaw.rs | 4.8KB | OpenClaw 命令 |
+| codex_oauth.rs | 3.2KB | Codex OAuth 命令 |
+| deeplink.rs | 3.1KB | 深度链接命令 |
+| sync_support.rs | 2.9KB | 同步支持命令 |
+| session_manager.rs | 2.6KB | 会话管理命令 |
+| omo.rs | 2.3KB | OMO 命令 |
+| prompt.rs | 1.9KB | Prompt 命令 |
+| subscription.rs | 1.8KB | 订阅命令 |
+| plugin.rs | 1.7KB | 插件命令 |
+| mod.rs | 1.1KB | 模块导出 |
+| env.rs | 739B | 环境变量命令 |
+| model_fetch.rs | 811B | 模型获取命令 |
+| lightweight.rs | 405B | 轻量级命令 |
+| coding_plan.rs | 278B | Coding Plan 命令 |
+| balance.rs | 217B | 余额查询命令 |
+- `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
+- `provider.rs`（32.3KB）包含 Provider CRUD 和切换命令
+- 所有命令通过 `#[tauri::command]` 宏注册
+- 命令参数从 JavaScript 通过 Tauri IPC 传递
 **lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
 ```rust
 // src-tauri/src/lib.rs:1-36
@@ -5163,6 +5319,45 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| misc.rs | 176.0KB | 杂项命令（最大的命令文件） |
+| provider.rs | 32.3KB | Provider CRUD 和切换命令 |
+| config.rs | 12.6KB | 配置导入导出命令 |
+| proxy.rs | 13.6KB | 代理服务器控制命令 |
+| settings.rs | 12.1KB | 设置管理命令 |
+| webdav_sync.rs | 12.3KB | WebDAV 同步命令 |
+| stream_check.rs | 10.9KB | 流式检查命令 |
+| workspace.rs | 10.5KB | 工作区命令 |
+| auth.rs | 10.6KB | 认证命令 |
+| skill.rs | 9.5KB | Skills 管理命令 |
+| usage.rs | 8.9KB | 用量查询命令 |
+| global_proxy.rs | 7.5KB | 全局代理命令 |
+| copilot.rs | 6.7KB | Copilot OAuth 命令 |
+| mcp.rs | 6.5KB | MCP 管理命令 |
+| hermes.rs | 5.6KB | Hermes 命令 |
+| failover.rs | 5.5KB | 故障转移命令 |
+| import_export.rs | 5.6KB | 导入导出命令 |
+| openclaw.rs | 4.8KB | OpenClaw 命令 |
+| codex_oauth.rs | 3.2KB | Codex OAuth 命令 |
+| deeplink.rs | 3.1KB | 深度链接命令 |
+| sync_support.rs | 2.9KB | 同步支持命令 |
+| session_manager.rs | 2.6KB | 会话管理命令 |
+| omo.rs | 2.3KB | OMO 命令 |
+| prompt.rs | 1.9KB | Prompt 命令 |
+| subscription.rs | 1.8KB | 订阅命令 |
+| plugin.rs | 1.7KB | 插件命令 |
+| mod.rs | 1.1KB | 模块导出 |
+| env.rs | 739B | 环境变量命令 |
+| model_fetch.rs | 811B | 模型获取命令 |
+| lightweight.rs | 405B | 轻量级命令 |
+| coding_plan.rs | 278B | Coding Plan 命令 |
+| balance.rs | 217B | 余额查询命令 |
+- `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
+- `provider.rs`（32.3KB）包含 Provider CRUD 和切换命令
+- 所有命令通过 `#[tauri::command]` 宏注册
+- 命令参数从 JavaScript 通过 Tauri IPC 传递
 **lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
 ```rust
 // src-tauri/src/lib.rs:1-36
@@ -6413,6 +6608,45 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| misc.rs | 176.0KB | 杂项命令（最大的命令文件） |
+| provider.rs | 32.3KB | Provider CRUD 和切换命令 |
+| config.rs | 12.6KB | 配置导入导出命令 |
+| proxy.rs | 13.6KB | 代理服务器控制命令 |
+| settings.rs | 12.1KB | 设置管理命令 |
+| webdav_sync.rs | 12.3KB | WebDAV 同步命令 |
+| stream_check.rs | 10.9KB | 流式检查命令 |
+| workspace.rs | 10.5KB | 工作区命令 |
+| auth.rs | 10.6KB | 认证命令 |
+| skill.rs | 9.5KB | Skills 管理命令 |
+| usage.rs | 8.9KB | 用量查询命令 |
+| global_proxy.rs | 7.5KB | 全局代理命令 |
+| copilot.rs | 6.7KB | Copilot OAuth 命令 |
+| mcp.rs | 6.5KB | MCP 管理命令 |
+| hermes.rs | 5.6KB | Hermes 命令 |
+| failover.rs | 5.5KB | 故障转移命令 |
+| import_export.rs | 5.6KB | 导入导出命令 |
+| openclaw.rs | 4.8KB | OpenClaw 命令 |
+| codex_oauth.rs | 3.2KB | Codex OAuth 命令 |
+| deeplink.rs | 3.1KB | 深度链接命令 |
+| sync_support.rs | 2.9KB | 同步支持命令 |
+| session_manager.rs | 2.6KB | 会话管理命令 |
+| omo.rs | 2.3KB | OMO 命令 |
+| prompt.rs | 1.9KB | Prompt 命令 |
+| subscription.rs | 1.8KB | 订阅命令 |
+| plugin.rs | 1.7KB | 插件命令 |
+| mod.rs | 1.1KB | 模块导出 |
+| env.rs | 739B | 环境变量命令 |
+| model_fetch.rs | 811B | 模型获取命令 |
+| lightweight.rs | 405B | 轻量级命令 |
+| coding_plan.rs | 278B | Coding Plan 命令 |
+| balance.rs | 217B | 余额查询命令 |
+- `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
+- `provider.rs`（32.3KB）包含 Provider CRUD 和切换命令
+- 所有命令通过 `#[tauri::command]` 宏注册
+- 命令参数从 JavaScript 通过 Tauri IPC 传递
 **lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
 ```rust
 // src-tauri/src/lib.rs:1-36
