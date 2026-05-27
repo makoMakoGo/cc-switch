@@ -558,6 +558,34 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
+```typescript
+// src/lib/usageRange.ts:3
+const DAY_SECONDS = 24 * 60 * 60;
+const DAY_MS = DAY_SECONDS * 1000;
+// src/lib/usageRange.ts:6
+export interface ResolvedUsageRange {
+    startDate: number;
+    endDate: number;
+}
+// src/lib/usageRange.ts:26
+export function resolveUsageRange(selection: UsageRangeSelection, nowMs: number = Date.now()): ResolvedUsageRange {
+    switch (selection.preset) {
+        case "today": { /* 今天 00:00 至今 */ }
+        case "1d": { /* 最近 24 小时 */ }
+        case "7d": { /* 最近 7 天 */ }
+        case "14d": { /* 最近 14 天 */ }
+        case "30d": { /* 最近 30 天 */ }
+        case "custom": { /* 自定义日期范围 */ }
+    }
+}
+```
+- 用量查询的时间范围解析工具
+- `ResolvedUsageRange` 包含 `startDate` 和 `endDate`（Unix 秒）
+- `resolveUsageRange()` 将预设（today/1d/7d/14d/30d/custom）转换为实际的日期范围
+- `getStartOfLocalDayDate()` 获取本地日期的开始时间
+- `getPresetLookbackStart()` 计算预设的回溯起始时间
+- 使用 Unix 秒（非毫秒）与后端数据库一致
 **omo.ts**（`src/lib/query/omo.ts`，77 行）：
 ```typescript
 // src/lib/query/omo.ts:6
@@ -905,6 +933,34 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
+```typescript
+// src/lib/usageRange.ts:3
+const DAY_SECONDS = 24 * 60 * 60;
+const DAY_MS = DAY_SECONDS * 1000;
+// src/lib/usageRange.ts:6
+export interface ResolvedUsageRange {
+    startDate: number;
+    endDate: number;
+}
+// src/lib/usageRange.ts:26
+export function resolveUsageRange(selection: UsageRangeSelection, nowMs: number = Date.now()): ResolvedUsageRange {
+    switch (selection.preset) {
+        case "today": { /* 今天 00:00 至今 */ }
+        case "1d": { /* 最近 24 小时 */ }
+        case "7d": { /* 最近 7 天 */ }
+        case "14d": { /* 最近 14 天 */ }
+        case "30d": { /* 最近 30 天 */ }
+        case "custom": { /* 自定义日期范围 */ }
+    }
+}
+```
+- 用量查询的时间范围解析工具
+- `ResolvedUsageRange` 包含 `startDate` 和 `endDate`（Unix 秒）
+- `resolveUsageRange()` 将预设（today/1d/7d/14d/30d/custom）转换为实际的日期范围
+- `getStartOfLocalDayDate()` 获取本地日期的开始时间
+- `getPresetLookbackStart()` 计算预设的回溯起始时间
+- 使用 Unix 秒（非毫秒）与后端数据库一致
 **omo.ts**（`src/lib/query/omo.ts`，77 行）：
 ```typescript
 // src/lib/query/omo.ts:6
@@ -1629,6 +1685,34 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
+```typescript
+// src/lib/usageRange.ts:3
+const DAY_SECONDS = 24 * 60 * 60;
+const DAY_MS = DAY_SECONDS * 1000;
+// src/lib/usageRange.ts:6
+export interface ResolvedUsageRange {
+    startDate: number;
+    endDate: number;
+}
+// src/lib/usageRange.ts:26
+export function resolveUsageRange(selection: UsageRangeSelection, nowMs: number = Date.now()): ResolvedUsageRange {
+    switch (selection.preset) {
+        case "today": { /* 今天 00:00 至今 */ }
+        case "1d": { /* 最近 24 小时 */ }
+        case "7d": { /* 最近 7 天 */ }
+        case "14d": { /* 最近 14 天 */ }
+        case "30d": { /* 最近 30 天 */ }
+        case "custom": { /* 自定义日期范围 */ }
+    }
+}
+```
+- 用量查询的时间范围解析工具
+- `ResolvedUsageRange` 包含 `startDate` 和 `endDate`（Unix 秒）
+- `resolveUsageRange()` 将预设（today/1d/7d/14d/30d/custom）转换为实际的日期范围
+- `getStartOfLocalDayDate()` 获取本地日期的开始时间
+- `getPresetLookbackStart()` 计算预设的回溯起始时间
+- 使用 Unix 秒（非毫秒）与后端数据库一致
 **omo.ts**（`src/lib/query/omo.ts`，77 行）：
 ```typescript
 // src/lib/query/omo.ts:6
@@ -1974,6 +2058,34 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
+```typescript
+// src/lib/usageRange.ts:3
+const DAY_SECONDS = 24 * 60 * 60;
+const DAY_MS = DAY_SECONDS * 1000;
+// src/lib/usageRange.ts:6
+export interface ResolvedUsageRange {
+    startDate: number;
+    endDate: number;
+}
+// src/lib/usageRange.ts:26
+export function resolveUsageRange(selection: UsageRangeSelection, nowMs: number = Date.now()): ResolvedUsageRange {
+    switch (selection.preset) {
+        case "today": { /* 今天 00:00 至今 */ }
+        case "1d": { /* 最近 24 小时 */ }
+        case "7d": { /* 最近 7 天 */ }
+        case "14d": { /* 最近 14 天 */ }
+        case "30d": { /* 最近 30 天 */ }
+        case "custom": { /* 自定义日期范围 */ }
+    }
+}
+```
+- 用量查询的时间范围解析工具
+- `ResolvedUsageRange` 包含 `startDate` 和 `endDate`（Unix 秒）
+- `resolveUsageRange()` 将预设（today/1d/7d/14d/30d/custom）转换为实际的日期范围
+- `getStartOfLocalDayDate()` 获取本地日期的开始时间
+- `getPresetLookbackStart()` 计算预设的回溯起始时间
+- 使用 Unix 秒（非毫秒）与后端数据库一致
 **omo.ts**（`src/lib/query/omo.ts`，77 行）：
 ```typescript
 // src/lib/query/omo.ts:6
@@ -3643,6 +3755,34 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
+```typescript
+// src/lib/usageRange.ts:3
+const DAY_SECONDS = 24 * 60 * 60;
+const DAY_MS = DAY_SECONDS * 1000;
+// src/lib/usageRange.ts:6
+export interface ResolvedUsageRange {
+    startDate: number;
+    endDate: number;
+}
+// src/lib/usageRange.ts:26
+export function resolveUsageRange(selection: UsageRangeSelection, nowMs: number = Date.now()): ResolvedUsageRange {
+    switch (selection.preset) {
+        case "today": { /* 今天 00:00 至今 */ }
+        case "1d": { /* 最近 24 小时 */ }
+        case "7d": { /* 最近 7 天 */ }
+        case "14d": { /* 最近 14 天 */ }
+        case "30d": { /* 最近 30 天 */ }
+        case "custom": { /* 自定义日期范围 */ }
+    }
+}
+```
+- 用量查询的时间范围解析工具
+- `ResolvedUsageRange` 包含 `startDate` 和 `endDate`（Unix 秒）
+- `resolveUsageRange()` 将预设（today/1d/7d/14d/30d/custom）转换为实际的日期范围
+- `getStartOfLocalDayDate()` 获取本地日期的开始时间
+- `getPresetLookbackStart()` 计算预设的回溯起始时间
+- 使用 Unix 秒（非毫秒）与后端数据库一致
 **omo.ts**（`src/lib/query/omo.ts`，77 行）：
 ```typescript
 // src/lib/query/omo.ts:6
@@ -4513,6 +4653,34 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
+```typescript
+// src/lib/usageRange.ts:3
+const DAY_SECONDS = 24 * 60 * 60;
+const DAY_MS = DAY_SECONDS * 1000;
+// src/lib/usageRange.ts:6
+export interface ResolvedUsageRange {
+    startDate: number;
+    endDate: number;
+}
+// src/lib/usageRange.ts:26
+export function resolveUsageRange(selection: UsageRangeSelection, nowMs: number = Date.now()): ResolvedUsageRange {
+    switch (selection.preset) {
+        case "today": { /* 今天 00:00 至今 */ }
+        case "1d": { /* 最近 24 小时 */ }
+        case "7d": { /* 最近 7 天 */ }
+        case "14d": { /* 最近 14 天 */ }
+        case "30d": { /* 最近 30 天 */ }
+        case "custom": { /* 自定义日期范围 */ }
+    }
+}
+```
+- 用量查询的时间范围解析工具
+- `ResolvedUsageRange` 包含 `startDate` 和 `endDate`（Unix 秒）
+- `resolveUsageRange()` 将预设（today/1d/7d/14d/30d/custom）转换为实际的日期范围
+- `getStartOfLocalDayDate()` 获取本地日期的开始时间
+- `getPresetLookbackStart()` 计算预设的回溯起始时间
+- 使用 Unix 秒（非毫秒）与后端数据库一致
 **omo.ts**（`src/lib/query/omo.ts`，77 行）：
 ```typescript
 // src/lib/query/omo.ts:6
