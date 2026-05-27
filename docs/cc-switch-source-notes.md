@@ -3342,6 +3342,28 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**model_fetch.rs**（`services/model_fetch.rs`，414 行，13.2KB）：
+```rust
+// services/model_fetch.rs:14
+pub struct FetchedModel {
+    pub id: String,
+    pub owned_by: Option<String>,
+}
+// services/model_fetch.rs:31
+const FETCH_TIMEOUT_SECS: u64 = 15;
+const ERROR_BODY_MAX_CHARS: usize = 512;
+// services/model_fetch.rs:38
+const KNOWN_COMPAT_SUFFIXES: &[&str] = &[
+    "/api/claudecode", "/api/anthropic", "/apps/anthropic",
+    "/api/coding", "/claudecode", "/anthropic",
+    "/step_plan", "/coding", "/claude",
+];
+```
+- 通过 OpenAI 兼容的 `GET /v1/models` 端点获取供应商可用模型列表
+- 主要面向第三方聚合站（硅基流动、OpenRouter 等）
+- `KNOWN_COMPAT_SUFFIXES`（`model_fetch.rs:38`）— 已知的 Anthropic 协议兼容子路径后缀
+- `fetch_models()`（`model_fetch.rs:53`）— 按候选列表顺序尝试获取模型列表
+- 404/405 响应体截断为 512 字符，避免保留几十 KB HTML 404 页
 **balance.rs**（`services/balance.rs`，418 行，13.8KB）：
 ```rust
 // services/balance.rs:11
@@ -3431,6 +3453,28 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**model_fetch.rs**（`services/model_fetch.rs`，414 行，13.2KB）：
+```rust
+// services/model_fetch.rs:14
+pub struct FetchedModel {
+    pub id: String,
+    pub owned_by: Option<String>,
+}
+// services/model_fetch.rs:31
+const FETCH_TIMEOUT_SECS: u64 = 15;
+const ERROR_BODY_MAX_CHARS: usize = 512;
+// services/model_fetch.rs:38
+const KNOWN_COMPAT_SUFFIXES: &[&str] = &[
+    "/api/claudecode", "/api/anthropic", "/apps/anthropic",
+    "/api/coding", "/claudecode", "/anthropic",
+    "/step_plan", "/coding", "/claude",
+];
+```
+- 通过 OpenAI 兼容的 `GET /v1/models` 端点获取供应商可用模型列表
+- 主要面向第三方聚合站（硅基流动、OpenRouter 等）
+- `KNOWN_COMPAT_SUFFIXES`（`model_fetch.rs:38`）— 已知的 Anthropic 协议兼容子路径后缀
+- `fetch_models()`（`model_fetch.rs:53`）— 按候选列表顺序尝试获取模型列表
+- 404/405 响应体截断为 512 字符，避免保留几十 KB HTML 404 页
 **balance.rs**（`services/balance.rs`，418 行，13.8KB）：
 ```rust
 // services/balance.rs:11
