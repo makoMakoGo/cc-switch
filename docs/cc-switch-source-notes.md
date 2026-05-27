@@ -3342,6 +3342,29 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**session_usage.rs**（`services/session_usage.rs`，682 行，22.6KB）：
+```rust
+// services/session_usage.rs:28
+pub struct SessionSyncResult {
+    pub imported: u32,
+    pub skipped: u32,
+    pub files_scanned: u32,
+    pub errors: Vec<String>,
+}
+// services/session_usage.rs:40
+pub struct DataSourceSummary {
+    pub data_source: String,
+    pub request_count: u32,
+    pub total_cost_usd: String,
+}
+```
+- Claude Code 会话日志使用追踪
+- 数据流：`~/.claude/projects/*/*.jsonl` → 增量解析 → 去重 → 费用计算 → `proxy_request_logs` 表
+- 从 JSONL 文件中解析 assistant 消息的 token 使用数据
+- 使用 `CostCalculator` 计算费用
+- `session_usage_codex.rs`（787 行）— Codex 会话日志使用追踪
+- `session_usage_gemini.rs`（494 行）— Gemini 会话日志使用追踪
+- 三个文件分别对应三个工具的会话日志解析
 **coding_plan.rs**（`services/coding_plan.rs`，607 行，21.9KB）：
 ```rust
 // services/coding_plan.rs:13
@@ -3577,6 +3600,29 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**session_usage.rs**（`services/session_usage.rs`，682 行，22.6KB）：
+```rust
+// services/session_usage.rs:28
+pub struct SessionSyncResult {
+    pub imported: u32,
+    pub skipped: u32,
+    pub files_scanned: u32,
+    pub errors: Vec<String>,
+}
+// services/session_usage.rs:40
+pub struct DataSourceSummary {
+    pub data_source: String,
+    pub request_count: u32,
+    pub total_cost_usd: String,
+}
+```
+- Claude Code 会话日志使用追踪
+- 数据流：`~/.claude/projects/*/*.jsonl` → 增量解析 → 去重 → 费用计算 → `proxy_request_logs` 表
+- 从 JSONL 文件中解析 assistant 消息的 token 使用数据
+- 使用 `CostCalculator` 计算费用
+- `session_usage_codex.rs`（787 行）— Codex 会话日志使用追踪
+- `session_usage_gemini.rs`（494 行）— Gemini 会话日志使用追踪
+- 三个文件分别对应三个工具的会话日志解析
 **coding_plan.rs**（`services/coding_plan.rs`，607 行，21.9KB）：
 ```rust
 // services/coding_plan.rs:13
