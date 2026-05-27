@@ -3342,6 +3342,41 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**subscription.rs**（`services/subscription.rs`，1323 行，41.1KB）：
+```rust
+// services/subscription.rs:18
+pub enum CredentialStatus { Valid, Expired, NotFound, ParseError }
+// services/subscription.rs:28
+pub struct QuotaTier {
+    pub name: String,           // 窗口标识：five_hour, seven_day 等
+    pub utilization: f64,       // 使用百分比 0–100
+    pub resets_at: Option<String>,  // ISO 8601 重置时间
+}
+// services/subscription.rs:40
+pub struct ExtraUsage {
+    pub is_enabled: bool,
+    pub monthly_limit: Option<f64>,
+    pub used_credits: Option<f64>,
+    pub utilization: Option<f64>,
+    pub currency: Option<String>,
+}
+// services/subscription.rs:51
+pub struct SubscriptionQuota {
+    pub tool: String,
+    pub credential_status: CredentialStatus,
+    pub credential_message: Option<String>,
+    pub success: bool,
+    pub tiers: Vec<QuotaTier>,
+    pub extra_usage: Option<ExtraUsage>,
+    pub error: Option<String>,
+    pub queried_at: Option<i64>,
+}
+```
+- 读取 CLI 工具的已有 OAuth 凭据，查询官方订阅额度
+- 第一层设计：仅读取凭据，不实现登录/刷新
+- `QuotaTier` 表示限速窗口（如 5 小时会话、7 天周期）
+- `ExtraUsage` 表示超额使用信息
+- `SubscriptionQuota::not_found()`（`subscription.rs:63`）— 工具未找到时的默认返回
 **usage_stats.rs**（`services/usage_stats.rs`，3250 行，114.6KB）：
 ```rust
 // services/usage_stats.rs:18
