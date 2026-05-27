@@ -444,6 +444,24 @@ pub fn is_additive_mode(&self) -> bool {
     matches!(self, AppType::OpenCode | AppType::OpenClaw | AppType::Hermes)
 }
 ```
+**AppType 方法**（`app_config.rs:356-415`）：
+- `as_str()` → 返回字符串表示（`app_config.rs:357`）
+- `is_additive_mode()` → 是否为 additive 模式（`app_config.rs:373`）
+- `all()` → 返回所有 7 个变体的迭代器（`app_config.rs:381`）
+- `FromStr` 实现（`app_config.rs:395`）— 支持从字符串解析，包括别名如 `claude_desktop`
+**AppType 的 FromStr 实现**（`app_config.rs:395`）：
+```rust
+impl FromStr for AppType {
+    type Err = AppError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match normalized.as_str() {
+            "claude" => Ok(AppType::Claude),
+            "claude-desktop" | "claude_desktop" | "claudedesktop" => Ok(AppType::ClaudeDesktop),
+            // ... 其他变体
+        }
+    }
+}
+```
 
 这个分类影响整个架构：
 - Switch 模式（4 个工具）：同一时间只有一个 provider 生效
