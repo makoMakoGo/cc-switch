@@ -558,6 +558,26 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**base64.ts**（`src/lib/utils/base64.ts`，44 行）：
+```typescript
+// src/lib/utils/base64.ts:13
+export function decodeBase64Utf8(str: string): string {
+    let cleaned = str.trim().replace(/ /g, "+");  // URL 解析可能将 + 转为空格
+    try {
+        const binString = atob(cleaned);
+        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
+        return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+    } catch (e1) {
+        // 尝试修复缺失的 padding
+        // ...
+    }
+}
+```
+- Base64 解码工具（处理 URL 传递中的边缘情况）
+- 处理空格（URL 解析可能将 `+` 转为空格）
+- 处理缺失的 padding（`=` 字符）
+- 处理不同的 Base64 变体
+- 使用 `TextDecoder("utf-8", { fatal: false })` 解码 UTF-8
 **clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
 ```typescript
 // src/lib/clipboard.ts:3
@@ -1243,6 +1263,26 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**base64.ts**（`src/lib/utils/base64.ts`，44 行）：
+```typescript
+// src/lib/utils/base64.ts:13
+export function decodeBase64Utf8(str: string): string {
+    let cleaned = str.trim().replace(/ /g, "+");  // URL 解析可能将 + 转为空格
+    try {
+        const binString = atob(cleaned);
+        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
+        return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+    } catch (e1) {
+        // 尝试修复缺失的 padding
+        // ...
+    }
+}
+```
+- Base64 解码工具（处理 URL 传递中的边缘情况）
+- 处理空格（URL 解析可能将 `+` 转为空格）
+- 处理缺失的 padding（`=` 字符）
+- 处理不同的 Base64 变体
+- 使用 `TextDecoder("utf-8", { fatal: false })` 解码 UTF-8
 **clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
 ```typescript
 // src/lib/clipboard.ts:3
@@ -2305,6 +2345,26 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**base64.ts**（`src/lib/utils/base64.ts`，44 行）：
+```typescript
+// src/lib/utils/base64.ts:13
+export function decodeBase64Utf8(str: string): string {
+    let cleaned = str.trim().replace(/ /g, "+");  // URL 解析可能将 + 转为空格
+    try {
+        const binString = atob(cleaned);
+        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
+        return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+    } catch (e1) {
+        // 尝试修复缺失的 padding
+        // ...
+    }
+}
+```
+- Base64 解码工具（处理 URL 传递中的边缘情况）
+- 处理空格（URL 解析可能将 `+` 转为空格）
+- 处理缺失的 padding（`=` 字符）
+- 处理不同的 Base64 变体
+- 使用 `TextDecoder("utf-8", { fatal: false })` 解码 UTF-8
 **clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
 ```typescript
 // src/lib/clipboard.ts:3
@@ -2988,6 +3048,26 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**base64.ts**（`src/lib/utils/base64.ts`，44 行）：
+```typescript
+// src/lib/utils/base64.ts:13
+export function decodeBase64Utf8(str: string): string {
+    let cleaned = str.trim().replace(/ /g, "+");  // URL 解析可能将 + 转为空格
+    try {
+        const binString = atob(cleaned);
+        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
+        return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+    } catch (e1) {
+        // 尝试修复缺失的 padding
+        // ...
+    }
+}
+```
+- Base64 解码工具（处理 URL 传递中的边缘情况）
+- 处理空格（URL 解析可能将 `+` 转为空格）
+- 处理缺失的 padding（`=` 字符）
+- 处理不同的 Base64 变体
+- 使用 `TextDecoder("utf-8", { fatal: false })` 解码 UTF-8
 **clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
 ```typescript
 // src/lib/clipboard.ts:3
@@ -4995,6 +5075,26 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**base64.ts**（`src/lib/utils/base64.ts`，44 行）：
+```typescript
+// src/lib/utils/base64.ts:13
+export function decodeBase64Utf8(str: string): string {
+    let cleaned = str.trim().replace(/ /g, "+");  // URL 解析可能将 + 转为空格
+    try {
+        const binString = atob(cleaned);
+        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
+        return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+    } catch (e1) {
+        // 尝试修复缺失的 padding
+        // ...
+    }
+}
+```
+- Base64 解码工具（处理 URL 传递中的边缘情况）
+- 处理空格（URL 解析可能将 `+` 转为空格）
+- 处理缺失的 padding（`=` 字符）
+- 处理不同的 Base64 变体
+- 使用 `TextDecoder("utf-8", { fatal: false })` 解码 UTF-8
 **clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
 ```typescript
 // src/lib/clipboard.ts:3
@@ -6203,6 +6303,26 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**base64.ts**（`src/lib/utils/base64.ts`，44 行）：
+```typescript
+// src/lib/utils/base64.ts:13
+export function decodeBase64Utf8(str: string): string {
+    let cleaned = str.trim().replace(/ /g, "+");  // URL 解析可能将 + 转为空格
+    try {
+        const binString = atob(cleaned);
+        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
+        return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+    } catch (e1) {
+        // 尝试修复缺失的 padding
+        // ...
+    }
+}
+```
+- Base64 解码工具（处理 URL 传递中的边缘情况）
+- 处理空格（URL 解析可能将 `+` 转为空格）
+- 处理缺失的 padding（`=` 字符）
+- 处理不同的 Base64 变体
+- 使用 `TextDecoder("utf-8", { fatal: false })` 解码 UTF-8
 **clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
 ```typescript
 // src/lib/clipboard.ts:3
