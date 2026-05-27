@@ -1148,11 +1148,41 @@ pub struct WebDavSyncSettings {  // settings.rs:107
 **核心结构**（`database/mod.rs:76`）：
 
 ```rust
-pub struct Database {
+pub struct Database {  // database/mod.rs:76
     pub(crate) conn: Mutex<Connection>,
 }
 ```
-
+**Database::init()**（`database/mod.rs:95`）— 初始化流程：
+```rust
+pub fn init() -> Result<Self, AppError> {  // database/mod.rs:95
+    let db_path = get_app_config_dir().join("cc-switch.db");
+    let conn = Connection::open(&db_path)?;
+    conn.execute("PRAGMA foreign_keys = ON;", [])?;  // 启用外键约束
+    conn.execute("PRAGMA auto_vacuum = INCREMENTAL;", [])?;  // 增量自动清理
+    register_db_change_hook(&conn);  // 注册数据库变更钩子
+    let db = Self { conn: Mutex::new(conn) };
+    db.create_tables()?;
+    db.apply_schema_migrations()?;
+    db.ensure_model_pricing_seeded()?;
+    db.cleanup_old_stream_check_logs(7)?;  // 清理 7 天前的日志
+    db.rollup_and_prune(30)?;  // 滚动合并 30 天前的数据
+    Ok(db)
+}
+```
+**初始化流程**：
+1. 获取数据库路径 `~/.cc-switch/cc-switch.db`
+2. 确保父目录存在
+3. 打开 SQLite 连接
+4. 启用外键约束（`PRAGMA foreign_keys = ON`）
+5. 新数据库设置增量自动清理（`PRAGMA auto_vacuum = INCREMENTAL`）
+6. 注册数据库变更钩子（通知 WebDAV 自动同步）
+7. 创建表结构
+8. 创建迁移前备份（版本升级时）
+9. 应用 Schema 迁移
+10. 确保模型定价已播种
+11. 清理旧的流式检查日志（7 天）
+12. 滚动合并旧数据（30 天）
+13. 回收磁盘空间（`PRAGMA incremental_vacuum`）
 **模块结构**：
 - `mod.rs`（9.1KB）— Database 结构体 + 初始化
 - `schema.rs`（79.7KB）— 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`mod.rs:52`）
