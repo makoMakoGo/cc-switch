@@ -558,6 +558,43 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
+```typescript
+// src/lib/query/copilot.ts:5
+const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+// src/lib/query/copilot.ts:7
+export interface CopilotQuota {
+    success: boolean;
+    plan: string | null;
+    resetDate: string | null;
+    tiers: QuotaTier[];
+    error: string | null;
+    queriedAt: number | null;
+}
+// src/lib/query/copilot.ts:22
+export function useCopilotQuota(accountId: string | null, options: UseCopilotQuotaOptions = {}) {
+    const { enabled = true, autoQuery = false } = options;
+    return useQuery<CopilotQuota>({
+        queryKey: ["copilot", "quota", accountId ?? "default"],
+        queryFn: async (): Promise<CopilotQuota> => {
+            const usage = accountId
+                ? await copilotGetUsageForAccount(accountId)
+                : await copilotGetUsage();
+            // ...
+        },
+        enabled,
+        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
+        staleTime: REFETCH_INTERVAL,
+        retry: 1,
+    });
+}
+```
+- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
+- `CopilotQuota` — Copilot 配额信息（success、plan、resetDate、tiers、error、queriedAt）
+- `useCopilotQuota()` — 获取 Copilot 配额（支持指定 accountId 或使用默认账号）
+- 支持自动轮询（5 分钟）与窗口 focus 重取
+- `copilotGetUsage()` — 获取默认账号的使用量
+- `copilotGetUsageForAccount()` — 获取指定账号的使用量
 **index.ts**（`src/lib/api/index.ts`，31 行）：
 - API 层统一导出入口
 - 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
@@ -1118,6 +1155,43 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
+```typescript
+// src/lib/query/copilot.ts:5
+const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+// src/lib/query/copilot.ts:7
+export interface CopilotQuota {
+    success: boolean;
+    plan: string | null;
+    resetDate: string | null;
+    tiers: QuotaTier[];
+    error: string | null;
+    queriedAt: number | null;
+}
+// src/lib/query/copilot.ts:22
+export function useCopilotQuota(accountId: string | null, options: UseCopilotQuotaOptions = {}) {
+    const { enabled = true, autoQuery = false } = options;
+    return useQuery<CopilotQuota>({
+        queryKey: ["copilot", "quota", accountId ?? "default"],
+        queryFn: async (): Promise<CopilotQuota> => {
+            const usage = accountId
+                ? await copilotGetUsageForAccount(accountId)
+                : await copilotGetUsage();
+            // ...
+        },
+        enabled,
+        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
+        staleTime: REFETCH_INTERVAL,
+        retry: 1,
+    });
+}
+```
+- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
+- `CopilotQuota` — Copilot 配额信息（success、plan、resetDate、tiers、error、queriedAt）
+- `useCopilotQuota()` — 获取 Copilot 配额（支持指定 accountId 或使用默认账号）
+- 支持自动轮询（5 分钟）与窗口 focus 重取
+- `copilotGetUsage()` — 获取默认账号的使用量
+- `copilotGetUsageForAccount()` — 获取指定账号的使用量
 **index.ts**（`src/lib/api/index.ts`，31 行）：
 - API 层统一导出入口
 - 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
@@ -2055,6 +2129,43 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
+```typescript
+// src/lib/query/copilot.ts:5
+const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+// src/lib/query/copilot.ts:7
+export interface CopilotQuota {
+    success: boolean;
+    plan: string | null;
+    resetDate: string | null;
+    tiers: QuotaTier[];
+    error: string | null;
+    queriedAt: number | null;
+}
+// src/lib/query/copilot.ts:22
+export function useCopilotQuota(accountId: string | null, options: UseCopilotQuotaOptions = {}) {
+    const { enabled = true, autoQuery = false } = options;
+    return useQuery<CopilotQuota>({
+        queryKey: ["copilot", "quota", accountId ?? "default"],
+        queryFn: async (): Promise<CopilotQuota> => {
+            const usage = accountId
+                ? await copilotGetUsageForAccount(accountId)
+                : await copilotGetUsage();
+            // ...
+        },
+        enabled,
+        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
+        staleTime: REFETCH_INTERVAL,
+        retry: 1,
+    });
+}
+```
+- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
+- `CopilotQuota` — Copilot 配额信息（success、plan、resetDate、tiers、error、queriedAt）
+- `useCopilotQuota()` — 获取 Copilot 配额（支持指定 accountId 或使用默认账号）
+- 支持自动轮询（5 分钟）与窗口 focus 重取
+- `copilotGetUsage()` — 获取默认账号的使用量
+- `copilotGetUsageForAccount()` — 获取指定账号的使用量
 **index.ts**（`src/lib/api/index.ts`，31 行）：
 - API 层统一导出入口
 - 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
@@ -2613,6 +2724,43 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
+```typescript
+// src/lib/query/copilot.ts:5
+const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+// src/lib/query/copilot.ts:7
+export interface CopilotQuota {
+    success: boolean;
+    plan: string | null;
+    resetDate: string | null;
+    tiers: QuotaTier[];
+    error: string | null;
+    queriedAt: number | null;
+}
+// src/lib/query/copilot.ts:22
+export function useCopilotQuota(accountId: string | null, options: UseCopilotQuotaOptions = {}) {
+    const { enabled = true, autoQuery = false } = options;
+    return useQuery<CopilotQuota>({
+        queryKey: ["copilot", "quota", accountId ?? "default"],
+        queryFn: async (): Promise<CopilotQuota> => {
+            const usage = accountId
+                ? await copilotGetUsageForAccount(accountId)
+                : await copilotGetUsage();
+            // ...
+        },
+        enabled,
+        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
+        staleTime: REFETCH_INTERVAL,
+        retry: 1,
+    });
+}
+```
+- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
+- `CopilotQuota` — Copilot 配额信息（success、plan、resetDate、tiers、error、queriedAt）
+- `useCopilotQuota()` — 获取 Copilot 配额（支持指定 accountId 或使用默认账号）
+- 支持自动轮询（5 分钟）与窗口 focus 重取
+- `copilotGetUsage()` — 获取默认账号的使用量
+- `copilotGetUsageForAccount()` — 获取指定账号的使用量
 **index.ts**（`src/lib/api/index.ts`，31 行）：
 - API 层统一导出入口
 - 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
@@ -4495,6 +4643,43 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
+```typescript
+// src/lib/query/copilot.ts:5
+const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+// src/lib/query/copilot.ts:7
+export interface CopilotQuota {
+    success: boolean;
+    plan: string | null;
+    resetDate: string | null;
+    tiers: QuotaTier[];
+    error: string | null;
+    queriedAt: number | null;
+}
+// src/lib/query/copilot.ts:22
+export function useCopilotQuota(accountId: string | null, options: UseCopilotQuotaOptions = {}) {
+    const { enabled = true, autoQuery = false } = options;
+    return useQuery<CopilotQuota>({
+        queryKey: ["copilot", "quota", accountId ?? "default"],
+        queryFn: async (): Promise<CopilotQuota> => {
+            const usage = accountId
+                ? await copilotGetUsageForAccount(accountId)
+                : await copilotGetUsage();
+            // ...
+        },
+        enabled,
+        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
+        staleTime: REFETCH_INTERVAL,
+        retry: 1,
+    });
+}
+```
+- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
+- `CopilotQuota` — Copilot 配额信息（success、plan、resetDate、tiers、error、queriedAt）
+- `useCopilotQuota()` — 获取 Copilot 配额（支持指定 accountId 或使用默认账号）
+- 支持自动轮询（5 分钟）与窗口 focus 重取
+- `copilotGetUsage()` — 获取默认账号的使用量
+- `copilotGetUsageForAccount()` — 获取指定账号的使用量
 **index.ts**（`src/lib/api/index.ts`，31 行）：
 - API 层统一导出入口
 - 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
@@ -5578,6 +5763,43 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
+```typescript
+// src/lib/query/copilot.ts:5
+const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+// src/lib/query/copilot.ts:7
+export interface CopilotQuota {
+    success: boolean;
+    plan: string | null;
+    resetDate: string | null;
+    tiers: QuotaTier[];
+    error: string | null;
+    queriedAt: number | null;
+}
+// src/lib/query/copilot.ts:22
+export function useCopilotQuota(accountId: string | null, options: UseCopilotQuotaOptions = {}) {
+    const { enabled = true, autoQuery = false } = options;
+    return useQuery<CopilotQuota>({
+        queryKey: ["copilot", "quota", accountId ?? "default"],
+        queryFn: async (): Promise<CopilotQuota> => {
+            const usage = accountId
+                ? await copilotGetUsageForAccount(accountId)
+                : await copilotGetUsage();
+            // ...
+        },
+        enabled,
+        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
+        staleTime: REFETCH_INTERVAL,
+        retry: 1,
+    });
+}
+```
+- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
+- `CopilotQuota` — Copilot 配额信息（success、plan、resetDate、tiers、error、queriedAt）
+- `useCopilotQuota()` — 获取 Copilot 配额（支持指定 accountId 或使用默认账号）
+- 支持自动轮询（5 分钟）与窗口 focus 重取
+- `copilotGetUsage()` — 获取默认账号的使用量
+- `copilotGetUsageForAccount()` — 获取指定账号的使用量
 **index.ts**（`src/lib/api/index.ts`，31 行）：
 - API 层统一导出入口
 - 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
