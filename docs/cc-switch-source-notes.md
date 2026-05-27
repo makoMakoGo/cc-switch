@@ -2305,6 +2305,37 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**skillsApi**（`src/lib/api/skills.ts`，284 行）：
+```typescript
+// 前端类型定义（与后端对应）
+export interface InstalledSkill {  // skills.ts:26
+    id: string;
+    name: string;
+    description?: string;
+    directory: string;
+    repoOwner?: string;
+    repoName?: string;
+    repoBranch?: string;
+    readmeUrl?: string;
+    apps: SkillApps;
+    installedAt: number;
+    contentHash?: string;
+    updatedAt: number;
+}
+export interface SkillUninstallResult {  // skills.ts:41
+    backupPath?: string;
+}
+export interface SkillBackupEntry {  // skills.ts:45
+    backupId: string;
+    backupPath: string;
+    createdAt: number;
+    skill: InstalledSkill;
+}
+```
+- `SkillApps`（`skills.ts:15`）— 前端版本的 Skill 应用启用状态
+- `DiscoverableSkill`（`skills.ts:53`）— 可发现的 Skill（来自仓库）
+- `AppType`（`skills.ts:5`）— 前端版本的应用类型
+- API 方法：`getInstalled()`, `install()`, `uninstall()`, `restoreBackup()`, `toggleApp()`, `scanUnmanaged()`
 **mcpApi**（`src/lib/api/mcp.ts`，130 行）：
 ```typescript
 export const mcpApi = {  // mcp.ts:11
