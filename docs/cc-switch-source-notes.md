@@ -948,6 +948,10 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**cache_injector 模块**（`proxy/cache_injector.rs`，378 行）：
+- `inject()`（`cache_injector.rs:9`）— 在请求体关键位置注入 cache_control 断点
+- 启用 Bedrock Prompt Caching
+- 最多注入 4 个断点（tools 末尾、system 末尾、messages 末尾）
 **error_mapper 模块**（`proxy/error_mapper.rs`，119 行）：
 - `map_proxy_error_to_status()`（`error_mapper.rs:16`）— ProxyError → HTTP 状态码映射
 - `UpstreamError` → 使用上游实际状态码
