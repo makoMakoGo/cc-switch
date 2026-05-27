@@ -3342,6 +3342,30 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**error_mapper.rs**（`proxy/error_mapper.rs`，118 行，4.0KB）：
+```rust
+// proxy/error_mapper.rs:16
+pub fn map_proxy_error_to_status(error: &ProxyError) -> u16 {
+    match error {
+        ProxyError::UpstreamError { status, .. } => *status,
+        ProxyError::Timeout(_) => 504,
+        ProxyError::ForwardFailed(_) => 502,
+        ProxyError::NoAvailableProvider => 503,
+        ProxyError::AllProvidersCircuitOpen => 503,
+        ProxyError::NoProvidersConfigured => 503,
+        ProxyError::MaxRetriesExceeded => 503,
+        ProxyError::ProviderUnhealthy(_) => 503,
+        ProxyError::DatabaseError(_) => 500,
+        _ => 500,
+    }
+}
+```
+- 将 ProxyError 映射到 HTTP 状态码
+- 上游错误：直接使用上游返回的状态码
+- 超时：504 Gateway Timeout
+- 连接失败：502 Bad Gateway
+- 无可用 Provider / 熔断 / 重试耗尽：503 Service Unavailable
+- 其他错误：500 Internal Server Error
 **ProxyError**（`proxy/error.rs`，206 行，6.9KB）：
 ```rust
 // proxy/error.rs:10
@@ -3992,6 +4016,30 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**error_mapper.rs**（`proxy/error_mapper.rs`，118 行，4.0KB）：
+```rust
+// proxy/error_mapper.rs:16
+pub fn map_proxy_error_to_status(error: &ProxyError) -> u16 {
+    match error {
+        ProxyError::UpstreamError { status, .. } => *status,
+        ProxyError::Timeout(_) => 504,
+        ProxyError::ForwardFailed(_) => 502,
+        ProxyError::NoAvailableProvider => 503,
+        ProxyError::AllProvidersCircuitOpen => 503,
+        ProxyError::NoProvidersConfigured => 503,
+        ProxyError::MaxRetriesExceeded => 503,
+        ProxyError::ProviderUnhealthy(_) => 503,
+        ProxyError::DatabaseError(_) => 500,
+        _ => 500,
+    }
+}
+```
+- 将 ProxyError 映射到 HTTP 状态码
+- 上游错误：直接使用上游返回的状态码
+- 超时：504 Gateway Timeout
+- 连接失败：502 Bad Gateway
+- 无可用 Provider / 熔断 / 重试耗尽：503 Service Unavailable
+- 其他错误：500 Internal Server Error
 **ProxyError**（`proxy/error.rs`，206 行，6.9KB）：
 ```rust
 // proxy/error.rs:10
