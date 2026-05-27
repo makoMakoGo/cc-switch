@@ -523,6 +523,20 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**MultiAppConfig**（`app_config.rs:469`）— 旧版 JSON 配置格式（用于迁移）：
+```rust
+pub struct MultiAppConfig {  // app_config.rs:469
+    pub version: u32,                        // 版本号（默认 2）
+    pub apps: HashMap<String, ProviderManager>,  // 应用管理器
+    pub mcp: McpRoot,                        // MCP 配置
+    pub prompts: PromptRoot,                 // Prompt 配置
+    pub skills: SkillStore,                  // Skills 配置
+    pub common_config_snippets: CommonConfigSnippets,  // 通用配置片段
+    pub claude_common_config_snippet: Option<String>,  // 旧字段向后兼容
+}
+```
+- `Default` 实现（`app_config.rs:496`）— 7 个应用的默认 ProviderManager
+- 用于 JSON → SQLite 迁移（`database/migration.rs`）
 **McpServer**（`app_config.rs:222`）：
 ```rust
 pub struct McpServer {  // app_config.rs:222
@@ -689,6 +703,20 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**MultiAppConfig**（`app_config.rs:469`）— 旧版 JSON 配置格式（用于迁移）：
+```rust
+pub struct MultiAppConfig {  // app_config.rs:469
+    pub version: u32,                        // 版本号（默认 2）
+    pub apps: HashMap<String, ProviderManager>,  // 应用管理器
+    pub mcp: McpRoot,                        // MCP 配置
+    pub prompts: PromptRoot,                 // Prompt 配置
+    pub skills: SkillStore,                  // Skills 配置
+    pub common_config_snippets: CommonConfigSnippets,  // 通用配置片段
+    pub claude_common_config_snippet: Option<String>,  // 旧字段向后兼容
+}
+```
+- `Default` 实现（`app_config.rs:496`）— 7 个应用的默认 ProviderManager
+- 用于 JSON → SQLite 迁移（`database/migration.rs`）
 **McpServer**（`app_config.rs:222`）：
 ```rust
 pub struct McpServer {  // app_config.rs:222
