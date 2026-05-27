@@ -948,6 +948,10 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**json_canonical 模块**（`proxy/json_canonical.rs`，191 行）：
+- `canonicalize_value()`（`json_canonical.rs:6`）— 递归排序 JSON 对象键（确保确定性输出）
+- `canonical_json_string()`（`json_canonical.rs:23`）— 生成稳定的 JSON 字符串
+- `short_value_hash()`（`json_canonical.rs`）— 计算 JSON 值的 SHA256 哈希
 **cache_injector 模块**（`proxy/cache_injector.rs`，378 行）：
 - `inject()`（`cache_injector.rs:9`）— 在请求体关键位置注入 cache_control 断点
 - 启用 Bedrock Prompt Caching
