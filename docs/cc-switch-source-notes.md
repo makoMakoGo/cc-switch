@@ -948,6 +948,12 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**transform_responses 模块**（`proxy/providers/transform_responses.rs`，1675 行，61.5KB）：
+- Anthropic Messages ↔ OpenAI Responses API 双向转换
+- Responses API（2025 年推出）：扁平化 input/output 结构
+- `sanitize_anthropic_tool_use_input()`（`transform_responses.rs:14`）— 清理 Anthropic tool input
+- tool_use/tool_result 从 message content "提升"为顶层 input item
+- system prompt 使用 `instructions` 字段
 **transform_gemini 模块**（`proxy/providers/transform_gemini.rs`，2239 行，78.1KB）：
 - Anthropic Messages ↔ Gemini `generateContent` 双向转换
 - `anthropic_to_gemini()`（`transform_gemini.rs:42`）— Anthropic → Gemini 请求转换
