@@ -930,7 +930,16 @@ pub struct ProxyState {
 - `ProxyServer::new()` 创建 `ProxyState` 并初始化所有共享组件
 - `ProxyServer::start()` 绑定端口、启动 Axum 路由
 - `ProxyServer::stop()` 发送 shutdown 信号、等待服务器关闭
-
+**FailoverSwitchManager**（`proxy/failover_switch.rs:19`）：
+```rust
+pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
+    pending_switches: Arc<RwLock<HashSet<String>>>,  // 正在处理中的切换
+    db: Arc<Database>,
+}
+```
+- `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
+- 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
+- 切换成功后更新数据库、发射 Tauri 事件通知前端
 ### 4.3 认证和路由
 
 **ProviderRouter**（`proxy/provider_router.rs`，524 行）：
