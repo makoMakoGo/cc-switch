@@ -2305,6 +2305,17 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**前端 Query 层**（`src/lib/query/`，10 个文件）：
+- `queries.ts`（4.2KB）— 查询 hooks（useProvidersQuery, useSettingsQuery, useUsageQuery, useSessionsQuery）
+- `mutations.ts`（10.2KB）— 变更 hooks（useAddProviderMutation, useUpdateProviderMutation, useDeleteProviderMutation, useSwitchProviderMutation）
+- `proxy.ts`（6.5KB）— 代理相关查询
+- `usage.ts`（8.5KB）— 用量相关查询
+- `failover.ts`（7.9KB）— 故障转移相关查询
+- `subscription.ts`（2.1KB）— 订阅相关查询
+- `copilot.ts`（1.7KB）— Copilot 相关查询
+- `omo.ts`（2.6KB）— OMO 相关查询
+- `queryClient.ts`（264B）— QueryClient 配置
+- `index.ts`（144B）— 模块导出
 **前端工具函数**（`src/utils/`）：
 - `deepClone.ts`（22 行）— 深拷贝工具
   - 优先使用 `globalThis.structuredClone`
