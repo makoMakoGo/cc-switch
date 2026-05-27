@@ -558,6 +558,29 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
+```typescript
+// src/lib/clipboard.ts:3
+export async function copyText(text: string): Promise<void> {
+    try {
+        await invoke("copy_text_to_clipboard", { text });
+        return;
+    } catch (nativeError) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return;
+        } catch (webError) {
+            throw webError instanceof Error ? webError
+                : nativeError instanceof Error ? nativeError
+                : new Error(String(webError || nativeError));
+        }
+    }
+}
+```
+- 剪贴板操作工具（双层回退策略）
+- 优先使用 Tauri 原生命令 `copy_text_to_clipboard`
+- 原生失败时回退到 Web API `navigator.clipboard.writeText`
+- 错误处理：优先抛出 webError，其次 nativeError
 **updater.ts**（`src/lib/updater.ts`，127 行）：
 ```typescript
 // src/lib/updater.ts:8
@@ -1220,6 +1243,29 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
+```typescript
+// src/lib/clipboard.ts:3
+export async function copyText(text: string): Promise<void> {
+    try {
+        await invoke("copy_text_to_clipboard", { text });
+        return;
+    } catch (nativeError) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return;
+        } catch (webError) {
+            throw webError instanceof Error ? webError
+                : nativeError instanceof Error ? nativeError
+                : new Error(String(webError || nativeError));
+        }
+    }
+}
+```
+- 剪贴板操作工具（双层回退策略）
+- 优先使用 Tauri 原生命令 `copy_text_to_clipboard`
+- 原生失败时回退到 Web API `navigator.clipboard.writeText`
+- 错误处理：优先抛出 webError，其次 nativeError
 **updater.ts**（`src/lib/updater.ts`，127 行）：
 ```typescript
 // src/lib/updater.ts:8
@@ -2259,6 +2305,29 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
+```typescript
+// src/lib/clipboard.ts:3
+export async function copyText(text: string): Promise<void> {
+    try {
+        await invoke("copy_text_to_clipboard", { text });
+        return;
+    } catch (nativeError) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return;
+        } catch (webError) {
+            throw webError instanceof Error ? webError
+                : nativeError instanceof Error ? nativeError
+                : new Error(String(webError || nativeError));
+        }
+    }
+}
+```
+- 剪贴板操作工具（双层回退策略）
+- 优先使用 Tauri 原生命令 `copy_text_to_clipboard`
+- 原生失败时回退到 Web API `navigator.clipboard.writeText`
+- 错误处理：优先抛出 webError，其次 nativeError
 **updater.ts**（`src/lib/updater.ts`，127 行）：
 ```typescript
 // src/lib/updater.ts:8
@@ -2919,6 +2988,29 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
+```typescript
+// src/lib/clipboard.ts:3
+export async function copyText(text: string): Promise<void> {
+    try {
+        await invoke("copy_text_to_clipboard", { text });
+        return;
+    } catch (nativeError) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return;
+        } catch (webError) {
+            throw webError instanceof Error ? webError
+                : nativeError instanceof Error ? nativeError
+                : new Error(String(webError || nativeError));
+        }
+    }
+}
+```
+- 剪贴板操作工具（双层回退策略）
+- 优先使用 Tauri 原生命令 `copy_text_to_clipboard`
+- 原生失败时回退到 Web API `navigator.clipboard.writeText`
+- 错误处理：优先抛出 webError，其次 nativeError
 **updater.ts**（`src/lib/updater.ts`，127 行）：
 ```typescript
 // src/lib/updater.ts:8
@@ -4903,6 +4995,29 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
+```typescript
+// src/lib/clipboard.ts:3
+export async function copyText(text: string): Promise<void> {
+    try {
+        await invoke("copy_text_to_clipboard", { text });
+        return;
+    } catch (nativeError) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return;
+        } catch (webError) {
+            throw webError instanceof Error ? webError
+                : nativeError instanceof Error ? nativeError
+                : new Error(String(webError || nativeError));
+        }
+    }
+}
+```
+- 剪贴板操作工具（双层回退策略）
+- 优先使用 Tauri 原生命令 `copy_text_to_clipboard`
+- 原生失败时回退到 Web API `navigator.clipboard.writeText`
+- 错误处理：优先抛出 webError，其次 nativeError
 **updater.ts**（`src/lib/updater.ts`，127 行）：
 ```typescript
 // src/lib/updater.ts:8
@@ -6088,6 +6203,29 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
+```typescript
+// src/lib/clipboard.ts:3
+export async function copyText(text: string): Promise<void> {
+    try {
+        await invoke("copy_text_to_clipboard", { text });
+        return;
+    } catch (nativeError) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return;
+        } catch (webError) {
+            throw webError instanceof Error ? webError
+                : nativeError instanceof Error ? nativeError
+                : new Error(String(webError || nativeError));
+        }
+    }
+}
+```
+- 剪贴板操作工具（双层回退策略）
+- 优先使用 Tauri 原生命令 `copy_text_to_clipboard`
+- 原生失败时回退到 Web API `navigator.clipboard.writeText`
+- 错误处理：优先抛出 webError，其次 nativeError
 **updater.ts**（`src/lib/updater.ts`，127 行）：
 ```typescript
 // src/lib/updater.ts:8
