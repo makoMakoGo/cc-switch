@@ -3342,6 +3342,42 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**env_checker.rs**（`services/env_checker.rs`，168 行，5.9KB）：
+```rust
+// services/env_checker.rs:7
+pub struct EnvConflict {
+    pub var_name: String,
+    pub var_value: String,
+    pub source_type: String,  // "system" | "file"
+    pub source_path: String,  // Registry path or file path
+}
+// services/env_checker.rs:20
+pub fn check_env_conflicts(app: &str) -> Result<Vec<EnvConflict>, String> {
+    let keywords = get_keywords_for_app(app);
+    let mut conflicts = Vec::new();
+    conflicts.extend(check_system_env(&keywords)?);
+    #[cfg(not(target_os = "windows"))]
+    conflicts.extend(check_shell_configs(&keywords)?);
+    Ok(conflicts)
+}
+fn get_keywords_for_app(app: &str) -> Vec<&str> {
+    match app.to_lowercase().as_str() {
+        "claude" => vec!["ANTHROPIC"],
+        "codex" => vec!["OPENAI"],
+        "gemini" => vec!["GEMINI", "GOOGLE_GEMINI"],
+        _ => vec![],
+    }
+}
+```
+- 检测环境变量冲突（系统环境变量 vs shell 配置文件）
+- Windows：检查注册表 `HKEY_CURRENT_USER\Environment`
+- Unix：检查 shell 配置文件（`.bashrc`、`.zshrc` 等）
+- 每个工具对应不同的关键词：Claude → `ANTHROPIC`，Codex → `OPENAI`，Gemini → `GEMINI`/`GOOGLE_GEMINI`
+**env_manager.rs**（`services/env_manager.rs`，240 行，8.5KB）：
+- 环境变量管理服务
+- 支持设置和删除环境变量
+- Windows：通过注册表操作
+- Unix：通过 shell 配置文件操作
 **webdav_sync.rs**（`services/webdav_sync.rs`，884 行，29.0KB）：
 ```rust
 // services/webdav_sync.rs:32
@@ -3621,6 +3657,42 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**env_checker.rs**（`services/env_checker.rs`，168 行，5.9KB）：
+```rust
+// services/env_checker.rs:7
+pub struct EnvConflict {
+    pub var_name: String,
+    pub var_value: String,
+    pub source_type: String,  // "system" | "file"
+    pub source_path: String,  // Registry path or file path
+}
+// services/env_checker.rs:20
+pub fn check_env_conflicts(app: &str) -> Result<Vec<EnvConflict>, String> {
+    let keywords = get_keywords_for_app(app);
+    let mut conflicts = Vec::new();
+    conflicts.extend(check_system_env(&keywords)?);
+    #[cfg(not(target_os = "windows"))]
+    conflicts.extend(check_shell_configs(&keywords)?);
+    Ok(conflicts)
+}
+fn get_keywords_for_app(app: &str) -> Vec<&str> {
+    match app.to_lowercase().as_str() {
+        "claude" => vec!["ANTHROPIC"],
+        "codex" => vec!["OPENAI"],
+        "gemini" => vec!["GEMINI", "GOOGLE_GEMINI"],
+        _ => vec![],
+    }
+}
+```
+- 检测环境变量冲突（系统环境变量 vs shell 配置文件）
+- Windows：检查注册表 `HKEY_CURRENT_USER\Environment`
+- Unix：检查 shell 配置文件（`.bashrc`、`.zshrc` 等）
+- 每个工具对应不同的关键词：Claude → `ANTHROPIC`，Codex → `OPENAI`，Gemini → `GEMINI`/`GOOGLE_GEMINI`
+**env_manager.rs**（`services/env_manager.rs`，240 行，8.5KB）：
+- 环境变量管理服务
+- 支持设置和删除环境变量
+- Windows：通过注册表操作
+- Unix：通过 shell 配置文件操作
 **webdav_sync.rs**（`services/webdav_sync.rs`，884 行，29.0KB）：
 ```rust
 // services/webdav_sync.rs:32
