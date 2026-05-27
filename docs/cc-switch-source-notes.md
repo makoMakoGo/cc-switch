@@ -3342,6 +3342,34 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**response_processor.rs**（`proxy/response_processor.rs`，1107 行，37.4KB）：
+```rust
+// proxy/response_processor.rs:38
+fn decompress_body(content_encoding: &str, body: &[u8]) -> Result<Vec<u8>, std::io::Error> {
+    match content_encoding {
+        "gzip" | "x-gzip" => { /* GzDecoder */ }
+        "deflate" => { /* DeflateDecoder */ }
+        "br" => { /* BrotliDecoder */ }
+        _ => Ok(body.to_vec()),
+    }
+}
+```
+- 响应处理器模块（统一处理流式和非流式 API 响应）
+- `decompress_body()`（`response_processor.rs:38`）— 根据 content-encoding 解压响应体
+- 支持 gzip、deflate、br 三种压缩格式
+- reqwest 自动解压已禁用（为了透传 accept-encoding），需要手动解压
+- 使用 `StreamUsageEventCollector` 收集流式使用量事件
+- `strip_hop_by_hop_response_headers()` — 剥离 hop-by-hop 响应头
+- `strip_entity_headers_for_rebuilt_body()` — 剥离实体头
+- `create_logged_passthrough_stream()` — 创建带日志的透传流
+**session.rs**（`proxy/session.rs`，626 行，19.2KB）：
+- 会话管理模块
+- `ClientFormat` 枚举：Claude、OpenAI、Gemini、Codex、Copilot、Unknown
+- 会话跟踪和使用量记录
+**sse.rs**（`proxy/sse.rs`，345 行，11.7KB）：
+- SSE（Server-Sent Events）处理模块
+- `strip_sse_field()` — 从 SSE 事件中剥离字段
+- `take_sse_block()` — 提取 SSE 块
 **handlers.rs**（`proxy/handlers.rs`，1266 行，43.6KB）：
 ```rust
 // proxy/handlers.rs:1
@@ -3765,6 +3793,34 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**response_processor.rs**（`proxy/response_processor.rs`，1107 行，37.4KB）：
+```rust
+// proxy/response_processor.rs:38
+fn decompress_body(content_encoding: &str, body: &[u8]) -> Result<Vec<u8>, std::io::Error> {
+    match content_encoding {
+        "gzip" | "x-gzip" => { /* GzDecoder */ }
+        "deflate" => { /* DeflateDecoder */ }
+        "br" => { /* BrotliDecoder */ }
+        _ => Ok(body.to_vec()),
+    }
+}
+```
+- 响应处理器模块（统一处理流式和非流式 API 响应）
+- `decompress_body()`（`response_processor.rs:38`）— 根据 content-encoding 解压响应体
+- 支持 gzip、deflate、br 三种压缩格式
+- reqwest 自动解压已禁用（为了透传 accept-encoding），需要手动解压
+- 使用 `StreamUsageEventCollector` 收集流式使用量事件
+- `strip_hop_by_hop_response_headers()` — 剥离 hop-by-hop 响应头
+- `strip_entity_headers_for_rebuilt_body()` — 剥离实体头
+- `create_logged_passthrough_stream()` — 创建带日志的透传流
+**session.rs**（`proxy/session.rs`，626 行，19.2KB）：
+- 会话管理模块
+- `ClientFormat` 枚举：Claude、OpenAI、Gemini、Codex、Copilot、Unknown
+- 会话跟踪和使用量记录
+**sse.rs**（`proxy/sse.rs`，345 行，11.7KB）：
+- SSE（Server-Sent Events）处理模块
+- `strip_sse_field()` — 从 SSE 事件中剥离字段
+- `take_sse_block()` — 提取 SSE 块
 **handlers.rs**（`proxy/handlers.rs`，1266 行，43.6KB）：
 ```rust
 // proxy/handlers.rs:1
