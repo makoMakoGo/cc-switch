@@ -3342,6 +3342,28 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**copilot_optimizer.rs**（`proxy/copilot_optimizer.rs`，1539 行，57.9KB）：
+```rust
+// proxy/copilot_optimizer.rs:19
+pub struct CopilotClassification {
+    pub initiator: &'static str,  // "user" 或 "agent"
+    pub is_warmup: bool,          // 是否为 warmup/探针请求
+    pub is_compact: bool,         // 是否为上下文压缩请求
+    pub is_subagent: bool,        // 是否为 Claude Code 子代理请求
+}
+```
+- 解决 GitHub Copilot 代理消耗量异常问题（Issue #1813）
+- Copilot 使用 `x-initiator` 请求头区分「用户发起」和「agent 续写」：
+  - `user`：计为一次 premium interaction（扣额度）
+  - `agent`：视为上一次交互的延续（不额外扣费）
+- 分类算法（只检查最后一条消息，与参考实现 caozhiyuan/copilot-api 对齐）：
+  1. 无消息 → "user"（安全默认，首次请求）
+  2. 最后消息 role=user：content 中存在非 tool_result 类型 block → "user"
+  3. 最后消息 role=user：content 全部是 tool_result → "agent"
+  4. 最后消息 role 非 user → "user"（安全默认）
+- Warmup 检测：请求头中有 `anthropic-beta` + 无 tools + 非 compact → warmup
+- 子代理请求应设置 `x-interaction-type=conversation-subagent`，不计 premium interaction
+- 参考实现：https://github.com/caozhiyuan/copilot-api
 **response_processor.rs**（`proxy/response_processor.rs`，1107 行，37.4KB）：
 ```rust
 // proxy/response_processor.rs:38
@@ -3793,6 +3815,28 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**copilot_optimizer.rs**（`proxy/copilot_optimizer.rs`，1539 行，57.9KB）：
+```rust
+// proxy/copilot_optimizer.rs:19
+pub struct CopilotClassification {
+    pub initiator: &'static str,  // "user" 或 "agent"
+    pub is_warmup: bool,          // 是否为 warmup/探针请求
+    pub is_compact: bool,         // 是否为上下文压缩请求
+    pub is_subagent: bool,        // 是否为 Claude Code 子代理请求
+}
+```
+- 解决 GitHub Copilot 代理消耗量异常问题（Issue #1813）
+- Copilot 使用 `x-initiator` 请求头区分「用户发起」和「agent 续写」：
+  - `user`：计为一次 premium interaction（扣额度）
+  - `agent`：视为上一次交互的延续（不额外扣费）
+- 分类算法（只检查最后一条消息，与参考实现 caozhiyuan/copilot-api 对齐）：
+  1. 无消息 → "user"（安全默认，首次请求）
+  2. 最后消息 role=user：content 中存在非 tool_result 类型 block → "user"
+  3. 最后消息 role=user：content 全部是 tool_result → "agent"
+  4. 最后消息 role 非 user → "user"（安全默认）
+- Warmup 检测：请求头中有 `anthropic-beta` + 无 tools + 非 compact → warmup
+- 子代理请求应设置 `x-interaction-type=conversation-subagent`，不计 premium interaction
+- 参考实现：https://github.com/caozhiyuan/copilot-api
 **response_processor.rs**（`proxy/response_processor.rs`，1107 行，37.4KB）：
 ```rust
 // proxy/response_processor.rs:38
