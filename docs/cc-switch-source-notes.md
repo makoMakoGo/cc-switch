@@ -3342,6 +3342,25 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**webdav.rs**（`services/webdav.rs`，554 行，18.0KB）：
+```rust
+// services/webdav.rs:13
+const DEFAULT_TIMEOUT_SECS: u64 = 30;
+const TRANSFER_TIMEOUT_SECS: u64 = 300;  // 大文件传输超时（db.sql, skills.zip）
+pub type WebDavAuth = Option<(String, Option<String>)>;  // webdav.rs:18
+```
+- WebDAV HTTP 传输层（底层 HTTP 原语）
+- 支持的 WebDAV 方法：PUT、GET、HEAD、MKCOL、PROPFIND
+- `parse_base_url()`（`webdav.rs:33`）— 解析并验证 WebDAV 基础 URL（必须是 http 或 https）
+- `method_propfind()`（`webdav.rs:22`）— 创建 PROPFIND 方法
+- `method_mkcol()`（`webdav.rs:26`）— 创建 MKCOL 方法
+- 使用 `reqwest` 进行 HTTP 请求
+- 大文件传输使用 300 秒超时（`TRANSFER_TIMEOUT_SECS`）
+- 常规操作使用 30 秒超时（`DEFAULT_TIMEOUT_SECS`）
+**webdav_auto_sync.rs**（`services/webdav_auto_sync.rs`，274 行，8.0KB）：
+- WebDAV 自动同步服务
+- 定时同步和启动时同步
+- 使用 `tokio::spawn` 运行后台同步任务
 **SpeedtestService**（`services/speedtest.rs`，187 行，5.9KB）：
 ```rust
 // services/speedtest.rs:8
@@ -3729,6 +3748,25 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**webdav.rs**（`services/webdav.rs`，554 行，18.0KB）：
+```rust
+// services/webdav.rs:13
+const DEFAULT_TIMEOUT_SECS: u64 = 30;
+const TRANSFER_TIMEOUT_SECS: u64 = 300;  // 大文件传输超时（db.sql, skills.zip）
+pub type WebDavAuth = Option<(String, Option<String>)>;  // webdav.rs:18
+```
+- WebDAV HTTP 传输层（底层 HTTP 原语）
+- 支持的 WebDAV 方法：PUT、GET、HEAD、MKCOL、PROPFIND
+- `parse_base_url()`（`webdav.rs:33`）— 解析并验证 WebDAV 基础 URL（必须是 http 或 https）
+- `method_propfind()`（`webdav.rs:22`）— 创建 PROPFIND 方法
+- `method_mkcol()`（`webdav.rs:26`）— 创建 MKCOL 方法
+- 使用 `reqwest` 进行 HTTP 请求
+- 大文件传输使用 300 秒超时（`TRANSFER_TIMEOUT_SECS`）
+- 常规操作使用 30 秒超时（`DEFAULT_TIMEOUT_SECS`）
+**webdav_auto_sync.rs**（`services/webdav_auto_sync.rs`，274 行，8.0KB）：
+- WebDAV 自动同步服务
+- 定时同步和启动时同步
+- 使用 `tokio::spawn` 运行后台同步任务
 **SpeedtestService**（`services/speedtest.rs`，187 行，5.9KB）：
 ```rust
 // services/speedtest.rs:8
