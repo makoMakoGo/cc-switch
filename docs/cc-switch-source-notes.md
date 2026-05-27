@@ -835,6 +835,28 @@ async fn handle_messages_for_app(state, request, app_type, tag, app_type_str, st
     process_response(response, ...).await
 }
 ```
+**RequestContext 结构体**（`proxy/handler_context.rs:35`）：
+```rust
+pub struct RequestContext {          // proxy/handler_context.rs:35
+    pub start_time: Instant,               // 请求开始时间
+    pub app_config: AppProxyConfig,        // 应用级代理配置
+    pub provider: Provider,                // 选中的 Provider
+    providers: Vec<Provider>,              // 完整的 Provider 列表（用于故障转移）
+    pub current_provider_id: String,       // 当前供应商 ID
+    pub request_model: String,             // 请求中的模型名称
+    pub tag: &'static str,                 // 日志标签
+    pub session_id: String,                // Session ID
+    pub rectifier_config: RectifierConfig, // 整流器配置
+    pub optimizer_config: OptimizerConfig, // 优化器配置
+}
+```
+**StreamingTimeoutConfig**（`proxy/handler_context.rs:19`）：
+```rust
+pub struct StreamingTimeoutConfig {  // proxy/handler_context.rs:19
+    pub first_byte_timeout: u64,     // 首字节超时（秒）
+    pub idle_timeout: u64,           // 静默期超时（秒）
+}
+```
 **response_processor 模块**（`proxy/response_processor.rs`）：
 - `process_response()` — 处理非流式响应
 - `create_logged_passthrough_stream()` — 创建带日志的透传流
