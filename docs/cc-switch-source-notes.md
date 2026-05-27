@@ -558,6 +558,28 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
+```rust
+// src-tauri/src/lib.rs:1-36
+mod app_config;        mod app_store;         mod auto_launch;
+mod claude_desktop_config; mod claude_mcp;    mod claude_plugin;
+mod codex_config;      mod codex_history_migration; mod commands;
+mod config;            mod database;          mod deeplink;
+mod error;             mod gemini_config;     mod gemini_mcp;
+pub mod hermes_config; mod init_status;       mod lightweight;
+mod linux_fix;         mod mcp;               mod openclaw_config;
+mod opencode_config;   mod panic_hook;        mod prompt;
+mod prompt_files;      mod provider;          mod provider_defaults;
+mod proxy;             mod services;          mod session_manager;
+mod settings;          mod store;             mod tray;
+mod usage_script;
+```
+- 34 个模块声明（lib.rs:1-36）
+- 公开导出：`AppType`、`InstalledSkill`、`McpApps`、`McpServer`、`MultiAppConfig`、`SkillApps`（lib.rs:38）
+- `run()` 函数（lib.rs:203）— 应用入口点，初始化插件、注册命令、创建窗口
+- `.invoke_handler()`（lib.rs:1072）— 注册约 271 个 Tauri 命令
+- `cleanup_before_exit()`（lib.rs:1513）— 退出前清理
+- 9 个插件注册：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
 **base64.ts**（`src/lib/utils/base64.ts`，44 行）：
 ```typescript
 // src/lib/utils/base64.ts:13
@@ -1263,6 +1285,28 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
+```rust
+// src-tauri/src/lib.rs:1-36
+mod app_config;        mod app_store;         mod auto_launch;
+mod claude_desktop_config; mod claude_mcp;    mod claude_plugin;
+mod codex_config;      mod codex_history_migration; mod commands;
+mod config;            mod database;          mod deeplink;
+mod error;             mod gemini_config;     mod gemini_mcp;
+pub mod hermes_config; mod init_status;       mod lightweight;
+mod linux_fix;         mod mcp;               mod openclaw_config;
+mod opencode_config;   mod panic_hook;        mod prompt;
+mod prompt_files;      mod provider;          mod provider_defaults;
+mod proxy;             mod services;          mod session_manager;
+mod settings;          mod store;             mod tray;
+mod usage_script;
+```
+- 34 个模块声明（lib.rs:1-36）
+- 公开导出：`AppType`、`InstalledSkill`、`McpApps`、`McpServer`、`MultiAppConfig`、`SkillApps`（lib.rs:38）
+- `run()` 函数（lib.rs:203）— 应用入口点，初始化插件、注册命令、创建窗口
+- `.invoke_handler()`（lib.rs:1072）— 注册约 271 个 Tauri 命令
+- `cleanup_before_exit()`（lib.rs:1513）— 退出前清理
+- 9 个插件注册：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
 **base64.ts**（`src/lib/utils/base64.ts`，44 行）：
 ```typescript
 // src/lib/utils/base64.ts:13
@@ -2345,6 +2389,28 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
+```rust
+// src-tauri/src/lib.rs:1-36
+mod app_config;        mod app_store;         mod auto_launch;
+mod claude_desktop_config; mod claude_mcp;    mod claude_plugin;
+mod codex_config;      mod codex_history_migration; mod commands;
+mod config;            mod database;          mod deeplink;
+mod error;             mod gemini_config;     mod gemini_mcp;
+pub mod hermes_config; mod init_status;       mod lightweight;
+mod linux_fix;         mod mcp;               mod openclaw_config;
+mod opencode_config;   mod panic_hook;        mod prompt;
+mod prompt_files;      mod provider;          mod provider_defaults;
+mod proxy;             mod services;          mod session_manager;
+mod settings;          mod store;             mod tray;
+mod usage_script;
+```
+- 34 个模块声明（lib.rs:1-36）
+- 公开导出：`AppType`、`InstalledSkill`、`McpApps`、`McpServer`、`MultiAppConfig`、`SkillApps`（lib.rs:38）
+- `run()` 函数（lib.rs:203）— 应用入口点，初始化插件、注册命令、创建窗口
+- `.invoke_handler()`（lib.rs:1072）— 注册约 271 个 Tauri 命令
+- `cleanup_before_exit()`（lib.rs:1513）— 退出前清理
+- 9 个插件注册：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
 **base64.ts**（`src/lib/utils/base64.ts`，44 行）：
 ```typescript
 // src/lib/utils/base64.ts:13
@@ -3048,6 +3114,28 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
+```rust
+// src-tauri/src/lib.rs:1-36
+mod app_config;        mod app_store;         mod auto_launch;
+mod claude_desktop_config; mod claude_mcp;    mod claude_plugin;
+mod codex_config;      mod codex_history_migration; mod commands;
+mod config;            mod database;          mod deeplink;
+mod error;             mod gemini_config;     mod gemini_mcp;
+pub mod hermes_config; mod init_status;       mod lightweight;
+mod linux_fix;         mod mcp;               mod openclaw_config;
+mod opencode_config;   mod panic_hook;        mod prompt;
+mod prompt_files;      mod provider;          mod provider_defaults;
+mod proxy;             mod services;          mod session_manager;
+mod settings;          mod store;             mod tray;
+mod usage_script;
+```
+- 34 个模块声明（lib.rs:1-36）
+- 公开导出：`AppType`、`InstalledSkill`、`McpApps`、`McpServer`、`MultiAppConfig`、`SkillApps`（lib.rs:38）
+- `run()` 函数（lib.rs:203）— 应用入口点，初始化插件、注册命令、创建窗口
+- `.invoke_handler()`（lib.rs:1072）— 注册约 271 个 Tauri 命令
+- `cleanup_before_exit()`（lib.rs:1513）— 退出前清理
+- 9 个插件注册：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
 **base64.ts**（`src/lib/utils/base64.ts`，44 行）：
 ```typescript
 // src/lib/utils/base64.ts:13
@@ -5075,6 +5163,28 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
+```rust
+// src-tauri/src/lib.rs:1-36
+mod app_config;        mod app_store;         mod auto_launch;
+mod claude_desktop_config; mod claude_mcp;    mod claude_plugin;
+mod codex_config;      mod codex_history_migration; mod commands;
+mod config;            mod database;          mod deeplink;
+mod error;             mod gemini_config;     mod gemini_mcp;
+pub mod hermes_config; mod init_status;       mod lightweight;
+mod linux_fix;         mod mcp;               mod openclaw_config;
+mod opencode_config;   mod panic_hook;        mod prompt;
+mod prompt_files;      mod provider;          mod provider_defaults;
+mod proxy;             mod services;          mod session_manager;
+mod settings;          mod store;             mod tray;
+mod usage_script;
+```
+- 34 个模块声明（lib.rs:1-36）
+- 公开导出：`AppType`、`InstalledSkill`、`McpApps`、`McpServer`、`MultiAppConfig`、`SkillApps`（lib.rs:38）
+- `run()` 函数（lib.rs:203）— 应用入口点，初始化插件、注册命令、创建窗口
+- `.invoke_handler()`（lib.rs:1072）— 注册约 271 个 Tauri 命令
+- `cleanup_before_exit()`（lib.rs:1513）— 退出前清理
+- 9 个插件注册：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
 **base64.ts**（`src/lib/utils/base64.ts`，44 行）：
 ```typescript
 // src/lib/utils/base64.ts:13
@@ -6303,6 +6413,28 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
+```rust
+// src-tauri/src/lib.rs:1-36
+mod app_config;        mod app_store;         mod auto_launch;
+mod claude_desktop_config; mod claude_mcp;    mod claude_plugin;
+mod codex_config;      mod codex_history_migration; mod commands;
+mod config;            mod database;          mod deeplink;
+mod error;             mod gemini_config;     mod gemini_mcp;
+pub mod hermes_config; mod init_status;       mod lightweight;
+mod linux_fix;         mod mcp;               mod openclaw_config;
+mod opencode_config;   mod panic_hook;        mod prompt;
+mod prompt_files;      mod provider;          mod provider_defaults;
+mod proxy;             mod services;          mod session_manager;
+mod settings;          mod store;             mod tray;
+mod usage_script;
+```
+- 34 个模块声明（lib.rs:1-36）
+- 公开导出：`AppType`、`InstalledSkill`、`McpApps`、`McpServer`、`MultiAppConfig`、`SkillApps`（lib.rs:38）
+- `run()` 函数（lib.rs:203）— 应用入口点，初始化插件、注册命令、创建窗口
+- `.invoke_handler()`（lib.rs:1072）— 注册约 271 个 Tauri 命令
+- `cleanup_before_exit()`（lib.rs:1513）— 退出前清理
+- 9 个插件注册：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
 **base64.ts**（`src/lib/utils/base64.ts`，44 行）：
 ```typescript
 // src/lib/utils/base64.ts:13
