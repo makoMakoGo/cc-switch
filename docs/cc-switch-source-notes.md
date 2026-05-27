@@ -230,7 +230,7 @@ App.tsx
 | `thiserror` | 自动派生 Error trait | `error.rs:6` 的 `AppError` |
 | `impl From<X> for Y` | 类型转换 | `CircuitBreakerConfig::from(&AppProxyConfig)`（`circuit_breaker.rs:51`） |
 | `#[serde(rename_all)]` | JSON 字段命名风格转换 | `camelCase` vs `snake_case` |
-| `matches!` | 模式匹配宏，返回 bool | `is_additive_mode()`（`app_config.rs:374`） |
+| `matches!` | 模式匹配宏，返回 bool | `is_additive_mode()`（`app_config.rs:373`） |
 
 ### 2.2 你不需要深入的
 
@@ -796,6 +796,25 @@ pub struct ModelMapping {         // proxy/model_mapper.rs:10
 ```
 - `ModelMapping::from_provider()`（`model_mapper.rs:19`）— 从 Provider 配置提取映射
 - 映射 `ANTHROPIC_DEFAULT_HAIKU_MODEL` 等环境变量到模型名称
+**ClientFormat 枚举**（`proxy/session.rs:19`）：
+```rust
+pub enum ClientFormat {            // proxy/session.rs:19
+    Claude,                        // Claude Messages API (/v1/messages)
+    Codex,                         // Codex Response API (/v1/responses)
+    OpenAI,                        // OpenAI Chat Completions API
+    Gemini,                        // Gemini API (/v1beta/models/*)
+    GeminiCli,                     // Gemini CLI API (/v1internal/)
+    Unknown,                       // 未知格式
+}
+```
+- `ClientFormat::from_path()`（`session.rs:37`）— 从请求路径检测格式
+- `ClientFormat::from_body()`（`session.rs:61`）— 从请求体内容检测格式（回退方案）
+**session 模块**（`proxy/session.rs`，627 行）：
+- 为每个代理请求创建会话上下文
+- 支持从客户端请求中提取 Session ID
+- Claude: 从 `metadata.user_id` 或 `metadata.session_id` 提取
+- Codex: 从 headers 中的 `session_id` / `x-session-id` 提取
+- 其他: 生成新的 UUID
 ### 4.2 ProxyState 和 ProxyServer
 **ProxyError 枚举**（`proxy/error.rs:10`）— 20 个变体：
 ```rust
@@ -860,6 +879,25 @@ pub struct StreamingTimeoutConfig {  // proxy/handler_context.rs:19
 **response_processor 模块**（`proxy/response_processor.rs`）：
 - `process_response()` — 处理非流式响应
 - `create_logged_passthrough_stream()` — 创建带日志的透传流
+**ClientFormat 枚举**（`proxy/session.rs:19`）：
+```rust
+pub enum ClientFormat {            // proxy/session.rs:19
+    Claude,                        // Claude Messages API (/v1/messages)
+    Codex,                         // Codex Response API (/v1/responses)
+    OpenAI,                        // OpenAI Chat Completions API
+    Gemini,                        // Gemini API (/v1beta/models/*)
+    GeminiCli,                     // Gemini CLI API (/v1internal/)
+    Unknown,                       // 未知格式
+}
+```
+- `ClientFormat::from_path()`（`session.rs:37`）— 从请求路径检测格式
+- `ClientFormat::from_body()`（`session.rs:61`）— 从请求体内容检测格式（回退方案）
+**session 模块**（`proxy/session.rs`，627 行）：
+- 为每个代理请求创建会话上下文
+- 支持从客户端请求中提取 Session ID
+- Claude: 从 `metadata.user_id` 或 `metadata.session_id` 提取
+- Codex: 从 headers 中的 `session_id` / `x-session-id` 提取
+- 其他: 生成新的 UUID
 ### 4.2 ProxyState 和 ProxyServer
 ```
 **ProxyError 实现了 `IntoResponse`**（`proxy/error.rs:79`），可以直接作为 Axum 响应返回
@@ -1242,7 +1280,7 @@ trait ToolConfig {
 | store.rs | — | 23 |
 | error.rs | 3.4KB | 146 |
 | config.rs | 13.9KB | 424 |
-| settings.rs | 28.8KB | 877 |
+| settings.rs | 28.8KB | 876 |
 | provider.rs | 40.5KB | 1153 |
 | app_config.rs | 41.0KB | 1183 |
 | services/proxy.rs | 141.3KB | 3909 |
