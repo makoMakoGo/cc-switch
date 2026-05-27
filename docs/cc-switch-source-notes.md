@@ -601,6 +601,21 @@ pub struct Database {
 | 模块 | 实际大小 | 职责 |
 |------|---------|------|
 | provider/mod.rs | 105.5KB | Provider 业务逻辑（CRUD、切换、导入导出） |
+**ProviderService 内部结构**（`services/provider/mod.rs:46`）：
+```rust
+pub struct ProviderService;  // 空结构体，纯方法集合
+```
+**子模块**（`services/provider/`）：
+- `live.rs` — live 配置读写、导入、同步
+- `endpoints.rs` — 自定义端点管理
+- `gemini_auth.rs` — Gemini 认证
+- `usage.rs` — 用量脚本验证
+**SwitchResult**（`services/provider/mod.rs:51`）：
+```rust
+pub struct SwitchResult {
+    pub warnings: Vec<String>,  // 切换操作的非致命警告
+}
+```
 | proxy.rs | 141.3KB | ProxyService（启动、停止、接管、热切换） |
 | usage_stats.rs | 114.6KB | 用量统计 |
 | skill.rs | 104.7KB | Skills 管理 |
