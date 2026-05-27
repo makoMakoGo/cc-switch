@@ -948,6 +948,12 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**transform_gemini 模块**（`proxy/providers/transform_gemini.rs`，2239 行，78.1KB）：
+- Anthropic Messages ↔ Gemini `generateContent` 双向转换
+- `anthropic_to_gemini()`（`transform_gemini.rs:42`）— Anthropic → Gemini 请求转换
+- `SYNTHESIZED_ID_PREFIX: &str = "gemini_synth_"`（`transform_gemini.rs:26`）— 合成 tool call ID 前缀
+- `synthesize_tool_call_id()`（`transform_gemini.rs:32`）— 生成合成 tool call ID
+- `AnthropicToolSchemaHint`（`transform_gemini.rs:14`）— Anthropic tool schema 提示
 **copilot_model_map 模块**（`proxy/providers/copilot_model_map.rs`，375 行）：
 - GitHub Copilot 模型 ID 归一化与 live-list 解析
 - `normalize_to_copilot_id()`（`copilot_model_map.rs:16`）— 归一化客户端 model ID
