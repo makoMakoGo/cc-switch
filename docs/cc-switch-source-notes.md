@@ -2323,6 +2323,34 @@ pub struct ProxyConfig {  // proxy/types.rs:5
 - `streaming_first_byte_timeout`：等待首个数据块的最大时间（1-120 秒）
 - `streaming_idle_timeout`：两个数据块之间的最大间隔（60-600 秒）
 - `non_streaming_timeout`：非流式请求的总超时时间（60-1200 秒）
+**ProxyStatus**（`proxy/types.rs:60`）：
+```rust
+pub struct ProxyStatus {  // proxy/types.rs:60
+    pub running: bool,                  // 是否运行中
+    pub address: String,                // 监听地址
+    pub port: u16,                      // 监听端口
+    pub active_connections: usize,      // 活跃连接数
+    pub total_requests: u64,            // 总请求数
+    pub success_requests: u64,          // 成功请求数
+    pub failed_requests: u64,           // 失败请求数
+    pub success_rate: f32,              // 成功率 (0-100)
+    pub uptime_seconds: u64,            // 运行时间（秒）
+    pub current_provider: Option<String>, // 当前使用的Provider名称
+    pub current_provider_id: Option<String>,
+    pub last_request_at: Option<String>,
+    pub last_error: Option<String>,
+    pub failover_count: u64,            // Provider故障转移次数
+    pub active_targets: Vec<ActiveTarget>, // 当前活跃的代理目标列表
+}
+```
+**ActiveTarget**（`proxy/types.rs:96`）：
+```rust
+pub struct ActiveTarget {  // proxy/types.rs:96
+    pub app_type: String,      // "claude" | "codex" | "gemini"
+    pub provider_name: String,
+    pub provider_id: String,
+}
+```
 **前端 API 类型**（`src/lib/api/types.ts`，10 行）：
 ```typescript
 export type AppId =  // types.ts:2
