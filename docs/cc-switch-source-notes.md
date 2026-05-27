@@ -1234,6 +1234,18 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**useDirectorySettings**（`src/hooks/useDirectorySettings.ts`，374 行）：
+```typescript
+export type DirectoryAppId = Exclude<AppId, "claude-desktop">;
+export interface ResolvedDirectories {  // useDirectorySettings.ts:18
+    appConfig: string;
+    claude: string; codex: string; gemini: string;
+    opencode: string; openclaw: string; hermes: string;
+}
+```
+- `APP_DIRECTORY_META`（`useDirectorySettings.ts:29`）— 每应用目录元数据（SSOT）
+- 默认目录：`.claude`, `.codex`, `.gemini`, `.config/opencode`, `.openclaw`, `.hermes`
+- `DirectoryAppId` 排除了 `claude-desktop`（因为 Claude Desktop 使用平台特定路径）
 **useSettingsForm**（`src/hooks/useSettingsForm.ts`，204 行）：
 ```typescript
 type Language = "zh" | "zh-TW" | "en" | "ja";
