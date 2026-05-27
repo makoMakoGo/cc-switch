@@ -1192,6 +1192,20 @@ CREATE TABLE IF NOT EXISTS mcp_servers (
     enabled_hermes BOOLEAN NOT NULL DEFAULT 0
 )
 ```
+**prompts 表**（`schema.rs:76`）：
+```sql
+CREATE TABLE IF NOT EXISTS prompts (
+    id TEXT NOT NULL,
+    app_type TEXT NOT NULL,
+    name TEXT NOT NULL,
+    content TEXT NOT NULL,
+    description TEXT,
+    enabled BOOLEAN NOT NULL DEFAULT 1,
+    created_at INTEGER,
+    updated_at INTEGER,
+    PRIMARY KEY (id, app_type)
+)
+```
 **skills 表**（`schema.rs:84`）：
 ```sql
 CREATE TABLE IF NOT EXISTS skills (
