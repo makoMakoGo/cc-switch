@@ -2305,6 +2305,34 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**前端类型定义**（`src/types.ts`，688 行）：
+```typescript
+export type ProviderCategory =  // types.ts:1
+  | "official" | "cn_official" | "cloud_provider"
+  | "aggregator" | "third_party" | "custom"
+  | "omo" | "omo-slim";
+
+export interface Provider {  // types.ts:11
+    id: string;
+    name: string;
+    settingsConfig: Record<string, any>;  // 应用配置对象
+    websiteUrl?: string;
+    category?: ProviderCategory;
+    createdAt?: number;
+    sortIndex?: number;
+    notes?: string;
+    isPartner?: boolean;
+    meta?: ProviderMeta;
+    icon?: string;
+    iconColor?: string;
+    inFailoverQueue?: boolean;
+}
+```
+- `ProviderCategory`（`types.ts:1`）— 8 种供应商分类
+- `AppConfig`（`types.ts:33`）— 应用配置（providers + current）
+- `CustomEndpoint`（`types.ts:39`）— 自定义端点配置
+- `EndpointCandidate`（`types.ts:46`）— 端点候选项（用于测速弹窗）
+- `UsageScript`（`types.ts:55`）— 用量查询脚本配置
 **skillsApi**（`src/lib/api/skills.ts`，284 行）：
 ```typescript
 // 前端类型定义（与后端对应）
