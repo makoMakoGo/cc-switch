@@ -2475,6 +2475,34 @@ export type AppId =  // types.ts:2
 ```
 - 前端统一使用 `AppId` 作为应用标识（与后端命令参数 `app` 一致）
 - 与后端 `AppType` 枚举对应（`app_config.rs:341`）
+**前端 API 层**（`src/lib/api/`，25 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| settings.ts | 8.3KB | 设置 API（get, save, restart, checkUpdates） |
+| skills.ts | 6.8KB | Skills API（getInstalled, install, uninstall, toggleApp） |
+| providers.ts | 6.4KB | Provider API（getAll, getCurrent, add, update, remove, switch） |
+| copilot.ts | 5.9KB | Copilot OAuth API |
+| usage.ts | 3.5KB | 用量查询 API |
+| proxy.ts | 3.4KB | 代理 API（start, stop, getStatus, switchProvider） |
+| openclaw.ts | 3.3KB | OpenClaw API |
+| mcp.ts | 3.2KB | MCP API（getAllServers, upsertUnifiedServer, toggleApp） |
+| failover.ts | 2.7KB | 故障转移 API |
+| config.ts | 2.6KB | 配置 API |
+| deeplink.ts | 2.5KB | 深度链接 API |
+| model-fetch.ts | 2.5KB | 模型获取 API |
+| auth.ts | 2.4KB | 认证 API |
+| hermes.ts | 2.2KB | Hermes API |
+| vscode.ts | 2.0KB | VS Code API |
+| globalProxy.ts | 1.9KB | 全局代理 API |
+| workspace.ts | 1.6KB | 工作区 API |
+| model-test.ts | 1.5KB | 模型测试 API |
+| env.ts | 1.5KB | 环境变量 API |
+| sessions.ts | 1.3KB | 会话 API |
+| prompts.ts | 1.0KB | Prompt API |
+| index.ts | 1.0KB | 模块导出 |
+| subscription.ts | 695B | 订阅 API |
+| omo.ts | 667B | OMO API |
+| types.ts | 210B | 类型定义（AppId） |
 **proxyApi**（`src/lib/api/proxy.ts`，121 行）：
 ```typescript
 export const proxyApi = {  // proxy.ts:11
