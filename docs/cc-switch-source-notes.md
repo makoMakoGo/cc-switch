@@ -948,6 +948,12 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**codex_oauth_auth 模块**（`proxy/providers/codex_oauth_auth.rs`，1134 行）：
+- OpenAI ChatGPT Plus/Pro OAuth Device Code 流程
+- `CODEX_CLIENT_ID`（`codex_oauth_auth.rs:31`）— OpenCode OAuth 客户端 ID
+- 多账号支持：每个 ChatGPT 账号独立存储 refresh_token
+- 自动刷新 access_token（到期前 60 秒）
+- 认证流程：Device Code → 用户授权 → 轮询 → 换取 token → 自动刷新
 **codex_chat_history 模块**（`proxy/providers/codex_chat_history.rs`，739 行）：
 - Cross-request history for Codex Responses → Chat Completions bridging
 - `CodexChatHistoryStore`（`codex_chat_history.rs:43`）— 存储 Codex Chat 历史
