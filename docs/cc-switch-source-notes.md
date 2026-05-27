@@ -3342,6 +3342,11 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**response_handler.rs**（`proxy/response_handler.rs`，232 行，7.2KB）：
+- 响应处理器模块
+- 处理代理响应的后处理逻辑
+**health.rs**（`proxy/health.rs`，7 行，175B）：
+- 健康检查模块（最小实现）
 **provider_router.rs**（`proxy/provider_router.rs`，523 行，18.8KB）：
 ```rust
 // proxy/provider_router.rs:16
@@ -3921,6 +3926,11 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**response_handler.rs**（`proxy/response_handler.rs`，232 行，7.2KB）：
+- 响应处理器模块
+- 处理代理响应的后处理逻辑
+**health.rs**（`proxy/health.rs`，7 行，175B）：
+- 健康检查模块（最小实现）
 **provider_router.rs**（`proxy/provider_router.rs`，523 行，18.8KB）：
 ```rust
 // proxy/provider_router.rs:16
