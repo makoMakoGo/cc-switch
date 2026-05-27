@@ -825,6 +825,13 @@ pub enum ProxyError {           // proxy/error.rs:10
 ```
 **ProxyError 实现了 `IntoResponse`**（`proxy/error.rs:79`），可以直接作为 Axum 响应返回
 
+**handlers 模块**（`proxy/handlers.rs`，1267 行）：
+- 处理各种 API 端点的 HTTP 请求
+- 通用逻辑提取到 `handler_context` 和 `response_processor` 模块
+**proxy/ 目录统计**：34 个模块文件 + 24 个 providers/ 文件 = 58 个 Rust 文件
+**response_processor 模块**（`proxy/response_processor.rs`）：
+- `process_response()` — 处理非流式响应
+- `create_logged_passthrough_stream()` — 创建带日志的透传流
 **ProxyState**（`proxy/server.rs:34`）：
 
 ```rust
