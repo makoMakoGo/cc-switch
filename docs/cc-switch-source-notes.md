@@ -3431,6 +3431,34 @@ pub trait ProviderAdapter: Send + Sync {
 - `calculator.rs`（9.0KB）— 费用计算器（`CostCalculator`、`ModelPricing`）
 - `parser.rs`（33.5KB）— 使用量解析器（`TokenUsage`）
 - `mod.rs`（446B）— 模块导出
+**CostCalculator**（`proxy/usage/calculator.rs`，271 行，9.0KB）：
+```rust
+// proxy/usage/calculator.rs:11
+pub struct CostBreakdown {
+    pub input_cost: Decimal,
+    pub output_cost: Decimal,
+    pub cache_read_cost: Decimal,
+    pub cache_creation_cost: Decimal,
+    pub total_cost: Decimal,
+}
+// proxy/usage/calculator.rs:21
+pub struct ModelPricing {
+    pub input_cost_per_million: Decimal,
+    pub output_cost_per_million: Decimal,
+    pub cache_read_cost_per_million: Decimal,
+    pub cache_creation_cost_per_million: Decimal,
+}
+pub struct CostCalculator;  // calculator.rs:29
+impl CostCalculator {
+    pub fn calculate(usage: &TokenUsage, pricing: &ModelPricing, cost_multiplier: Decimal) -> CostBreakdown;
+}
+```
+- 使用高精度 `Decimal` 类型避免浮点数精度问题
+- 计算逻辑：`input_cost: input_tokens × 输入价格`、`cache_read_cost: cache_read_tokens × 缓存读取价格`
+- Claude/Anthropic 的 `input_tokens` 已经不包含 `cache_read_tokens`
+- `total_cost: 各项成本之和 × 倍率`（倍率只作用于最终总价）
+- `ModelPricing` 存储每百万 token 的价格（input、output、cache_read、cache_creation）
+- `CostBreakdown` 存储计算后的成本明细
 **UsageLogger**（`proxy/usage/logger.rs`，431 行，13.7KB）：
 ```rust
 // proxy/usage/logger.rs:13
@@ -4163,6 +4191,34 @@ pub trait ProviderAdapter: Send + Sync {
 - `calculator.rs`（9.0KB）— 费用计算器（`CostCalculator`、`ModelPricing`）
 - `parser.rs`（33.5KB）— 使用量解析器（`TokenUsage`）
 - `mod.rs`（446B）— 模块导出
+**CostCalculator**（`proxy/usage/calculator.rs`，271 行，9.0KB）：
+```rust
+// proxy/usage/calculator.rs:11
+pub struct CostBreakdown {
+    pub input_cost: Decimal,
+    pub output_cost: Decimal,
+    pub cache_read_cost: Decimal,
+    pub cache_creation_cost: Decimal,
+    pub total_cost: Decimal,
+}
+// proxy/usage/calculator.rs:21
+pub struct ModelPricing {
+    pub input_cost_per_million: Decimal,
+    pub output_cost_per_million: Decimal,
+    pub cache_read_cost_per_million: Decimal,
+    pub cache_creation_cost_per_million: Decimal,
+}
+pub struct CostCalculator;  // calculator.rs:29
+impl CostCalculator {
+    pub fn calculate(usage: &TokenUsage, pricing: &ModelPricing, cost_multiplier: Decimal) -> CostBreakdown;
+}
+```
+- 使用高精度 `Decimal` 类型避免浮点数精度问题
+- 计算逻辑：`input_cost: input_tokens × 输入价格`、`cache_read_cost: cache_read_tokens × 缓存读取价格`
+- Claude/Anthropic 的 `input_tokens` 已经不包含 `cache_read_tokens`
+- `total_cost: 各项成本之和 × 倍率`（倍率只作用于最终总价）
+- `ModelPricing` 存储每百万 token 的价格（input、output、cache_read、cache_creation）
+- `CostBreakdown` 存储计算后的成本明细
 **UsageLogger**（`proxy/usage/logger.rs`，431 行，13.7KB）：
 ```rust
 // proxy/usage/logger.rs:13
