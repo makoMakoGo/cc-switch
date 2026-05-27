@@ -2305,6 +2305,38 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**核心 Query Hooks**（`src/lib/query/queries.ts`）：
+```typescript
+// src/lib/query/queries.ts:54
+export const useProvidersQuery = (
+    appId: AppId,
+    options?: UseProvidersQueryOptions,
+): UseQueryResult<ProvidersQueryData> => {
+    return useQuery({
+        queryKey: ["providers", appId],
+        placeholderData: keepPreviousData,
+        refetchInterval: isProxyRunning ? 10000 : false,  // 代理运行时每 10 秒刷新
+        queryFn: async () => {
+            let providers = await providersApi.getAll(appId);
+            let currentProviderId = await providersApi.getCurrent(appId);
+            return { providers: sortProviders(providers), currentProviderId };
+        },
+    });
+};
+
+// src/lib/query/queries.ts:90
+export const useSettingsQuery = (): UseQueryResult<Settings> => {
+    return useQuery({
+        queryKey: ["settings"],
+        queryFn: async () => settingsApi.get(),
+    });
+};
+```
+- `useProvidersQuery`（`queries.ts:54`）— 获取 provider 列表，代理运行时每 10 秒刷新
+- `useSettingsQuery`（`queries.ts:90`）— 获取设置
+- `useUsageQuery`（`queries.ts:102`）— 获取用量数据
+- `useSessionsQuery`（`queries.ts:137`）— 获取会话列表
+- `useSessionMessagesQuery`（`queries.ts:145`）— 获取会话消息
 **前端 → 后端调用模式**：
 
 ```typescript
