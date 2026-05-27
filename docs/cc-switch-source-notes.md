@@ -948,6 +948,11 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**streaming_gemini 模块**（`proxy/providers/streaming_gemini.rs`，1055 行）：
+- Gemini `streamGenerateContent?alt=sse` → Anthropic SSE 转换
+- `map_finish_reason()`（`streaming_gemini.rs:18`）— Gemini finish reason → Anthropic 映射
+- `extract_visible_text()`（`streaming_gemini.rs:35`）— 提取可见文本（排除 thinking）
+- `extract_tool_calls()`（`streaming_gemini.rs:43`）— 提取 tool calls
 **streaming_codex_chat 模块**（`proxy/providers/streaming_codex_chat.rs`，1083 行）：
 - OpenAI Chat Completions SSE → OpenAI Responses SSE 转换
 - `TextItemState`（`streaming_codex_chat.rs:20`）— 文本项状态追踪
