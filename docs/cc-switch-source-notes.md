@@ -554,9 +554,33 @@ pub struct AppSettings {           // settings.rs:211
 ```
 **AppSettings 的 AI Slop 特征**：
 - 每个工具都有 `current_provider_xxx` 字段（7 个），应该用 HashMap 或数组
-- 每个工具都有 `xxx_config_dir` 字段（7 个），同上
-- `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**DAO proxy 模块**（`database/dao/proxy.rs`，953 行）— 最大的 DAO 模块：
+```rust
+// 验证费用倍率（database/dao/proxy.rs:16）
+pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError> {
+    let parsed = Decimal::from_str(trimmed).map_err(|e| {
+        AppError::localized(
+            "error.invalidMultiplier",
+            format!("无效倍率: {value} - {e}"),
+            format!("Invalid multiplier: {value} - {e}"),
+        )
+    })?;
+    if parsed < Decimal::ZERO {
+        return Err(AppError::localized(...));
+    }
+    Ok(parsed)
+}
+```
+**DAO proxy 模块职责**：
+- 全局代理配置 CRUD（`get_global_proxy_config`, `set_global_proxy_url`）
+- 每应用代理配置（`get_proxy_config_for_app`, `update_proxy_config_for_app`）
+- 模型定价管理（`get_model_pricing`, `update_model_pricing`, `delete_model_pricing`）
+- 请求日志（`insert_request_log`, `get_request_logs`）
+- 供应商健康状态（`get_provider_health`, `reset_circuit_breaker`）
+- 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
+- `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**AppSettings 的陷阱**：
 - `mutate_settings` 是私有函数，外部模块不能直接调用
 - `unwrap_or_else` 处理锁中毒（`settings.rs:578`），但仍然可能 panic
 - 写入失败时内存缓存和文件可能不一致
