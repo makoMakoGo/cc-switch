@@ -2495,6 +2495,35 @@ export const usageKeys = {  // usage.ts:32
 - `RequestLogsKey`（`usage.ts:21`）— 请求日志查询键
 - `LogFilters`（`types/usage.ts`）— 日志过滤器
 - `UsageRangeSelection`（`types/usage.ts`）— 用量范围选择
+**queries.ts**（`src/lib/query/queries.ts`，156 行）：
+```typescript
+// src/lib/query/queries.ts:22
+const sortProviders = (providers: Record<string, Provider>) => {
+    return Object.fromEntries(
+        Object.values(providers)
+            .sort((a, b) => {
+                const indexA = a.sortIndex ?? Number.MAX_SAFE_INTEGER;
+                const indexB = b.sortIndex ?? Number.MAX_SAFE_INTEGER;
+                if (indexA !== indexB) return indexA - indexB;
+                const timeA = a.createdAt ?? 0;
+                const timeB = b.createdAt ?? 0;
+                if (timeA === timeB) return a.name.localeCompare(b.name, "zh-CN");
+                return timeA - timeB;
+            })
+            .map((provider) => [provider.id, provider]),
+    );
+};
+export interface ProvidersQueryData {  // queries.ts:45
+    providers: Record<string, Provider>;
+    currentProviderId: string;
+}
+```
+- `sortProviders()`（`queries.ts:22`）— 按 sortIndex → createdAt → name 排序
+- `useProvidersQuery()`（`queries.ts`）— 获取 providers 列表（sorted）
+- `useSettingsQuery()`（`queries.ts`）— 获取 settings
+- `useUsageQuery()`（`queries.ts`）— 获取用量数据
+- `useSessionsQuery()`（`queries.ts`）— 获取会话列表
+- `useSessionMessagesQuery()`（`queries.ts`）— 获取会话消息
 **copilotApi**（`src/lib/api/copilot.ts`，259 行）：
 ```typescript
 export interface CopilotDeviceCodeResponse {  // copilot.ts:13
