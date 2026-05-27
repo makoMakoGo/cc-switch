@@ -933,8 +933,18 @@ pub struct ProxyState {
 
 ### 4.3 认证和路由
 
-**ProviderRouter**（`proxy/provider_router.rs`，523 行）：
-
+**ProviderRouter**（`proxy/provider_router.rs`，524 行）：
+```rust
+pub struct ProviderRouter {       // proxy/provider_router.rs:16
+    db: Arc<Database>,
+    circuit_breakers: Arc<RwLock<HashMap<String, Arc<CircuitBreaker>>>>,
+}
+```
+**路由逻辑**（`provider_router.rs:37`）：
+- 故障转移关闭时：仅返回当前供应商
+- 故障转移开启时：按队列顺序依次尝试（P1 → P2 → ...）
+- 熔断器 key 格式：`app_type:provider_id`
+**路由流程**：
 ```text
 客户端请求 → ProviderRouter
   ├─ 从请求头解析 API key
