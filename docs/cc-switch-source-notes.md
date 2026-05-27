@@ -948,6 +948,11 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**thinking_budget_rectifier 模块**（`proxy/thinking_budget_rectifier.rs`，360 行）：
+- `MAX_THINKING_BUDGET: u64 = 32000`（`thinking_budget_rectifier.rs:10`）
+- `MAX_TOKENS_VALUE: u64 = 64000`（`thinking_budget_rectifier.rs:13`）
+- `should_rectify_thinking_budget()`（`thinking_budget_rectifier.rs:43`）— 检测 budget_tokens 相关错误
+- `BudgetRectifyResult`（`thinking_budget_rectifier.rs:31`）— 整流结果（applied, before/after snapshots）
 **thinking_rectifier 模块**（`proxy/thinking_rectifier.rs`，717 行）：
 - 修复 Anthropic API 中因签名校验失败导致的请求错误
 - `should_rectify_thinking_signature()`（`thinking_rectifier.rs:26`）— 检测是否需要触发整流器
