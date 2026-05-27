@@ -3342,6 +3342,31 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**coding_plan.rs**（`services/coding_plan.rs`，607 行，21.9KB）：
+```rust
+// services/coding_plan.rs:13
+enum CodingPlanProvider {
+    Kimi,
+    ZhipuCn,
+    ZhipuEn,
+    MiniMaxCn,
+    MiniMaxEn,
+}
+fn detect_provider(base_url: &str) -> Option<CodingPlanProvider> {
+    let url = base_url.to_lowercase();
+    if url.contains("api.kimi.com/coding") { Some(CodingPlanProvider::Kimi) }
+    else if url.contains("open.bigmodel.cn") || url.contains("bigmodel.cn") { Some(CodingPlanProvider::ZhipuCn) }
+    else if url.contains("api.z.ai") { Some(CodingPlanProvider::ZhipuEn) }
+    else if url.contains("api.minimaxi.com") { Some(CodingPlanProvider::MiniMaxCn) }
+    else if url.contains("api.minimax.io") { Some(CodingPlanProvider::MiniMaxEn) }
+    else { None }
+}
+```
+- 国产 Token Plan 额度查询服务（Kimi、智谱 GLM、MiniMax）
+- 复用 subscription 模块的 `SubscriptionQuota` / `QuotaTier` 类型
+- 通过 `base_url` 自动检测供应商类型
+- `millis_to_iso8601()`（`coding_plan.rs:45`）— 毫秒时间戳转 ISO 8601
+- 从 JSON 值提取重置时间，兼容字符串和数字格式
 **ConfigService**（`services/config.rs`，262 行，9.7KB）：
 ```rust
 // services/config.rs:10
@@ -3552,6 +3577,31 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**coding_plan.rs**（`services/coding_plan.rs`，607 行，21.9KB）：
+```rust
+// services/coding_plan.rs:13
+enum CodingPlanProvider {
+    Kimi,
+    ZhipuCn,
+    ZhipuEn,
+    MiniMaxCn,
+    MiniMaxEn,
+}
+fn detect_provider(base_url: &str) -> Option<CodingPlanProvider> {
+    let url = base_url.to_lowercase();
+    if url.contains("api.kimi.com/coding") { Some(CodingPlanProvider::Kimi) }
+    else if url.contains("open.bigmodel.cn") || url.contains("bigmodel.cn") { Some(CodingPlanProvider::ZhipuCn) }
+    else if url.contains("api.z.ai") { Some(CodingPlanProvider::ZhipuEn) }
+    else if url.contains("api.minimaxi.com") { Some(CodingPlanProvider::MiniMaxCn) }
+    else if url.contains("api.minimax.io") { Some(CodingPlanProvider::MiniMaxEn) }
+    else { None }
+}
+```
+- 国产 Token Plan 额度查询服务（Kimi、智谱 GLM、MiniMax）
+- 复用 subscription 模块的 `SubscriptionQuota` / `QuotaTier` 类型
+- 通过 `base_url` 自动检测供应商类型
+- `millis_to_iso8601()`（`coding_plan.rs:45`）— 毫秒时间戳转 ISO 8601
+- 从 JSON 值提取重置时间，兼容字符串和数字格式
 **ConfigService**（`services/config.rs`，262 行，9.7KB）：
 ```rust
 // services/config.rs:10
