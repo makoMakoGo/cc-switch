@@ -3342,6 +3342,46 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**omo.rs**（`services/omo.rs`，560 行，19.1KB）：
+```rust
+// services/omo.rs:12
+pub struct OmoLocalFileData {
+    pub agents: Option<Value>,
+    pub categories: Option<Value>,
+    pub other_fields: Option<Value>,
+    pub file_path: String,
+    pub last_modified: Option<String>,
+}
+// services/omo.rs:24
+pub struct OmoVariant {
+    pub preferred_filename: &'static str,
+    pub config_candidates: &'static [&'static str],
+    pub category: &'static str,
+    pub provider_prefix: &'static str,
+    pub plugin_name: &'static str,
+    pub plugin_prefixes: &'static [&'static str],
+    pub has_categories: bool,
+    pub label: &'static str,
+    pub import_label: &'static str,
+}
+pub const STANDARD: OmoVariant = OmoVariant {  // omo.rs:36
+    preferred_filename: "oh-my-openagent.jsonc",
+    config_candidates: &["oh-my-openagent.jsonc", "oh-my-openagent.json", "oh-my-opencode.jsonc", "oh-my-opencode.json"],
+    category: "omo",
+    provider_prefix: "omo-",
+    plugin_name: "oh-my-openagent@latest",
+    plugin_prefixes: &["oh-my-openagent", "oh-my-opencode"],
+    has_categories: true,
+    label: "OMO",
+    import_label: "Imported",
+};
+pub const SLIM: OmoVariant = OmoVariant { /* ... */ };
+```
+- `OmoVariant` 定义了 OMO 的两个变体：`STANDARD` 和 `SLIM`
+- `STANDARD` 对应 `oh-my-openagent.jsonc`（`omo.rs:36`）
+- `SLIM` 对应精简版配置
+- `OmoLocalFileData` 表示本地文件数据（agents、categories、other_fields）
+- 使用 `serde_json::Value` 动态类型处理不确定的 JSON 结构
 **PromptService**（`services/prompt.rs`，242 行，8.6KB）：
 ```rust
 // services/prompt.rs:18
@@ -3484,6 +3524,46 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**omo.rs**（`services/omo.rs`，560 行，19.1KB）：
+```rust
+// services/omo.rs:12
+pub struct OmoLocalFileData {
+    pub agents: Option<Value>,
+    pub categories: Option<Value>,
+    pub other_fields: Option<Value>,
+    pub file_path: String,
+    pub last_modified: Option<String>,
+}
+// services/omo.rs:24
+pub struct OmoVariant {
+    pub preferred_filename: &'static str,
+    pub config_candidates: &'static [&'static str],
+    pub category: &'static str,
+    pub provider_prefix: &'static str,
+    pub plugin_name: &'static str,
+    pub plugin_prefixes: &'static [&'static str],
+    pub has_categories: bool,
+    pub label: &'static str,
+    pub import_label: &'static str,
+}
+pub const STANDARD: OmoVariant = OmoVariant {  // omo.rs:36
+    preferred_filename: "oh-my-openagent.jsonc",
+    config_candidates: &["oh-my-openagent.jsonc", "oh-my-openagent.json", "oh-my-opencode.jsonc", "oh-my-opencode.json"],
+    category: "omo",
+    provider_prefix: "omo-",
+    plugin_name: "oh-my-openagent@latest",
+    plugin_prefixes: &["oh-my-openagent", "oh-my-opencode"],
+    has_categories: true,
+    label: "OMO",
+    import_label: "Imported",
+};
+pub const SLIM: OmoVariant = OmoVariant { /* ... */ };
+```
+- `OmoVariant` 定义了 OMO 的两个变体：`STANDARD` 和 `SLIM`
+- `STANDARD` 对应 `oh-my-openagent.jsonc`（`omo.rs:36`）
+- `SLIM` 对应精简版配置
+- `OmoLocalFileData` 表示本地文件数据（agents、categories、other_fields）
+- 使用 `serde_json::Value` 动态类型处理不确定的 JSON 结构
 **PromptService**（`services/prompt.rs`，242 行，8.6KB）：
 ```rust
 // services/prompt.rs:18
