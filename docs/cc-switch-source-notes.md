@@ -3342,6 +3342,33 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**thinking_rectifier.rs**（`proxy/thinking_rectifier.rs`，716 行，23.1KB）：
+```rust
+// proxy/thinking_rectifier.rs:11
+pub struct RectifyResult {
+    pub applied: bool,
+    pub removed_thinking_blocks: usize,
+    pub removed_redacted_thinking_blocks: usize,
+    pub removed_signature_fields: usize,
+}
+// proxy/thinking_rectifier.rs:26
+pub fn should_rectify_thinking_signature(error_message: Option<&str>, config: &RectifierConfig) -> bool {
+    if !config.enabled { return false; }
+    if !config.request_thinking_signature { return false; }
+    // 检测错误类型...
+}
+```
+- Thinking Signature 整流器（自动修复 Anthropic API 签名校验失败）
+- 当上游 API 返回签名相关错误时，自动移除有问题的签名字段并重试请求
+- `RectifyResult` 记录整流结果（移除的 thinking block、redacted_thinking block、signature 字段数量）
+- `should_rectify_thinking_signature()` 检测是否需要触发整流器
+- 使用 `RectifierConfig`（`proxy/types.rs:178`）控制行为
+**thinking_optimizer.rs**（`proxy/thinking_optimizer.rs`，271 行，8.2KB）：
+- Thinking 模式优化器
+- 优化 thinking 模式的请求参数
+**thinking_budget_rectifier.rs**（`proxy/thinking_budget_rectifier.rs`，359 行，11.1KB）：
+- Thinking Budget 整流器
+- 修复 thinking budget 相关的请求错误
 **copilot_optimizer.rs**（`proxy/copilot_optimizer.rs`，1539 行，57.9KB）：
 ```rust
 // proxy/copilot_optimizer.rs:19
@@ -3815,6 +3842,33 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**thinking_rectifier.rs**（`proxy/thinking_rectifier.rs`，716 行，23.1KB）：
+```rust
+// proxy/thinking_rectifier.rs:11
+pub struct RectifyResult {
+    pub applied: bool,
+    pub removed_thinking_blocks: usize,
+    pub removed_redacted_thinking_blocks: usize,
+    pub removed_signature_fields: usize,
+}
+// proxy/thinking_rectifier.rs:26
+pub fn should_rectify_thinking_signature(error_message: Option<&str>, config: &RectifierConfig) -> bool {
+    if !config.enabled { return false; }
+    if !config.request_thinking_signature { return false; }
+    // 检测错误类型...
+}
+```
+- Thinking Signature 整流器（自动修复 Anthropic API 签名校验失败）
+- 当上游 API 返回签名相关错误时，自动移除有问题的签名字段并重试请求
+- `RectifyResult` 记录整流结果（移除的 thinking block、redacted_thinking block、signature 字段数量）
+- `should_rectify_thinking_signature()` 检测是否需要触发整流器
+- 使用 `RectifierConfig`（`proxy/types.rs:178`）控制行为
+**thinking_optimizer.rs**（`proxy/thinking_optimizer.rs`，271 行，8.2KB）：
+- Thinking 模式优化器
+- 优化 thinking 模式的请求参数
+**thinking_budget_rectifier.rs**（`proxy/thinking_budget_rectifier.rs`，359 行，11.1KB）：
+- Thinking Budget 整流器
+- 修复 thinking budget 相关的请求错误
 **copilot_optimizer.rs**（`proxy/copilot_optimizer.rs`，1539 行，57.9KB）：
 ```rust
 // proxy/copilot_optimizer.rs:19
