@@ -2305,6 +2305,17 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**前端工具函数**（`src/utils/`）：
+- `deepClone.ts`（22 行）— 深拷贝工具
+  - 优先使用 `globalThis.structuredClone`
+  - 回退方案：递归拷贝（处理 Date、Array、Object）
+- `errorUtils.ts`（3.5KB）— 错误提取工具
+- `formatters.ts`（2.2KB）— 格式化工具
+- `postChangeSync.ts`（541B）— 变更后同步工具
+- `providerConfigUtils.ts`（34.4KB）— Provider 配置工具
+- `textNormalization.ts`（740B）— 文本归一化
+- `tomlUtils.ts`（6.6KB）— TOML 解析工具
+- `uuid.ts`（1.0KB）— UUID 生成
 **前端 OMO 类型**（`src/types/omo.ts`，434 行）：
 ```typescript
 export interface OmoLocalFileData {  // omo.ts:1
