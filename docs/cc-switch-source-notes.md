@@ -558,6 +558,23 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**platform.ts**（`src/lib/platform.ts`，49 行）：
+```typescript
+// src/lib/platform.ts:2
+export const isMac = (): boolean => {
+    try {
+        const ua = navigator.userAgent || "";
+        const plat = (navigator.platform || "").toLowerCase();
+        return /mac/i.test(ua) || plat.includes("mac");
+    } catch { return false; }
+};
+export const isWindows = (): boolean => { /* /windows|win32|win64/i */ };
+export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
+```
+- 轻量平台检测，避免在 SSR 或无 navigator 的环境报错
+- `isMac()`、`isWindows()`、`isLinux()` — 检测当前操作系统
+- Linux 上禁用所有 drag region，规避 Wayland 下 `gtk_window_begin_move_drag` 问题
+- 使用 try-catch 包裹，避免 navigator 不存在时崩溃
 **Query Layer Index**（`src/lib/query/index.ts`，6 行）：
 - Query 层统一导出入口
 - 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
@@ -1167,6 +1184,23 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**platform.ts**（`src/lib/platform.ts`，49 行）：
+```typescript
+// src/lib/platform.ts:2
+export const isMac = (): boolean => {
+    try {
+        const ua = navigator.userAgent || "";
+        const plat = (navigator.platform || "").toLowerCase();
+        return /mac/i.test(ua) || plat.includes("mac");
+    } catch { return false; }
+};
+export const isWindows = (): boolean => { /* /windows|win32|win64/i */ };
+export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
+```
+- 轻量平台检测，避免在 SSR 或无 navigator 的环境报错
+- `isMac()`、`isWindows()`、`isLinux()` — 检测当前操作系统
+- Linux 上禁用所有 drag region，规避 Wayland 下 `gtk_window_begin_move_drag` 问题
+- 使用 try-catch 包裹，避免 navigator 不存在时崩溃
 **Query Layer Index**（`src/lib/query/index.ts`，6 行）：
 - Query 层统一导出入口
 - 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
@@ -2153,6 +2187,23 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**platform.ts**（`src/lib/platform.ts`，49 行）：
+```typescript
+// src/lib/platform.ts:2
+export const isMac = (): boolean => {
+    try {
+        const ua = navigator.userAgent || "";
+        const plat = (navigator.platform || "").toLowerCase();
+        return /mac/i.test(ua) || plat.includes("mac");
+    } catch { return false; }
+};
+export const isWindows = (): boolean => { /* /windows|win32|win64/i */ };
+export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
+```
+- 轻量平台检测，避免在 SSR 或无 navigator 的环境报错
+- `isMac()`、`isWindows()`、`isLinux()` — 检测当前操作系统
+- Linux 上禁用所有 drag region，规避 Wayland 下 `gtk_window_begin_move_drag` 问题
+- 使用 try-catch 包裹，避免 navigator 不存在时崩溃
 **Query Layer Index**（`src/lib/query/index.ts`，6 行）：
 - Query 层统一导出入口
 - 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
@@ -2760,6 +2811,23 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**platform.ts**（`src/lib/platform.ts`，49 行）：
+```typescript
+// src/lib/platform.ts:2
+export const isMac = (): boolean => {
+    try {
+        const ua = navigator.userAgent || "";
+        const plat = (navigator.platform || "").toLowerCase();
+        return /mac/i.test(ua) || plat.includes("mac");
+    } catch { return false; }
+};
+export const isWindows = (): boolean => { /* /windows|win32|win64/i */ };
+export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
+```
+- 轻量平台检测，避免在 SSR 或无 navigator 的环境报错
+- `isMac()`、`isWindows()`、`isLinux()` — 检测当前操作系统
+- Linux 上禁用所有 drag region，规避 Wayland 下 `gtk_window_begin_move_drag` 问题
+- 使用 try-catch 包裹，避免 navigator 不存在时崩溃
 **Query Layer Index**（`src/lib/query/index.ts`，6 行）：
 - Query 层统一导出入口
 - 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
@@ -4691,6 +4759,23 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**platform.ts**（`src/lib/platform.ts`，49 行）：
+```typescript
+// src/lib/platform.ts:2
+export const isMac = (): boolean => {
+    try {
+        const ua = navigator.userAgent || "";
+        const plat = (navigator.platform || "").toLowerCase();
+        return /mac/i.test(ua) || plat.includes("mac");
+    } catch { return false; }
+};
+export const isWindows = (): boolean => { /* /windows|win32|win64/i */ };
+export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
+```
+- 轻量平台检测，避免在 SSR 或无 navigator 的环境报错
+- `isMac()`、`isWindows()`、`isLinux()` — 检测当前操作系统
+- Linux 上禁用所有 drag region，规避 Wayland 下 `gtk_window_begin_move_drag` 问题
+- 使用 try-catch 包裹，避免 navigator 不存在时崩溃
 **Query Layer Index**（`src/lib/query/index.ts`，6 行）：
 - Query 层统一导出入口
 - 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
@@ -5823,6 +5908,23 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**platform.ts**（`src/lib/platform.ts`，49 行）：
+```typescript
+// src/lib/platform.ts:2
+export const isMac = (): boolean => {
+    try {
+        const ua = navigator.userAgent || "";
+        const plat = (navigator.platform || "").toLowerCase();
+        return /mac/i.test(ua) || plat.includes("mac");
+    } catch { return false; }
+};
+export const isWindows = (): boolean => { /* /windows|win32|win64/i */ };
+export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
+```
+- 轻量平台检测，避免在 SSR 或无 navigator 的环境报错
+- `isMac()`、`isWindows()`、`isLinux()` — 检测当前操作系统
+- Linux 上禁用所有 drag region，规避 Wayland 下 `gtk_window_begin_move_drag` 问题
+- 使用 try-catch 包裹，避免 navigator 不存在时崩溃
 **Query Layer Index**（`src/lib/query/index.ts`，6 行）：
 - Query 层统一导出入口
 - 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
