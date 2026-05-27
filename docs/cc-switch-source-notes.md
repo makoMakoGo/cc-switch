@@ -876,6 +876,10 @@ pub struct StreamingTimeoutConfig {  // proxy/handler_context.rs:19
     pub idle_timeout: u64,           // 静默期超时（秒）
 }
 ```
+**sse 模块**（`proxy/sse.rs`，346 行）：
+- `strip_sse_field()`（`sse.rs:2`）— 从 SSE 行中提取字段值
+- `take_sse_block()`（`sse.rs:8`）— 从 buffer 中提取完整的 SSE 块
+- `append_utf8_safe()`（`sse.rs:36`）— 安全地追加 UTF-8 字节到 buffer，处理跨 chunk 的多字节字符
 **response_processor 模块**（`proxy/response_processor.rs`）：
 - `process_response()` — 处理非流式响应
 - `create_logged_passthrough_stream()` — 创建带日志的透传流
@@ -906,6 +910,10 @@ pub enum ClientFormat {            // proxy/session.rs:19
 - 处理各种 API 端点的 HTTP 请求
 - 通用逻辑提取到 `handler_context` 和 `response_processor` 模块
 **proxy/ 目录统计**：34 个模块文件 + 24 个 providers/ 文件 = 58 个 Rust 文件
+**sse 模块**（`proxy/sse.rs`，346 行）：
+- `strip_sse_field()`（`sse.rs:2`）— 从 SSE 行中提取字段值
+- `take_sse_block()`（`sse.rs:8`）— 从 buffer 中提取完整的 SSE 块
+- `append_utf8_safe()`（`sse.rs:36`）— 安全地追加 UTF-8 字节到 buffer，处理跨 chunk 的多字节字符
 **response_processor 模块**（`proxy/response_processor.rs`）：
 - `process_response()` — 处理非流式响应
 - `create_logged_passthrough_stream()` — 创建带日志的透传流
