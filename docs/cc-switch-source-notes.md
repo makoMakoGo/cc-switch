@@ -1210,6 +1210,16 @@ CREATE TABLE IF NOT EXISTS mcp_servers (
     enabled_hermes BOOLEAN NOT NULL DEFAULT 0
 )
 ```
+**settings 表**（`schema.rs:118`）：
+```sql
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+)
+```
+- 简单的 key-value 存储
+- 用于存储全局设置（如 `skills_ssot_migration_pending`、`legacy_common_config_migrated` 等）
+- 通过 `get_setting()` / `set_setting()` 方法访问（`database/dao/settings.rs`）
 **prompts 表**（`schema.rs:76`）：
 ```sql
 CREATE TABLE IF NOT EXISTS prompts (
