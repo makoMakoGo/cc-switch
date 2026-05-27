@@ -3342,6 +3342,31 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**providers/mod.rs**（`proxy/providers/mod.rs`，518 行，18.3KB）：
+```rust
+// proxy/providers/mod.rs:1
+//! Provider Adapters Module
+//! 供应商适配器模块，提供统一的接口抽象不同上游供应商的处理逻辑
+```
+- 子模块：`adapter`、`auth`、`claude`、`codex`、`gemini`、`models`、`transform`
+- `ProviderAdapter` trait — 统一的供应商适配器接口
+- `ClaudeAdapter` — Claude (Anthropic) 适配器
+- `CodexAdapter` — Codex (OpenAI) 适配器
+- `GeminiAdapter` — Gemini (Google) 适配器
+- `AuthInfo`、`AuthStrategy` — 认证类型和策略
+- 格式转换：`transform`（Claude）、`transform_codex_chat`（Codex Chat）、`transform_gemini`（Gemini）、`transform_responses`（Responses API）
+- 流式处理：`streaming`（Claude）、`streaming_codex_chat`（Codex Chat）、`streaming_gemini`（Gemini）、`streaming_responses`（Responses API）
+- `copilot_auth.rs`（70.4KB）— Copilot 认证
+- `copilot_model_map.rs`（12.1KB）— Copilot 模型映射
+- `codex_oauth_auth.rs`（36.6KB）— Codex OAuth 认证
+- `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
+- `gemini_schema.rs`（11.7KB）— Gemini schema 定义
+- `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**usage/ 目录**（`proxy/usage/`，4 个文件）：
+- `calculator.rs`（9.0KB）— 费用计算器（`CostCalculator`、`ModelPricing`）
+- `logger.rs`（13.7KB）— 使用量日志记录器
+- `parser.rs`（33.5KB）— 使用量解析器（`TokenUsage`）
+- `mod.rs`（446B）— 模块导出
 **response_handler.rs**（`proxy/response_handler.rs`，232 行，7.2KB）：
 - 响应处理器模块
 - 处理代理响应的后处理逻辑
@@ -3926,6 +3951,31 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**providers/mod.rs**（`proxy/providers/mod.rs`，518 行，18.3KB）：
+```rust
+// proxy/providers/mod.rs:1
+//! Provider Adapters Module
+//! 供应商适配器模块，提供统一的接口抽象不同上游供应商的处理逻辑
+```
+- 子模块：`adapter`、`auth`、`claude`、`codex`、`gemini`、`models`、`transform`
+- `ProviderAdapter` trait — 统一的供应商适配器接口
+- `ClaudeAdapter` — Claude (Anthropic) 适配器
+- `CodexAdapter` — Codex (OpenAI) 适配器
+- `GeminiAdapter` — Gemini (Google) 适配器
+- `AuthInfo`、`AuthStrategy` — 认证类型和策略
+- 格式转换：`transform`（Claude）、`transform_codex_chat`（Codex Chat）、`transform_gemini`（Gemini）、`transform_responses`（Responses API）
+- 流式处理：`streaming`（Claude）、`streaming_codex_chat`（Codex Chat）、`streaming_gemini`（Gemini）、`streaming_responses`（Responses API）
+- `copilot_auth.rs`（70.4KB）— Copilot 认证
+- `copilot_model_map.rs`（12.1KB）— Copilot 模型映射
+- `codex_oauth_auth.rs`（36.6KB）— Codex OAuth 认证
+- `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
+- `gemini_schema.rs`（11.7KB）— Gemini schema 定义
+- `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**usage/ 目录**（`proxy/usage/`，4 个文件）：
+- `calculator.rs`（9.0KB）— 费用计算器（`CostCalculator`、`ModelPricing`）
+- `logger.rs`（13.7KB）— 使用量日志记录器
+- `parser.rs`（33.5KB）— 使用量解析器（`TokenUsage`）
+- `mod.rs`（446B）— 模块导出
 **response_handler.rs**（`proxy/response_handler.rs`，232 行，7.2KB）：
 - 响应处理器模块
 - 处理代理响应的后处理逻辑
