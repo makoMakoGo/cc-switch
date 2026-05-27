@@ -948,6 +948,12 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**copilot_model_map 模块**（`proxy/providers/copilot_model_map.rs`，375 行）：
+- GitHub Copilot 模型 ID 归一化与 live-list 解析
+- `normalize_to_copilot_id()`（`copilot_model_map.rs:16`）— 归一化客户端 model ID
+- `claude-sonnet-4-6` → `claude-sonnet-4.6`（dash → dot 形式）
+- `resolve_against_models()` — 用 `/models` live 列表做精确匹配
+- fallback 按 family（haiku/sonnet/opus）+ 最高版本号
 **streaming_responses 模块**（`proxy/providers/streaming_responses.rs`，1186 行）：
 - OpenAI Responses API SSE → Anthropic SSE 转换
 - Responses API 使用命名事件生命周期模型：`response.created → output_item.added → ...`
