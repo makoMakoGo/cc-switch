@@ -580,6 +580,22 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**WebDavSyncSettings**（`settings.rs:107`）：
+```rust
+pub struct WebDavSyncSettings {  // settings.rs:107
+    pub enabled: bool,           // 是否启用
+    pub auto_sync: bool,         // 自动同步
+    pub base_url: String,        // WebDAV 服务器地址
+    pub username: String,        // 用户名
+    pub password: String,        // 密码
+    pub remote_root: String,     // 远程根目录（默认 "cc-switch-sync"）
+    pub profile: String,         // 配置文件（默认 "default"）
+    pub status: WebDavSyncStatus, // 同步状态
+}
+```
+- `validate()`（`settings.rs:142`）— 验证 base_url 和 username 非空
+- `normalize()`（`settings.rs:160`）— 清理路径字段
+- `is_empty()`（`settings.rs:174`）— 检查是否所有凭证字段都为空
 **AppSettings 方法**（`settings.rs:389-480`）：
 - `settings_path()`（`settings.rs:390`）— 返回 `~/.cc-switch/settings.json` 路径
 - `normalize_paths()`（`settings.rs:399`）— 清理路径字段（trim、过滤空字符串、验证语言）
