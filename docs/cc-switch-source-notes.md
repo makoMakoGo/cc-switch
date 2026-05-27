@@ -948,6 +948,12 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**codex_chat_history 模块**（`proxy/providers/codex_chat_history.rs`，739 行）：
+- Cross-request history for Codex Responses → Chat Completions bridging
+- `CodexChatHistoryStore`（`codex_chat_history.rs:43`）— 存储 Codex Chat 历史
+- `MAX_CACHED_RESPONSES: usize = 512`（`codex_chat_history.rs:10`）
+- 恢复 `previous_response_id` 指向的 tool call
+- 当 subagent flows 省略 `previous_response_id` 时回退到 `call_id`
 **gemini_shadow 模块**（`proxy/providers/gemini_shadow.rs`，400 行）：
 - 保存 Gemini thought signatures 和 tool call metadata
 - `GeminiShadowKey`（`gemini_shadow.rs:13`）— 复合键（provider_id + session_id）
