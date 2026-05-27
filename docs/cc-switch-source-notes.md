@@ -2323,6 +2323,15 @@ pub struct ProxyConfig {  // proxy/types.rs:5
 - `streaming_first_byte_timeout`：等待首个数据块的最大时间（1-120 秒）
 - `streaming_idle_timeout`：两个数据块之间的最大间隔（60-600 秒）
 - `non_streaming_timeout`：非流式请求的总超时时间（60-1200 秒）
+**LogConfig**（`proxy/types.rs:337`）：
+```rust
+pub struct LogConfig {  // proxy/types.rs:337
+    pub enabled: bool,    // 总开关（默认开启）
+    pub level: String,    // 日志级别: error, warn, info, debug, trace（默认 "info"）
+}
+```
+- `to_level_filter()`（`proxy/types.rs:357`）— 转换为 `log::LevelFilter`
+- 存储在 settings 表中，key = "log_config"
 **OptimizerConfig**（`proxy/types.rs:242`）：
 ```rust
 pub struct OptimizerConfig {  // proxy/types.rs:242
