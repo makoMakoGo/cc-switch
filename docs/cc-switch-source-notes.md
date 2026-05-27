@@ -1234,6 +1234,23 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**useSettings 接口**（`src/hooks/useSettings.ts:21`）：
+```typescript
+export interface UseSettingsResult {  // useSettings.ts:21
+    settings: SettingsFormState | null;
+    isLoading: boolean;
+    isSaving: boolean;
+    isPortable: boolean;
+    appConfigDir?: string;
+    resolvedDirs: ResolvedDirectories;
+    requiresRestart: boolean;
+    updateSettings: (updates: Partial<SettingsFormState>) => void;
+    updateDirectory: (app: DirectoryAppId, value?: string) => void;
+    browseDirectory: (app: DirectoryAppId) => Promise<void>;
+}
+```
+- 组合了 `useSettingsForm`、`useDirectorySettings`、`useSettingsMetadata` 三个子 hook
+- `syncCurrentProvidersLiveSafe` 在设置保存后同步 live 配置
 **useProviderActions 内部实现**（`src/hooks/useProviderActions.ts:31`）：
 ```typescript
 export function useProviderActions(
