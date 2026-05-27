@@ -558,6 +558,25 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**config.ts**（`src/lib/api/config.ts`，78 行）：
+```typescript
+// src/lib/api/config.ts:4
+export type AppType = "claude" | "codex" | "gemini" | "omo" | "omo_slim";
+// src/lib/api/config.ts:32
+export async function getCommonConfigSnippet(appType: AppType): Promise<string | null> {
+    return invoke<string | null>("get_common_config_snippet", { appType });
+}
+// src/lib/api/config.ts:43
+export async function setCommonConfigSnippet(appType: AppType, snippet: string): Promise<void> {
+    return invoke("set_common_config_snippet", { appType, snippet });
+}
+```
+- `AppType` 类型：`"claude" | "codex" | "gemini" | "omo" | "omo_slim"`
+- `getCommonConfigSnippet()`（`config.ts:32`）— 获取通用配置片段（统一接口）
+- `setCommonConfigSnippet()`（`config.ts:43`）— 设置通用配置片段（统一接口）
+- `getClaudeCommonConfigSnippet()`（`config.ts:11`）— 已废弃，使用 `getCommonConfigSnippet('claude')` 替代
+- `setClaudeCommonConfigSnippet()`（`config.ts:21`）— 已废弃，使用 `setCommonConfigSnippet('claude', snippet)` 替代
+- Claude/Gemini 验证 JSON 格式，Codex 暂不验证
 **model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
 ```typescript
 // src/lib/api/model-fetch.ts:5
@@ -1095,6 +1114,25 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**config.ts**（`src/lib/api/config.ts`，78 行）：
+```typescript
+// src/lib/api/config.ts:4
+export type AppType = "claude" | "codex" | "gemini" | "omo" | "omo_slim";
+// src/lib/api/config.ts:32
+export async function getCommonConfigSnippet(appType: AppType): Promise<string | null> {
+    return invoke<string | null>("get_common_config_snippet", { appType });
+}
+// src/lib/api/config.ts:43
+export async function setCommonConfigSnippet(appType: AppType, snippet: string): Promise<void> {
+    return invoke("set_common_config_snippet", { appType, snippet });
+}
+```
+- `AppType` 类型：`"claude" | "codex" | "gemini" | "omo" | "omo_slim"`
+- `getCommonConfigSnippet()`（`config.ts:32`）— 获取通用配置片段（统一接口）
+- `setCommonConfigSnippet()`（`config.ts:43`）— 设置通用配置片段（统一接口）
+- `getClaudeCommonConfigSnippet()`（`config.ts:11`）— 已废弃，使用 `getCommonConfigSnippet('claude')` 替代
+- `setClaudeCommonConfigSnippet()`（`config.ts:21`）— 已废弃，使用 `setCommonConfigSnippet('claude', snippet)` 替代
+- Claude/Gemini 验证 JSON 格式，Codex 暂不验证
 **model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
 ```typescript
 // src/lib/api/model-fetch.ts:5
@@ -2009,6 +2047,25 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**config.ts**（`src/lib/api/config.ts`，78 行）：
+```typescript
+// src/lib/api/config.ts:4
+export type AppType = "claude" | "codex" | "gemini" | "omo" | "omo_slim";
+// src/lib/api/config.ts:32
+export async function getCommonConfigSnippet(appType: AppType): Promise<string | null> {
+    return invoke<string | null>("get_common_config_snippet", { appType });
+}
+// src/lib/api/config.ts:43
+export async function setCommonConfigSnippet(appType: AppType, snippet: string): Promise<void> {
+    return invoke("set_common_config_snippet", { appType, snippet });
+}
+```
+- `AppType` 类型：`"claude" | "codex" | "gemini" | "omo" | "omo_slim"`
+- `getCommonConfigSnippet()`（`config.ts:32`）— 获取通用配置片段（统一接口）
+- `setCommonConfigSnippet()`（`config.ts:43`）— 设置通用配置片段（统一接口）
+- `getClaudeCommonConfigSnippet()`（`config.ts:11`）— 已废弃，使用 `getCommonConfigSnippet('claude')` 替代
+- `setClaudeCommonConfigSnippet()`（`config.ts:21`）— 已废弃，使用 `setCommonConfigSnippet('claude', snippet)` 替代
+- Claude/Gemini 验证 JSON 格式，Codex 暂不验证
 **model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
 ```typescript
 // src/lib/api/model-fetch.ts:5
@@ -2544,6 +2601,25 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**config.ts**（`src/lib/api/config.ts`，78 行）：
+```typescript
+// src/lib/api/config.ts:4
+export type AppType = "claude" | "codex" | "gemini" | "omo" | "omo_slim";
+// src/lib/api/config.ts:32
+export async function getCommonConfigSnippet(appType: AppType): Promise<string | null> {
+    return invoke<string | null>("get_common_config_snippet", { appType });
+}
+// src/lib/api/config.ts:43
+export async function setCommonConfigSnippet(appType: AppType, snippet: string): Promise<void> {
+    return invoke("set_common_config_snippet", { appType, snippet });
+}
+```
+- `AppType` 类型：`"claude" | "codex" | "gemini" | "omo" | "omo_slim"`
+- `getCommonConfigSnippet()`（`config.ts:32`）— 获取通用配置片段（统一接口）
+- `setCommonConfigSnippet()`（`config.ts:43`）— 设置通用配置片段（统一接口）
+- `getClaudeCommonConfigSnippet()`（`config.ts:11`）— 已废弃，使用 `getCommonConfigSnippet('claude')` 替代
+- `setClaudeCommonConfigSnippet()`（`config.ts:21`）— 已废弃，使用 `setCommonConfigSnippet('claude', snippet)` 替代
+- Claude/Gemini 验证 JSON 格式，Codex 暂不验证
 **model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
 ```typescript
 // src/lib/api/model-fetch.ts:5
@@ -4403,6 +4479,25 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**config.ts**（`src/lib/api/config.ts`，78 行）：
+```typescript
+// src/lib/api/config.ts:4
+export type AppType = "claude" | "codex" | "gemini" | "omo" | "omo_slim";
+// src/lib/api/config.ts:32
+export async function getCommonConfigSnippet(appType: AppType): Promise<string | null> {
+    return invoke<string | null>("get_common_config_snippet", { appType });
+}
+// src/lib/api/config.ts:43
+export async function setCommonConfigSnippet(appType: AppType, snippet: string): Promise<void> {
+    return invoke("set_common_config_snippet", { appType, snippet });
+}
+```
+- `AppType` 类型：`"claude" | "codex" | "gemini" | "omo" | "omo_slim"`
+- `getCommonConfigSnippet()`（`config.ts:32`）— 获取通用配置片段（统一接口）
+- `setCommonConfigSnippet()`（`config.ts:43`）— 设置通用配置片段（统一接口）
+- `getClaudeCommonConfigSnippet()`（`config.ts:11`）— 已废弃，使用 `getCommonConfigSnippet('claude')` 替代
+- `setClaudeCommonConfigSnippet()`（`config.ts:21`）— 已废弃，使用 `setCommonConfigSnippet('claude', snippet)` 替代
+- Claude/Gemini 验证 JSON 格式，Codex 暂不验证
 **model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
 ```typescript
 // src/lib/api/model-fetch.ts:5
@@ -5463,6 +5558,25 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**config.ts**（`src/lib/api/config.ts`，78 行）：
+```typescript
+// src/lib/api/config.ts:4
+export type AppType = "claude" | "codex" | "gemini" | "omo" | "omo_slim";
+// src/lib/api/config.ts:32
+export async function getCommonConfigSnippet(appType: AppType): Promise<string | null> {
+    return invoke<string | null>("get_common_config_snippet", { appType });
+}
+// src/lib/api/config.ts:43
+export async function setCommonConfigSnippet(appType: AppType, snippet: string): Promise<void> {
+    return invoke("set_common_config_snippet", { appType, snippet });
+}
+```
+- `AppType` 类型：`"claude" | "codex" | "gemini" | "omo" | "omo_slim"`
+- `getCommonConfigSnippet()`（`config.ts:32`）— 获取通用配置片段（统一接口）
+- `setCommonConfigSnippet()`（`config.ts:43`）— 设置通用配置片段（统一接口）
+- `getClaudeCommonConfigSnippet()`（`config.ts:11`）— 已废弃，使用 `getCommonConfigSnippet('claude')` 替代
+- `setClaudeCommonConfigSnippet()`（`config.ts:21`）— 已废弃，使用 `setCommonConfigSnippet('claude', snippet)` 替代
+- Claude/Gemini 验证 JSON 格式，Codex 暂不验证
 **model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
 ```typescript
 // src/lib/api/model-fetch.ts:5
