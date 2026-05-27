@@ -523,6 +523,26 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**ProxyState**（`proxy/server.rs:34`）：
+```rust
+pub struct ProxyState {  // proxy/server.rs:34
+    pub db: Arc<Database>,
+    pub config: Arc<RwLock<ProxyConfig>>,
+    pub status: Arc<RwLock<ProxyStatus>>,
+    pub start_time: Arc<RwLock<Option<std::time::Instant>>>,
+    pub current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    pub provider_router: Arc<ProviderRouter>,
+    pub gemini_shadow: Arc<GeminiShadowStore>,
+    pub codex_chat_history: Arc<CodexChatHistoryStore>,
+    pub app_handle: Option<tauri::AppHandle>,
+    pub failover_manager: Arc<FailoverSwitchManager>,
+}
+```
+**ProxyServer**（`proxy/server.rs:54`）：
+- `config: ProxyConfig` — 代理配置
+- `state: ProxyState` — 共享状态
+- `shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>` — 关闭信号
+- `server_handle: Arc<RwLock<Option<JoinHandle<()>>>>` — 服务器任务句柄
 **SwitchResult**（`services/provider/mod.rs:51`）：
 ```rust
 pub struct SwitchResult {  // services/provider/mod.rs:51
@@ -771,6 +791,26 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**ProxyState**（`proxy/server.rs:34`）：
+```rust
+pub struct ProxyState {  // proxy/server.rs:34
+    pub db: Arc<Database>,
+    pub config: Arc<RwLock<ProxyConfig>>,
+    pub status: Arc<RwLock<ProxyStatus>>,
+    pub start_time: Arc<RwLock<Option<std::time::Instant>>>,
+    pub current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    pub provider_router: Arc<ProviderRouter>,
+    pub gemini_shadow: Arc<GeminiShadowStore>,
+    pub codex_chat_history: Arc<CodexChatHistoryStore>,
+    pub app_handle: Option<tauri::AppHandle>,
+    pub failover_manager: Arc<FailoverSwitchManager>,
+}
+```
+**ProxyServer**（`proxy/server.rs:54`）：
+- `config: ProxyConfig` — 代理配置
+- `state: ProxyState` — 共享状态
+- `shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>` — 关闭信号
+- `server_handle: Arc<RwLock<Option<JoinHandle<()>>>>` — 服务器任务句柄
 **SwitchResult**（`services/provider/mod.rs:51`）：
 ```rust
 pub struct SwitchResult {  // services/provider/mod.rs:51
@@ -1103,6 +1143,26 @@ pub struct ProviderService;  // 空结构体，纯方法集合
 - `endpoints.rs` — 自定义端点管理
 - `gemini_auth.rs` — Gemini 认证
 - `usage.rs` — 用量脚本验证
+**ProxyState**（`proxy/server.rs:34`）：
+```rust
+pub struct ProxyState {  // proxy/server.rs:34
+    pub db: Arc<Database>,
+    pub config: Arc<RwLock<ProxyConfig>>,
+    pub status: Arc<RwLock<ProxyStatus>>,
+    pub start_time: Arc<RwLock<Option<std::time::Instant>>>,
+    pub current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    pub provider_router: Arc<ProviderRouter>,
+    pub gemini_shadow: Arc<GeminiShadowStore>,
+    pub codex_chat_history: Arc<CodexChatHistoryStore>,
+    pub app_handle: Option<tauri::AppHandle>,
+    pub failover_manager: Arc<FailoverSwitchManager>,
+}
+```
+**ProxyServer**（`proxy/server.rs:54`）：
+- `config: ProxyConfig` — 代理配置
+- `state: ProxyState` — 共享状态
+- `shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>` — 关闭信号
+- `server_handle: Arc<RwLock<Option<JoinHandle<()>>>>` — 服务器任务句柄
 **SwitchResult**（`services/provider/mod.rs:51`）：
 ```rust
 pub struct SwitchResult {
