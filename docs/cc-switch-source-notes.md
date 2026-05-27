@@ -811,17 +811,17 @@ pub enum ProxyError {           // proxy/error.rs:10
     AllProvidersCircuitOpen,    // 所有供应商已熔断
     NoProvidersConfigured,      // 未配置供应商
     ProviderUnhealthy(String),  // Provider不健康
-    UpstreamError { status: u16, body: Option<String> },
-    MaxRetriesExceeded,         // 超过最大重试次数
-    DatabaseError(String),      // 数据库错误
-    ConfigError(String),        // 配置错误
-    TransformError(String),     // 格式转换错误
-    InvalidRequest(String),     // 无效的请求
-    Timeout(String),            // 超时
-    StreamIdleTimeout(u64),     // 流式响应空闲超时
-    AuthError(String),          // 认证失败
-    Internal(String),           // 内部错误
-}
+**proxy/ 目录统计**：34 个模块文件 + 24 个 providers/ 文件 = 58 个 Rust 文件
+**handlers 模块端点**（`proxy/handlers.rs`）：
+- `health_check()`（`handlers.rs:49`）— 健康检查端点
+- `get_status()`（`handlers.rs:60`）— 获取服务状态
+- `handle_messages()`（`handlers.rs:74`）— 处理 `/v1/messages`（Claude API）
+- `handle_claude_desktop_messages()`（`handlers.rs:81`）— Claude Desktop 消息处理
+- `handle_claude_desktop_models()`（`handlers.rs:97`）— Claude Desktop 模型列表
+**response_processor 模块**（`proxy/response_processor.rs`）：
+- `process_response()` — 处理非流式响应
+- `create_logged_passthrough_stream()` — 创建带日志的透传流
+### 4.2 ProxyState 和 ProxyServer
 ```
 **ProxyError 实现了 `IntoResponse`**（`proxy/error.rs:79`），可以直接作为 Axum 响应返回
 
