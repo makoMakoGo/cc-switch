@@ -948,6 +948,12 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**streaming 模块**（`proxy/providers/streaming.rs`，1142 行）：
+- OpenAI SSE → Anthropic SSE 格式转换
+- `OpenAIStreamChunk`（`streaming.rs:14`）— OpenAI 流式响应数据结构
+- `create_anthropic_sse_stream()` — 创建 Anthropic 格式的 SSE 流
+- 支持 reasoning (thinking) 内容转换
+- 支持 tool_calls 流式转换
 **codex_oauth_auth 模块**（`proxy/providers/codex_oauth_auth.rs`，1134 行）：
 - OpenAI ChatGPT Plus/Pro OAuth Device Code 流程
 - `CODEX_CLIENT_ID`（`codex_oauth_auth.rs:31`）— OpenCode OAuth 客户端 ID
