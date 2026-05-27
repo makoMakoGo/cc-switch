@@ -580,6 +580,21 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**VisibleApps**（`settings.rs:28`）：
+```rust
+pub struct VisibleApps {  // settings.rs:28
+    pub claude: bool,           // 默认 true
+    pub claude_desktop: bool,   // 默认 true（别名 claude-desktop, claudeDesktop）
+    pub codex: bool,            // 默认 true
+    pub gemini: bool,           // 默认 true
+    pub opencode: bool,         // 默认 true
+    pub openclaw: bool,         // 默认 true
+    pub hermes: bool,           // 默认 false，需用户手动启用
+}
+```
+- `is_visible(&self, app: &AppType)`（`settings.rs:66`）— 检查指定应用是否可见
+- `Default` 实现（`settings.rs:50`）— hermes 默认不显示
+- serde 别名：`claude-desktop` / `claudeDesktop` / `claude_desktop`
 **WebDavSyncSettings**（`settings.rs:107`）：
 ```rust
 pub struct WebDavSyncSettings {  // settings.rs:107
