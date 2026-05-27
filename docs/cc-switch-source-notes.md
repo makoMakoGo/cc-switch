@@ -2495,6 +2495,35 @@ export const usageKeys = {  // usage.ts:32
 - `RequestLogsKey`（`usage.ts:21`）— 请求日志查询键
 - `LogFilters`（`types/usage.ts`）— 日志过滤器
 - `UsageRangeSelection`（`types/usage.ts`）— 用量范围选择
+**copilotApi**（`src/lib/api/copilot.ts`，259 行）：
+```typescript
+export interface CopilotDeviceCodeResponse {  // copilot.ts:13
+    device_code: string;
+    user_code: string;
+    verification_uri: string;
+    expires_in: number;
+    interval: number;
+}
+export interface GitHubAccount {  // copilot.ts:24
+    id: string;
+    login: string;
+    avatar_url: string | null;
+    authenticated_at: number;
+    github_domain: string;
+}
+export interface CopilotAuthStatus {  // copilot.ts:40
+    authenticated: boolean;
+    default_account_id: string | null;
+    migration_error?: string | null;
+    username: string | null;
+    expires_at: number | null;
+    accounts: GitHubAccount[];
+}
+```
+- GitHub Copilot OAuth 设备码流程
+- 支持多账号管理（`accounts` 数组）
+- `default_account_id` 指定默认账号
+- 向后兼容旧版单账号字段（`authenticated`, `username`, `expires_at`）
 **failover.ts**（`src/lib/query/failover.ts`，289 行）：
 ```typescript
 // src/lib/query/failover.ts:12
