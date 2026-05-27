@@ -3342,6 +3342,27 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**webdav_sync.rs**（`services/webdav_sync.rs`，884 行，29.0KB）：
+```rust
+// services/webdav_sync.rs:32
+const PROTOCOL_FORMAT: &str = "cc-switch-webdav-sync";
+const PROTOCOL_VERSION: u32 = 2;
+const DB_COMPAT_VERSION: u32 = 6;
+const LEGACY_DB_COMPAT_VERSION: u32 = 5;
+const REMOTE_DB_SQL: &str = "db.sql";
+const REMOTE_SKILLS_ZIP: &str = "skills.zip";
+const REMOTE_MANIFEST: &str = "manifest.json";
+const MAX_DEVICE_NAME_LEN: usize = 64;
+const MAX_MANIFEST_BYTES: usize = 1024 * 1024;  // 1MB
+pub(super) const MAX_SYNC_ARTIFACT_BYTES: u64 = 512 * 1024 * 1024;  // 512MB
+```
+- WebDAV v2 同步协议层（基于 manifest 的同步）
+- Artifact 集合：`db.sql` + `skills.zip`
+- `sync_mutex()`（`webdav_sync.rs:43`）— 使用 `OnceLock<tokio::sync::Mutex<()>>` 保证同步互斥
+- `run_with_sync_lock()`（`webdav_sync.rs:48`）— 带锁的异步操作执行器
+- 子模块 `archive` 管理 skills 的备份和恢复
+- `PROTOCOL_VERSION = 2`（`webdav_sync.rs:33`）— 当前协议版本
+- `DB_COMPAT_VERSION = 6`（`webdav_sync.rs:34`）— 数据库兼容版本
 **session_usage.rs**（`services/session_usage.rs`，682 行，22.6KB）：
 ```rust
 // services/session_usage.rs:28
@@ -3600,6 +3621,27 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**webdav_sync.rs**（`services/webdav_sync.rs`，884 行，29.0KB）：
+```rust
+// services/webdav_sync.rs:32
+const PROTOCOL_FORMAT: &str = "cc-switch-webdav-sync";
+const PROTOCOL_VERSION: u32 = 2;
+const DB_COMPAT_VERSION: u32 = 6;
+const LEGACY_DB_COMPAT_VERSION: u32 = 5;
+const REMOTE_DB_SQL: &str = "db.sql";
+const REMOTE_SKILLS_ZIP: &str = "skills.zip";
+const REMOTE_MANIFEST: &str = "manifest.json";
+const MAX_DEVICE_NAME_LEN: usize = 64;
+const MAX_MANIFEST_BYTES: usize = 1024 * 1024;  // 1MB
+pub(super) const MAX_SYNC_ARTIFACT_BYTES: u64 = 512 * 1024 * 1024;  // 512MB
+```
+- WebDAV v2 同步协议层（基于 manifest 的同步）
+- Artifact 集合：`db.sql` + `skills.zip`
+- `sync_mutex()`（`webdav_sync.rs:43`）— 使用 `OnceLock<tokio::sync::Mutex<()>>` 保证同步互斥
+- `run_with_sync_lock()`（`webdav_sync.rs:48`）— 带锁的异步操作执行器
+- 子模块 `archive` 管理 skills 的备份和恢复
+- `PROTOCOL_VERSION = 2`（`webdav_sync.rs:33`）— 当前协议版本
+- `DB_COMPAT_VERSION = 6`（`webdav_sync.rs:34`）— 数据库兼容版本
 **session_usage.rs**（`services/session_usage.rs`，682 行，22.6KB）：
 ```rust
 // services/session_usage.rs:28
