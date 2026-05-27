@@ -3342,6 +3342,35 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**SpeedtestService**（`services/speedtest.rs`，187 行，5.9KB）：
+```rust
+// services/speedtest.rs:8
+const DEFAULT_TIMEOUT_SECS: u64 = 8;
+const MAX_TIMEOUT_SECS: u64 = 30;
+const MIN_TIMEOUT_SECS: u64 = 2;
+// services/speedtest.rs:14
+pub struct EndpointLatency {
+    pub url: String,
+    pub latency: Option<u128>,
+    pub status: Option<u16>,
+    pub error: Option<String>,
+}
+// services/speedtest.rs:22
+pub struct SpeedtestService;
+impl SpeedtestService {
+    pub async fn test_endpoints(urls: Vec<String>, timeout_secs: Option<u64>) -> Result<Vec<EndpointLatency>, AppError>;
+}
+```
+- 测试一组端点的响应延迟
+- 并发请求所有端点（使用 `join_all`）
+- 超时范围：2-30 秒（默认 8 秒）
+- `EndpointLatency` 记录每个端点的延迟、状态码和错误信息
+**sql_helpers.rs**（`services/sql_helpers.rs`，134 行，5.3KB）：
+- SQL 查询辅助函数
+- `fresh_input_sql()` — 生成排除 cache tokens 的 SQL 表达式
+**codex_oauth_models.rs**（`services/codex_oauth_models.rs`，192 行，5.6KB）：
+- Codex OAuth 数据模型
+- 定义 Codex OAuth 相关的结构体
 **proxy.ts Query Hooks**（`src/lib/query/proxy.ts`，244 行）：
 ```typescript
 // src/lib/query/proxy.ts:12
@@ -3700,6 +3729,35 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**SpeedtestService**（`services/speedtest.rs`，187 行，5.9KB）：
+```rust
+// services/speedtest.rs:8
+const DEFAULT_TIMEOUT_SECS: u64 = 8;
+const MAX_TIMEOUT_SECS: u64 = 30;
+const MIN_TIMEOUT_SECS: u64 = 2;
+// services/speedtest.rs:14
+pub struct EndpointLatency {
+    pub url: String,
+    pub latency: Option<u128>,
+    pub status: Option<u16>,
+    pub error: Option<String>,
+}
+// services/speedtest.rs:22
+pub struct SpeedtestService;
+impl SpeedtestService {
+    pub async fn test_endpoints(urls: Vec<String>, timeout_secs: Option<u64>) -> Result<Vec<EndpointLatency>, AppError>;
+}
+```
+- 测试一组端点的响应延迟
+- 并发请求所有端点（使用 `join_all`）
+- 超时范围：2-30 秒（默认 8 秒）
+- `EndpointLatency` 记录每个端点的延迟、状态码和错误信息
+**sql_helpers.rs**（`services/sql_helpers.rs`，134 行，5.3KB）：
+- SQL 查询辅助函数
+- `fresh_input_sql()` — 生成排除 cache tokens 的 SQL 表达式
+**codex_oauth_models.rs**（`services/codex_oauth_models.rs`，192 行，5.6KB）：
+- Codex OAuth 数据模型
+- 定义 Codex OAuth 相关的结构体
 **proxy.ts Query Hooks**（`src/lib/query/proxy.ts`，244 行）：
 ```typescript
 // src/lib/query/proxy.ts:12
