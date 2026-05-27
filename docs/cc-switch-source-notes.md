@@ -1342,6 +1342,44 @@ CREATE TABLE IF NOT EXISTS settings (
 - 简单的 key-value 存储
 - 用于存储全局设置（如 `skills_ssot_migration_pending`、`legacy_common_config_migrated` 等）
 - 通过 `get_setting()` / `set_setting()` 方法访问（`database/dao/settings.rs`）
+**skill_repos 表**（`schema.rs:108`）：
+```sql
+CREATE TABLE IF NOT EXISTS skill_repos (
+    owner TEXT NOT NULL,
+    name TEXT NOT NULL,
+    branch TEXT NOT NULL DEFAULT 'main',
+    enabled BOOLEAN NOT NULL DEFAULT 1,
+    PRIMARY KEY (owner, name)
+)
+```
+- 管理 Skills 仓库配置
+**provider_health 表**（`schema.rs:175`）：
+```sql
+CREATE TABLE IF NOT EXISTS provider_health (
+    provider_id TEXT NOT NULL,
+    app_type TEXT NOT NULL,
+    is_healthy INTEGER NOT NULL DEFAULT 1,
+    consecutive_failures INTEGER NOT NULL DEFAULT 0,
+    last_success_at TEXT,
+    last_failure_at TEXT,
+    last_error TEXT,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (provider_id, app_type),
+    FOREIGN KEY (provider_id, app_type) REFERENCES providers(id, app_type) ON DELETE CASCADE
+)
+```
+- 外键关联到 `providers` 表
+- 用于跟踪 provider 健康状态
+**proxy_live_backup 表**（`schema.rs:250`）：
+```sql
+CREATE TABLE IF NOT EXISTS proxy_live_backup (
+    app_type TEXT PRIMARY KEY,
+    original_config TEXT NOT NULL,
+    backed_up_at TEXT NOT NULL
+)
+```
+- 代理接管时备份 live 配置
+- 恢复时从这里读取原始配置
 **prompts 表**（`schema.rs:76`）：
 ```sql
 CREATE TABLE IF NOT EXISTS prompts (
