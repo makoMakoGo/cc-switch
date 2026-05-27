@@ -3342,6 +3342,36 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**usage_stats.rs**（`services/usage_stats.rs`，3250 行，114.6KB）：
+```rust
+// services/usage_stats.rs:18
+pub struct UsageSummary {
+    pub total_requests: u64,
+    pub total_cost: String,
+    pub total_input_tokens: u64,
+    pub total_output_tokens: u64,
+    pub total_cache_creation_tokens: u64,
+    pub total_cache_read_tokens: u64,
+    pub success_rate: f32,
+    pub real_total_tokens: u64,  // input + output + cache_creation + cache_read
+    pub cache_hit_rate: f64,     // cache_read / (input + cache_creation + cache_read)
+}
+pub struct UsageSummaryByApp {  // usage_stats.rs:38
+    pub app_type: String,
+    pub summary: UsageSummary,
+}
+```
+- `derive_real_total_and_hit_rate()`（`usage_stats.rs:45`）— 计算真实总 token 数和缓存命中率
+- `real_total = fresh_input + output + cache_creation + cache_read`
+- `cache_hit_rate = cache_read / (fresh_input + cache_creation + cache_read)`
+- 使用 `rusqlite` 直接查询数据库（`lock_conn!` 宏）
+- 3250 行是最大的服务模块之一（与 proxy.rs 的 3909 行、usage_stats.rs 的 3250 行并列）
+**stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
+- 流式响应检查服务
+- 验证 provider 的流式 API 连接是否正常
+**subscription.rs**（`services/subscription.rs`，1323 行，41.1KB）：
+- 订阅管理服务
+- 管理 GitHub Copilot 订阅状态
 **McpService**（`services/mcp.rs`，438 行）：
 ```rust
 // services/mcp.rs:10
