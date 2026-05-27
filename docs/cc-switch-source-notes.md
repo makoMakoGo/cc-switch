@@ -1625,6 +1625,27 @@ pub struct AllowResult {  // circuit_breaker.rs:100
 }
 ```
 
+**RequestForwarder**（`forwarder.rs:89`）：
+```rust
+pub struct RequestForwarder {  // forwarder.rs:89
+    router: Arc<ProviderRouter>,                    // 共享的 ProviderRouter
+    status: Arc<RwLock<ProxyStatus>>,               // 代理状态
+    current_providers: Arc<RwLock<HashMap<...>>>,    // 当前 provider 映射
+    gemini_shadow: Arc<GeminiShadowStore>,           // Gemini shadow state
+    codex_chat_history: Arc<CodexChatHistoryStore>,  // Codex chat history
+    failover_manager: Arc<FailoverSwitchManager>,    // 故障转移管理器
+    app_handle: Option<tauri::AppHandle>,             // AppHandle
+    current_provider_id_at_start: String,            // 请求开始时的 provider ID
+    session_id: String,                              // 代理会话 ID
+    session_client_provided: bool,                   // Session ID 是否由客户端提供
+    rectifier_config: RectifierConfig,               // 整流器配置
+    optimizer_config: OptimizerConfig,               // 优化器配置
+    copilot_optimizer_config: CopilotOptimizerConfig, // Copilot 优化器配置
+    non_streaming_timeout: Duration,                 // 非流式请求超时
+    streaming_first_byte_timeout: Duration,          // 流式请求响应头等待超时
+    max_attempts: usize,                             // 最大重试次数（max_retries + 1）
+}
+```
 **CircuitBreakerConfig 默认值**（`circuit_breaker.rs:63`）：
 
 | 参数 | 默认值 | 说明 |
