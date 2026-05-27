@@ -584,7 +584,17 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - `mutate_settings` 是私有函数，外部模块不能直接调用
 - `unwrap_or_else` 处理锁中毒（`settings.rs:578`），但仍然可能 panic
 - 写入失败时内存缓存和文件可能不一致
-
+**AppSettings 完整字段分组**（`settings.rs:211-334`）：
+1. **设备级 UI 设置**（`settings.rs:212-256`）：show_in_tray, minimize_to_tray_on_close, use_app_window_controls, enable_claude_plugin_integration, skip_claude_onboarding, launch_on_startup, silent_startup, enable_local_proxy, language
+2. **首次确认标志**（`settings.rs:236-254`）：proxy_confirmed, usage_confirmed, stream_check_confirmed, failover_confirmed, first_run_notice_confirmed, common_config_confirmed
+3. **可见应用**（`settings.rs:258-260`）：visible_apps: Option<VisibleApps>
+4. **设备级目录覆盖**（`settings.rs:262-274`）：claude_config_dir, codex_config_dir, gemini_config_dir, opencode_config_dir, openclaw_config_dir, hermes_config_dir
+5. **当前供应商 ID**（`settings.rs:276-297`）：current_provider_claude, current_provider_claude_desktop, current_provider_codex, current_provider_gemini, current_provider_opencode, current_provider_openclaw, current_provider_hermes
+6. **Skill 同步设置**（`settings.rs:299-305`）：skill_sync_method (SyncMethod), skill_storage_location (SkillStorageLocation)
+7. **WebDAV 同步设置**（`settings.rs:307-313`）：webdav_sync: Option<WebDavSyncSettings>, webdav_backup
+8. **备份策略设置**（`settings.rs:315-321`）：backup_interval_hours, backup_retain_count
+9. **终端设置**（`settings.rs:323-329`）：preferred_terminal
+10. **本机自动迁移状态**（`settings.rs:331-333`）：local_migrations: Option<LocalMigrations>
 ### 3.6 各工具 config 模块对比
 
 | 工具 | 文件 | 实际大小 | 配置路径 |
