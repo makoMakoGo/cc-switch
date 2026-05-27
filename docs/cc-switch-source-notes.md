@@ -1037,6 +1037,13 @@ trait ToolConfig {
 - `forwarder.rs`（122.1KB）拆分成多个职责单一的模块
 - 抽取公共的 API 格式转换框架
 - 统一错误处理和日志记录
+**重构优先级排序**（按收益/风险比）：
+1. 抽取 `ToolConfig` trait（中等风险，高收益）— 减少 7 个 config 模块的重复代码
+2. 拆分 `lib.rs`（低风险，中等收益）— 1825 行的上帝文件需要拆分
+3. 拆分 `services/proxy.rs`（中等风险，高收益）— 141.3KB 的 ProxyService 需要拆分
+4. 拆分 `forwarder.rs`（高风险，高收益）— 122.1KB 的 RequestForwarder 需要拆分
+5. 统一 `AppType` match（低风险，中等收益）— 减少 10+ 处重复 match
+6. 强类型化 `Provider.settings_config`（高风险，高收益）— 用 enum 替代 `serde_json::Value`
 
 ---
 
