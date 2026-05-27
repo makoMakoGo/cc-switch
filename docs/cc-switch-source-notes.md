@@ -523,6 +523,38 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**McpServer**（`app_config.rs:222`）：
+```rust
+pub struct McpServer {  // app_config.rs:222
+    pub id: String,
+    pub name: String,
+    pub server: serde_json::Value,  // 服务器配置（JSON）
+    pub apps: McpApps,               // 应用启用状态
+    pub description: Option<String>,
+    pub homepage: Option<String>,
+    pub docs: Option<String>,
+    pub tags: Vec<String>,
+}
+```
+**McpConfig**（`app_config.rs:239`）— 单客户端维度（v3.6.x 向后兼容）：
+```rust
+pub struct McpConfig {  // app_config.rs:239
+    pub servers: HashMap<String, serde_json::Value>,
+}
+```
+**McpRoot**（`app_config.rs:254`）— v3.7.0 新旧结构并存：
+```rust
+pub struct McpRoot {  // app_config.rs:254
+    pub servers: Option<HashMap<String, McpServer>>,  // v3.7.0+ 统一存储
+    pub claude: McpConfig,       // 旧的分应用存储
+    pub claude_desktop: McpConfig,
+    pub codex: McpConfig,
+    pub gemini: McpConfig,
+    pub opencode: McpConfig,
+    pub openclaw: McpConfig,
+    pub hermes: McpConfig,
+}
+```
 **InstalledSkill**（`app_config.rs:169`）：
 ```rust
 pub struct InstalledSkill {  // app_config.rs:169
@@ -657,6 +689,38 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**McpServer**（`app_config.rs:222`）：
+```rust
+pub struct McpServer {  // app_config.rs:222
+    pub id: String,
+    pub name: String,
+    pub server: serde_json::Value,  // 服务器配置（JSON）
+    pub apps: McpApps,               // 应用启用状态
+    pub description: Option<String>,
+    pub homepage: Option<String>,
+    pub docs: Option<String>,
+    pub tags: Vec<String>,
+}
+```
+**McpConfig**（`app_config.rs:239`）— 单客户端维度（v3.6.x 向后兼容）：
+```rust
+pub struct McpConfig {  // app_config.rs:239
+    pub servers: HashMap<String, serde_json::Value>,
+}
+```
+**McpRoot**（`app_config.rs:254`）— v3.7.0 新旧结构并存：
+```rust
+pub struct McpRoot {  // app_config.rs:254
+    pub servers: Option<HashMap<String, McpServer>>,  // v3.7.0+ 统一存储
+    pub claude: McpConfig,       // 旧的分应用存储
+    pub claude_desktop: McpConfig,
+    pub codex: McpConfig,
+    pub gemini: McpConfig,
+    pub opencode: McpConfig,
+    pub openclaw: McpConfig,
+    pub hermes: McpConfig,
+}
+```
 **InstalledSkill**（`app_config.rs:169`）：
 ```rust
 pub struct InstalledSkill {  // app_config.rs:169
