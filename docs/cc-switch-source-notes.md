@@ -3342,6 +3342,23 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**handlers.rs**（`proxy/handlers.rs`，1266 行，43.6KB）：
+```rust
+// proxy/handlers.rs:1
+//! 请求处理器
+//! 处理各种API端点的HTTP请求
+//! 重构后的结构：
+//! - 通用逻辑提取到 handler_context 和 response_processor 模块
+//! - 各 handler 只保留独特的业务逻辑
+//! - Claude 的格式转换逻辑保留在此文件（用于 OpenRouter 旧接口回退）
+```
+- 处理器配置：`CLAUDE_PARSER_CONFIG`、`CODEX_PARSER_CONFIG`、`GEMINI_PARSER_CONFIG`、`OPENAI_PARSER_CONFIG`
+- 格式转换：`transform()`、`transform_codex_chat()`、`transform_gemini()`、`transform_responses()`
+- 流式处理：`create_anthropic_sse_stream()`、`create_responses_sse_stream_from_chat()`
+- `RequestContext`（`handler_context.rs:371`）— 请求上下文
+- `process_response()`（`response_processor.rs`）— 处理响应
+- `SseUsageCollector`（`response_processor.rs`）— SSE 使用量收集器
+- `ActiveConnectionGuard`（`forwarder.rs:61`）— 活跃连接守卫
 **webdav.rs**（`services/webdav.rs`，554 行，18.0KB）：
 ```rust
 // services/webdav.rs:13
@@ -3748,6 +3765,23 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**handlers.rs**（`proxy/handlers.rs`，1266 行，43.6KB）：
+```rust
+// proxy/handlers.rs:1
+//! 请求处理器
+//! 处理各种API端点的HTTP请求
+//! 重构后的结构：
+//! - 通用逻辑提取到 handler_context 和 response_processor 模块
+//! - 各 handler 只保留独特的业务逻辑
+//! - Claude 的格式转换逻辑保留在此文件（用于 OpenRouter 旧接口回退）
+```
+- 处理器配置：`CLAUDE_PARSER_CONFIG`、`CODEX_PARSER_CONFIG`、`GEMINI_PARSER_CONFIG`、`OPENAI_PARSER_CONFIG`
+- 格式转换：`transform()`、`transform_codex_chat()`、`transform_gemini()`、`transform_responses()`
+- 流式处理：`create_anthropic_sse_stream()`、`create_responses_sse_stream_from_chat()`
+- `RequestContext`（`handler_context.rs:371`）— 请求上下文
+- `process_response()`（`response_processor.rs`）— 处理响应
+- `SseUsageCollector`（`response_processor.rs`）— SSE 使用量收集器
+- `ActiveConnectionGuard`（`forwarder.rs:61`）— 活跃连接守卫
 **webdav.rs**（`services/webdav.rs`，554 行，18.0KB）：
 ```rust
 // services/webdav.rs:13
