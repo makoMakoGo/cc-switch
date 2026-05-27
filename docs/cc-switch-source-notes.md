@@ -2112,6 +2112,20 @@ HalfOpen（半开）
 
 **App.tsx** 是前端的"上帝文件"（`src/App.tsx`）。
 
+**View 类型**（`src/App.tsx:94`）：
+```typescript
+type View =
+  | "providers" | "settings" | "prompts" | "skills"
+  | "skillsDiscovery" | "mcp" | "agents" | "universal"
+  | "sessions" | "workspace" | "openclawEnv"
+  | "openclawTools" | "openclawAgents" | "hermesMemory";
+```
+- 14 个视图类型（`src/App.tsx:94-108`）
+- `VALID_APPS`（`src/App.tsx:120`）— 7 个有效应用 ID
+- `STORAGE_KEY = "cc-switch-last-app"`（`src/App.tsx:119`）
+- `getInitialApp()`（`src/App.tsx:130`）— 从 localStorage 获取初始应用
+- `DEFAULT_DRAG_BAR_HEIGHT`（`src/App.tsx:116`）— Windows/Linux 为 0，macOS 为 28px
+- `HEADER_HEIGHT = 64`（`src/App.tsx:117`）
 **视图切换实现**：
 
 ```typescript
