@@ -1403,7 +1403,12 @@ useTauriEvent("provider-changed", (event) => {
 ### 7.2 中等重构（3-5 天）
 
 **拆分过大的文件**：
-- `lib.rs`（1825 行）→ `init.rs`（初始化逻辑 `lib.rs:284-1070`）+ `lib.rs`（仅模块声明 `lib.rs:1-36`）
+- `lib.rs`（1825 行）→ 拆分建议：
+  - `lib.rs` — 仅模块声明（`lib.rs:1-36`）+ `run()` 函数骨架
+  - `init.rs` — `.setup()` 闭包逻辑（`lib.rs:284-1070`）
+  - `commands_register.rs` — `.invoke_handler()` 命令注册（`lib.rs:1072-1377`）
+  - `cleanup.rs` — `cleanup_before_exit()` 和 `restore_proxy_state_on_startup()`（`lib.rs:1513-1598`）
+  - `common_config.rs` — `initialize_common_config_snippets()`（`lib.rs:1601`）
 - `services/proxy.rs`（141.3KB）→ 拆分成 `takeover.rs`, `hot_switch.rs`, `config.rs`
 - `provider/mod.rs`（105.5KB）→ 拆分成多个子模块
 - `App.tsx`（1604 行）→ 每个视图一个文件 + `AppRouter.tsx`
