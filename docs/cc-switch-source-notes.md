@@ -3342,6 +3342,26 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**ProviderService**（`services/provider/mod.rs`，2767 行，105.5KB）：
+```rust
+// services/provider/mod.rs:46
+pub struct ProviderService;
+
+#[derive(Debug, serde::Serialize, Default)]
+pub struct SwitchResult {  // services/provider/mod.rs:51
+    pub warnings: Vec<String>,
+}
+```
+- 子模块：`endpoints`、`gemini_auth`、`live`、`usage`
+- `live` 子模块管理 Claude Code 的 Live 配置（`import_default_config`、`sync_current_to_live`）
+- `sanitize_claude_settings_for_live()`（`pub(crate)`）— 清理 Claude 设置
+- `build_effective_settings_with_common_config()` — 构建有效设置
+- `normalize_provider_common_config_for_storage()` — 规范化通用配置
+- `provider_exists_in_live_config()` — 检查 provider 是否存在于 Live 配置
+- `strip_common_config_from_live_settings()` — 从 Live 设置中剥离通用配置
+- `sync_current_provider_for_app_to_live()` — 同步当前 provider 到 Live 配置
+- `write_live_with_common_config()` — 写入带通用配置的 Live 配置
+- `validate_usage_script()`（`usage` 子模块）— 验证用量脚本
 **ProxyPanel**（`components/proxy/ProxyPanel.tsx`，733 行）：
 ```typescript
 // ProxyPanel.tsx:40
