@@ -1234,6 +1234,11 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**useStreamCheck**（`src/hooks/useStreamCheck.ts`，141 行）：
+- `checkProvider()`（`useStreamCheck.ts:16`）— 检查单个 provider 的流式响应
+- 状态：operational（正常）/ degraded（响应慢）/ error（失败）
+- 测试通过后自动重置熔断器状态（`resetCircuitBreaker.mutate()`）
+- 使用 `Set<string>` 跟踪正在检查的 provider
 **useOpenClaw**（`src/hooks/useOpenClaw.ts`，145 行）：
 ```typescript
 export const openclawKeys = {  // useOpenClaw.ts:14
