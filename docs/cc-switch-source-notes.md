@@ -785,6 +785,17 @@ impl Drop for ActiveConnectionGuard {
 - Gemini API ↔ 内部格式转换
 **transform_responses.rs 模块**（`providers/transform_responses.rs`，61.5KB）：
 - OpenAI Responses API 转换
+**model_mapper 模块**（`proxy/model_mapper.rs`，313 行，10.4KB）：
+```rust
+pub struct ModelMapping {         // proxy/model_mapper.rs:10
+    pub haiku_model: Option<String>,
+    pub sonnet_model: Option<String>,
+    pub opus_model: Option<String>,
+    pub default_model: Option<String>,
+}
+```
+- `ModelMapping::from_provider()`（`model_mapper.rs:19`）— 从 Provider 配置提取映射
+- 映射 `ANTHROPIC_DEFAULT_HAIKU_MODEL` 等环境变量到模型名称
 ### 4.2 ProxyState 和 ProxyServer
 **ProxyError 枚举**（`proxy/error.rs:10`）— 20 个变体：
 ```rust
