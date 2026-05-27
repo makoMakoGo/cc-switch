@@ -2305,6 +2305,41 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**mcpApi**（`src/lib/api/mcp.ts`，130 行）：
+```typescript
+export const mcpApi = {  // mcp.ts:11
+    async getStatus(): Promise<McpStatus> {
+        return await invoke("get_claude_mcp_status");
+    },
+    async readConfig(): Promise<string | null> {
+        return await invoke("read_claude_mcp_config");
+    },
+    async upsertServer(id: string, spec: McpServerSpec): Promise<boolean> {
+        return await invoke("upsert_claude_mcp_server", { id, spec });
+    },
+    async deleteServer(id: string): Promise<boolean> {
+        return await invoke("delete_claude_mcp_server", { id });
+    },
+    async validateCommand(cmd: string): Promise<boolean> {
+        return await invoke("validate_mcp_command", { cmd });
+    },
+    // v3.7.0+ 统一 API
+    async getAllServers(): Promise<McpServersMap> {
+        return await invoke("get_mcp_servers");
+    },
+    async upsertUnifiedServer(server: McpServer): Promise<boolean> {
+        return await invoke("upsert_mcp_server", { server });
+    },
+    async toggleApp(serverId: string, app: AppId, enabled: boolean): Promise<boolean> {
+        return await invoke("toggle_mcp_app", { serverId, app, enabled });
+    },
+    // ... 更多方法
+};
+```
+- 旧 API（`getConfig`, `upsertServerInConfig`）已标记 `@deprecated`，v3.7.0+ 使用统一 API
+- `McpStatus`（`mcp.ts:12`）— MCP 状态接口
+- `McpServerSpec`（`mcp.ts:5`）— MCP 服务器规格
+- `McpServersMap`（`mcp.ts:6`）— MCP 服务器映射
 **settingsApi**（`src/lib/api/settings.ts`，309 行）：
 ```typescript
 export const settingsApi = {  // settings.ts:21
