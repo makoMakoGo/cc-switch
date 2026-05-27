@@ -2305,6 +2305,39 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**settingsApi**（`src/lib/api/settings.ts`，309 行）：
+```typescript
+export const settingsApi = {  // settings.ts:21
+    async get(): Promise<Settings> {
+        return await invoke("get_settings");
+    },
+    async save(settings: Settings): Promise<boolean> {
+        return await invoke("save_settings", { settings });
+    },
+    async restart(): Promise<boolean> {
+        return await invoke("restart_app");
+    },
+    async checkUpdates(): Promise<void> {
+        await invoke("check_for_updates");
+    },
+    async isPortable(): Promise<boolean> {
+        return await invoke("is_portable_mode");
+    },
+    async getConfigDir(appId: AppId): Promise<string> {
+        return await invoke("get_config_dir", { app: appId });
+    },
+    async openConfigFolder(appId: AppId): Promise<void> {
+        await invoke("open_config_folder", { app: appId });
+    },
+    async pickDirectory(defaultPath?: string): Promise<string | null> {
+        return await invoke("pick_directory", { defaultPath });
+    },
+    // ... 更多方法
+};
+```
+- `ConfigTransferResult`（`settings.ts:5`）— 配置传输结果
+- `WebDavTestResult`（`settings.ts:12`）— WebDAV 测试结果
+- `WebDavSyncResult`（`settings.ts:17`）— WebDAV 同步结果
 **providersApi**（`src/lib/api/providers.ts`，237 行）：
 ```typescript
 export const providersApi = {  // providers.ts:49
