@@ -558,6 +558,42 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**updater.ts**（`src/lib/updater.ts`，127 行）：
+```typescript
+// src/lib/updater.ts:8
+export type UpdateChannel = "stable" | "beta";
+// src/lib/updater.ts:10
+export type UpdaterPhase = "idle" | "checking" | "available" | "downloading" | "installing" | "restarting" | "upToDate" | "error";
+// src/lib/updater.ts:20
+export interface UpdateInfo {
+    currentVersion: string;
+    availableVersion: string;
+    notes?: string;
+    pubDate?: string;
+}
+// src/lib/updater.ts:27
+export interface UpdateProgressEvent {
+    event: "Started" | "Progress" | "Finished";
+    total?: number;
+    downloaded?: number;
+}
+// src/lib/updater.ts:33
+export interface UpdateHandle {
+    version: string;
+    notes?: string;
+    date?: string;
+    downloadAndInstall: (onProgress?: (e: UpdateProgressEvent) => void) => Promise<void>;
+    download?: () => Promise<void>;
+    install?: () => Promise<void>;
+}
+```
+- `UpdateChannel`（`updater.ts:8`）— 更新通道：`"stable"` 或 `"beta"`
+- `UpdaterPhase`（`updater.ts:10`）— 更新器阶段：idle → checking → available → downloading → installing → restarting
+- `UpdateInfo`（`updater.ts:20`）— 更新信息（currentVersion、availableVersion、notes、pubDate）
+- `UpdateProgressEvent`（`updater.ts:27`）— 下载进度事件（Started、Progress、Finished）
+- `UpdateHandle`（`updater.ts:33`）— 更新句柄（version、notes、date、downloadAndInstall）
+- 使用 `@tauri-apps/plugin-updater` 插件
+- 可选导入：在未注册插件或非 Tauri 环境下，调用时会抛错，外层需做兜底
 **platform.ts**（`src/lib/platform.ts`，49 行）：
 ```typescript
 // src/lib/platform.ts:2
@@ -1184,6 +1220,42 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**updater.ts**（`src/lib/updater.ts`，127 行）：
+```typescript
+// src/lib/updater.ts:8
+export type UpdateChannel = "stable" | "beta";
+// src/lib/updater.ts:10
+export type UpdaterPhase = "idle" | "checking" | "available" | "downloading" | "installing" | "restarting" | "upToDate" | "error";
+// src/lib/updater.ts:20
+export interface UpdateInfo {
+    currentVersion: string;
+    availableVersion: string;
+    notes?: string;
+    pubDate?: string;
+}
+// src/lib/updater.ts:27
+export interface UpdateProgressEvent {
+    event: "Started" | "Progress" | "Finished";
+    total?: number;
+    downloaded?: number;
+}
+// src/lib/updater.ts:33
+export interface UpdateHandle {
+    version: string;
+    notes?: string;
+    date?: string;
+    downloadAndInstall: (onProgress?: (e: UpdateProgressEvent) => void) => Promise<void>;
+    download?: () => Promise<void>;
+    install?: () => Promise<void>;
+}
+```
+- `UpdateChannel`（`updater.ts:8`）— 更新通道：`"stable"` 或 `"beta"`
+- `UpdaterPhase`（`updater.ts:10`）— 更新器阶段：idle → checking → available → downloading → installing → restarting
+- `UpdateInfo`（`updater.ts:20`）— 更新信息（currentVersion、availableVersion、notes、pubDate）
+- `UpdateProgressEvent`（`updater.ts:27`）— 下载进度事件（Started、Progress、Finished）
+- `UpdateHandle`（`updater.ts:33`）— 更新句柄（version、notes、date、downloadAndInstall）
+- 使用 `@tauri-apps/plugin-updater` 插件
+- 可选导入：在未注册插件或非 Tauri 环境下，调用时会抛错，外层需做兜底
 **platform.ts**（`src/lib/platform.ts`，49 行）：
 ```typescript
 // src/lib/platform.ts:2
@@ -2187,6 +2259,42 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**updater.ts**（`src/lib/updater.ts`，127 行）：
+```typescript
+// src/lib/updater.ts:8
+export type UpdateChannel = "stable" | "beta";
+// src/lib/updater.ts:10
+export type UpdaterPhase = "idle" | "checking" | "available" | "downloading" | "installing" | "restarting" | "upToDate" | "error";
+// src/lib/updater.ts:20
+export interface UpdateInfo {
+    currentVersion: string;
+    availableVersion: string;
+    notes?: string;
+    pubDate?: string;
+}
+// src/lib/updater.ts:27
+export interface UpdateProgressEvent {
+    event: "Started" | "Progress" | "Finished";
+    total?: number;
+    downloaded?: number;
+}
+// src/lib/updater.ts:33
+export interface UpdateHandle {
+    version: string;
+    notes?: string;
+    date?: string;
+    downloadAndInstall: (onProgress?: (e: UpdateProgressEvent) => void) => Promise<void>;
+    download?: () => Promise<void>;
+    install?: () => Promise<void>;
+}
+```
+- `UpdateChannel`（`updater.ts:8`）— 更新通道：`"stable"` 或 `"beta"`
+- `UpdaterPhase`（`updater.ts:10`）— 更新器阶段：idle → checking → available → downloading → installing → restarting
+- `UpdateInfo`（`updater.ts:20`）— 更新信息（currentVersion、availableVersion、notes、pubDate）
+- `UpdateProgressEvent`（`updater.ts:27`）— 下载进度事件（Started、Progress、Finished）
+- `UpdateHandle`（`updater.ts:33`）— 更新句柄（version、notes、date、downloadAndInstall）
+- 使用 `@tauri-apps/plugin-updater` 插件
+- 可选导入：在未注册插件或非 Tauri 环境下，调用时会抛错，外层需做兜底
 **platform.ts**（`src/lib/platform.ts`，49 行）：
 ```typescript
 // src/lib/platform.ts:2
@@ -2811,6 +2919,42 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**updater.ts**（`src/lib/updater.ts`，127 行）：
+```typescript
+// src/lib/updater.ts:8
+export type UpdateChannel = "stable" | "beta";
+// src/lib/updater.ts:10
+export type UpdaterPhase = "idle" | "checking" | "available" | "downloading" | "installing" | "restarting" | "upToDate" | "error";
+// src/lib/updater.ts:20
+export interface UpdateInfo {
+    currentVersion: string;
+    availableVersion: string;
+    notes?: string;
+    pubDate?: string;
+}
+// src/lib/updater.ts:27
+export interface UpdateProgressEvent {
+    event: "Started" | "Progress" | "Finished";
+    total?: number;
+    downloaded?: number;
+}
+// src/lib/updater.ts:33
+export interface UpdateHandle {
+    version: string;
+    notes?: string;
+    date?: string;
+    downloadAndInstall: (onProgress?: (e: UpdateProgressEvent) => void) => Promise<void>;
+    download?: () => Promise<void>;
+    install?: () => Promise<void>;
+}
+```
+- `UpdateChannel`（`updater.ts:8`）— 更新通道：`"stable"` 或 `"beta"`
+- `UpdaterPhase`（`updater.ts:10`）— 更新器阶段：idle → checking → available → downloading → installing → restarting
+- `UpdateInfo`（`updater.ts:20`）— 更新信息（currentVersion、availableVersion、notes、pubDate）
+- `UpdateProgressEvent`（`updater.ts:27`）— 下载进度事件（Started、Progress、Finished）
+- `UpdateHandle`（`updater.ts:33`）— 更新句柄（version、notes、date、downloadAndInstall）
+- 使用 `@tauri-apps/plugin-updater` 插件
+- 可选导入：在未注册插件或非 Tauri 环境下，调用时会抛错，外层需做兜底
 **platform.ts**（`src/lib/platform.ts`，49 行）：
 ```typescript
 // src/lib/platform.ts:2
@@ -4759,6 +4903,42 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**updater.ts**（`src/lib/updater.ts`，127 行）：
+```typescript
+// src/lib/updater.ts:8
+export type UpdateChannel = "stable" | "beta";
+// src/lib/updater.ts:10
+export type UpdaterPhase = "idle" | "checking" | "available" | "downloading" | "installing" | "restarting" | "upToDate" | "error";
+// src/lib/updater.ts:20
+export interface UpdateInfo {
+    currentVersion: string;
+    availableVersion: string;
+    notes?: string;
+    pubDate?: string;
+}
+// src/lib/updater.ts:27
+export interface UpdateProgressEvent {
+    event: "Started" | "Progress" | "Finished";
+    total?: number;
+    downloaded?: number;
+}
+// src/lib/updater.ts:33
+export interface UpdateHandle {
+    version: string;
+    notes?: string;
+    date?: string;
+    downloadAndInstall: (onProgress?: (e: UpdateProgressEvent) => void) => Promise<void>;
+    download?: () => Promise<void>;
+    install?: () => Promise<void>;
+}
+```
+- `UpdateChannel`（`updater.ts:8`）— 更新通道：`"stable"` 或 `"beta"`
+- `UpdaterPhase`（`updater.ts:10`）— 更新器阶段：idle → checking → available → downloading → installing → restarting
+- `UpdateInfo`（`updater.ts:20`）— 更新信息（currentVersion、availableVersion、notes、pubDate）
+- `UpdateProgressEvent`（`updater.ts:27`）— 下载进度事件（Started、Progress、Finished）
+- `UpdateHandle`（`updater.ts:33`）— 更新句柄（version、notes、date、downloadAndInstall）
+- 使用 `@tauri-apps/plugin-updater` 插件
+- 可选导入：在未注册插件或非 Tauri 环境下，调用时会抛错，外层需做兜底
 **platform.ts**（`src/lib/platform.ts`，49 行）：
 ```typescript
 // src/lib/platform.ts:2
@@ -5908,6 +6088,42 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**updater.ts**（`src/lib/updater.ts`，127 行）：
+```typescript
+// src/lib/updater.ts:8
+export type UpdateChannel = "stable" | "beta";
+// src/lib/updater.ts:10
+export type UpdaterPhase = "idle" | "checking" | "available" | "downloading" | "installing" | "restarting" | "upToDate" | "error";
+// src/lib/updater.ts:20
+export interface UpdateInfo {
+    currentVersion: string;
+    availableVersion: string;
+    notes?: string;
+    pubDate?: string;
+}
+// src/lib/updater.ts:27
+export interface UpdateProgressEvent {
+    event: "Started" | "Progress" | "Finished";
+    total?: number;
+    downloaded?: number;
+}
+// src/lib/updater.ts:33
+export interface UpdateHandle {
+    version: string;
+    notes?: string;
+    date?: string;
+    downloadAndInstall: (onProgress?: (e: UpdateProgressEvent) => void) => Promise<void>;
+    download?: () => Promise<void>;
+    install?: () => Promise<void>;
+}
+```
+- `UpdateChannel`（`updater.ts:8`）— 更新通道：`"stable"` 或 `"beta"`
+- `UpdaterPhase`（`updater.ts:10`）— 更新器阶段：idle → checking → available → downloading → installing → restarting
+- `UpdateInfo`（`updater.ts:20`）— 更新信息（currentVersion、availableVersion、notes、pubDate）
+- `UpdateProgressEvent`（`updater.ts:27`）— 下载进度事件（Started、Progress、Finished）
+- `UpdateHandle`（`updater.ts:33`）— 更新句柄（version、notes、date、downloadAndInstall）
+- 使用 `@tauri-apps/plugin-updater` 插件
+- 可选导入：在未注册插件或非 Tauri 环境下，调用时会抛错，外层需做兜底
 **platform.ts**（`src/lib/platform.ts`，49 行）：
 ```typescript
 // src/lib/platform.ts:2
