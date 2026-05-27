@@ -948,6 +948,11 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**gemini_schema 模块**（`proxy/providers/gemini_schema.rs`，339 行）：
+- Gemini tool schema helpers
+- `GeminiFunctionParameters`（`gemini_schema.rs:13`）— Schema 或 JsonSchema 二选一
+- `build_gemini_function_parameters()`（`gemini_schema.rs:18`）— 构建 Gemini function 参数
+- `ensure_object_schema()`（`gemini_schema.rs:38`）— 确保 schema 有 `type: "object"`
 **transform_responses 模块**（`proxy/providers/transform_responses.rs`，1675 行，61.5KB）：
 - Anthropic Messages ↔ OpenAI Responses API 双向转换
 - Responses API（2025 年推出）：扁平化 input/output 结构
