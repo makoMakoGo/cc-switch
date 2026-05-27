@@ -523,6 +523,17 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**WebDavSyncStatus**（`settings.rs:82`）：
+```rust
+pub struct WebDavSyncStatus {  // settings.rs:82
+    pub last_sync_at: Option<i64>,             // 上次同步时间
+    pub last_error: Option<String>,            // 上次错误信息
+    pub last_error_source: Option<String>,     // 错误来源
+    pub last_remote_etag: Option<String>,      // 远程 ETag
+    pub last_local_manifest_hash: Option<String>,  // 本地清单哈希
+    pub last_remote_manifest_hash: Option<String>, // 远程清单哈希
+}
+```
 **VisibleApps**（`settings.rs:28`）：
 
 ```rust
@@ -580,6 +591,17 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**WebDavSyncStatus**（`settings.rs:82`）：
+```rust
+pub struct WebDavSyncStatus {  // settings.rs:82
+    pub last_sync_at: Option<i64>,             // 上次同步时间
+    pub last_error: Option<String>,            // 上次错误信息
+    pub last_error_source: Option<String>,     // 错误来源
+    pub last_remote_etag: Option<String>,      // 远程 ETag
+    pub last_local_manifest_hash: Option<String>,  // 本地清单哈希
+    pub last_remote_manifest_hash: Option<String>, // 远程清单哈希
+}
+```
 **VisibleApps**（`settings.rs:28`）：
 ```rust
 pub struct VisibleApps {  // settings.rs:28
