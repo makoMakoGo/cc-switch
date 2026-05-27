@@ -558,6 +558,18 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**Query Layer Index**（`src/lib/query/index.ts`，6 行）：
+- Query 层统一导出入口
+- 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
+- `queryClient.ts`（264B）— QueryClient 配置
+- `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
+- `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
+- `proxy.ts`（6.5KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
+- `subscription.ts`（2.1KB）— 订阅查询钩子（useSubscriptionQuota）
+- `copilot.ts`（1.7KB）— Copilot 查询钩子（useCopilotQuota）
+- `failover.ts`（7.9KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
+- `omo.ts`（2.6KB）— OMO 查询钩子（工厂模式）
+- `usage.ts`（8.5KB）— 用量查询钩子
 **copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
 ```typescript
 // src/lib/query/copilot.ts:5
@@ -1155,6 +1167,18 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**Query Layer Index**（`src/lib/query/index.ts`，6 行）：
+- Query 层统一导出入口
+- 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
+- `queryClient.ts`（264B）— QueryClient 配置
+- `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
+- `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
+- `proxy.ts`（6.5KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
+- `subscription.ts`（2.1KB）— 订阅查询钩子（useSubscriptionQuota）
+- `copilot.ts`（1.7KB）— Copilot 查询钩子（useCopilotQuota）
+- `failover.ts`（7.9KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
+- `omo.ts`（2.6KB）— OMO 查询钩子（工厂模式）
+- `usage.ts`（8.5KB）— 用量查询钩子
 **copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
 ```typescript
 // src/lib/query/copilot.ts:5
@@ -2129,6 +2153,18 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**Query Layer Index**（`src/lib/query/index.ts`，6 行）：
+- Query 层统一导出入口
+- 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
+- `queryClient.ts`（264B）— QueryClient 配置
+- `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
+- `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
+- `proxy.ts`（6.5KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
+- `subscription.ts`（2.1KB）— 订阅查询钩子（useSubscriptionQuota）
+- `copilot.ts`（1.7KB）— Copilot 查询钩子（useCopilotQuota）
+- `failover.ts`（7.9KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
+- `omo.ts`（2.6KB）— OMO 查询钩子（工厂模式）
+- `usage.ts`（8.5KB）— 用量查询钩子
 **copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
 ```typescript
 // src/lib/query/copilot.ts:5
@@ -2724,6 +2760,18 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**Query Layer Index**（`src/lib/query/index.ts`，6 行）：
+- Query 层统一导出入口
+- 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
+- `queryClient.ts`（264B）— QueryClient 配置
+- `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
+- `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
+- `proxy.ts`（6.5KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
+- `subscription.ts`（2.1KB）— 订阅查询钩子（useSubscriptionQuota）
+- `copilot.ts`（1.7KB）— Copilot 查询钩子（useCopilotQuota）
+- `failover.ts`（7.9KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
+- `omo.ts`（2.6KB）— OMO 查询钩子（工厂模式）
+- `usage.ts`（8.5KB）— 用量查询钩子
 **copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
 ```typescript
 // src/lib/query/copilot.ts:5
@@ -4643,6 +4691,18 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**Query Layer Index**（`src/lib/query/index.ts`，6 行）：
+- Query 层统一导出入口
+- 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
+- `queryClient.ts`（264B）— QueryClient 配置
+- `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
+- `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
+- `proxy.ts`（6.5KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
+- `subscription.ts`（2.1KB）— 订阅查询钩子（useSubscriptionQuota）
+- `copilot.ts`（1.7KB）— Copilot 查询钩子（useCopilotQuota）
+- `failover.ts`（7.9KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
+- `omo.ts`（2.6KB）— OMO 查询钩子（工厂模式）
+- `usage.ts`（8.5KB）— 用量查询钩子
 **copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
 ```typescript
 // src/lib/query/copilot.ts:5
@@ -5763,6 +5823,18 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**Query Layer Index**（`src/lib/query/index.ts`，6 行）：
+- Query 层统一导出入口
+- 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
+- `queryClient.ts`（264B）— QueryClient 配置
+- `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
+- `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
+- `proxy.ts`（6.5KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
+- `subscription.ts`（2.1KB）— 订阅查询钩子（useSubscriptionQuota）
+- `copilot.ts`（1.7KB）— Copilot 查询钩子（useCopilotQuota）
+- `failover.ts`（7.9KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
+- `omo.ts`（2.6KB）— OMO 查询钩子（工厂模式）
+- `usage.ts`（8.5KB）— 用量查询钩子
 **copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
 ```typescript
 // src/lib/query/copilot.ts:5
