@@ -1234,6 +1234,12 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**useDragSort**（`src/hooks/useDragSort.ts`，120 行）：
+- `useDragSort(providers, appId)`（`useDragSort.ts:16`）— Provider 拖拽排序
+- 使用 `@dnd-kit/core` 和 `@dnd-kit/sortable` 库
+- `sortedProviders`（`useDragSort.ts:20`）— 按 sortIndex → createdAt → name 排序
+- 排序规则：`sortIndex` > `createdAt` > `localeCompare(name)`
+- 拖拽结束后调用 `providersApi.updateSortOrder()` 保存排序
 **usePromptActions**（`src/hooks/usePromptActions.ts`，153 行）：
 - `usePromptActions(appId)`（`usePromptActions.ts:6`）— Prompt CRUD 操作
 - `reload()`（`usePromptActions.ts:14`）— 重新加载 prompts 和当前文件内容
