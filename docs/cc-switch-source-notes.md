@@ -2305,6 +2305,56 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**前端代理类型**（`src/types/proxy.ts`，141 行）：
+```typescript
+export interface ProxyConfig {  // proxy.ts:1
+    listen_address: string;
+    listen_port: number;
+    max_retries: number;
+    request_timeout: number;
+    enable_logging: boolean;
+    live_takeover_active?: boolean;
+    streaming_first_byte_timeout: number;
+    streaming_idle_timeout: number;
+    non_streaming_timeout: number;
+}
+export interface ProxyStatus {  // proxy.ts:14
+    running: boolean;
+    address: string;
+    port: number;
+    active_connections: number;
+    total_requests: number;
+    success_requests: number;
+    failed_requests: number;
+    success_rate: number;
+    uptime_seconds: number;
+    current_provider: string | null;
+    current_provider_id: string | null;
+    last_request_at: string | null;
+    last_error: string | null;
+    failover_count: number;
+    active_targets?: ActiveTarget[];
+}
+export interface ActiveTarget {  // proxy.ts:32
+    app_type: string;
+    provider_name: string;
+    provider_id: string;
+}
+export interface ProxyServerInfo {  // proxy.ts:38
+    address: string;
+    port: number;
+    started_at: string;
+}
+export interface ProxyTakeoverStatus {  // proxy.ts:44
+    claude: boolean;
+    "claude-desktop"?: boolean;
+    codex: boolean;
+    gemini: boolean;
+    opencode: boolean;
+    openclaw: boolean;
+    hermes: boolean;
+}
+```
 **前端使用统计类型**（`src/types/usage.ts`，247 行）：
 ```typescript
 export interface TokenUsage {  // usage.ts:3
