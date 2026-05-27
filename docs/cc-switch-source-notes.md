@@ -1234,6 +1234,12 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**useGlobalProxy**（`src/hooks/useGlobalProxy.ts`，110 行）：
+- `useGlobalProxyUrl()`（`useGlobalProxy.ts:24`）— 获取全局代理 URL（`staleTime: 30s`）
+- `useSetGlobalProxyUrl()`（`useGlobalProxy.ts:35`）— 设置全局代理 URL
+- `testProxyUrl` — 测试代理 URL 连通性
+- `getUpstreamProxyStatus` — 获取上游代理状态
+- `scanLocalProxies` — 扫描本地代理
 **useStreamCheck**（`src/hooks/useStreamCheck.ts`，141 行）：
 - `checkProvider()`（`useStreamCheck.ts:16`）— 检查单个 provider 的流式响应
 - 状态：operational（正常）/ degraded（响应慢）/ error（失败）
