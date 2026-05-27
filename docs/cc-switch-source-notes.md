@@ -948,6 +948,13 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**copilot_auth 模块**（`proxy/providers/copilot_auth.rs`，2095 行）：
+- GitHub OAuth 设备码流程和 Copilot 令牌管理
+- `GITHUB_CLIENT_ID`（`copilot_auth.rs:28`）— VS Code OAuth 客户端 ID
+- `GITHUB_CLIENT_ID_GHES`（`copilot_auth.rs:31`）— GHES Copilot 客户端 ID
+- 多账号支持（v3）：每个 GitHub 账号独立存储 token
+- 自动刷新 Copilot token（到期前 60 秒）
+- 认证流程：设备码 → 用户授权 → 轮询 access_token → 获取 Copilot token
 **providers/mod.rs 模块**（`proxy/providers/mod.rs`，518 行，24 个子模块）：
 - `adapter` — 定义 `ProviderAdapter` trait
 - `auth` — 认证类型和策略
