@@ -558,6 +558,34 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**omo.ts**（`src/lib/query/omo.ts`，77 行）：
+```typescript
+// src/lib/query/omo.ts:6
+function createOmoQueryKeys(prefix: string) {
+    return {
+        all: [prefix] as const,
+        currentProviderId: () => [prefix, "current-provider-id"] as const,
+    };
+}
+function createOmoQueryHooks(variant: "omo" | "omo-slim", api: typeof omoApi | typeof omoSlimApi) {
+    const keys = createOmoQueryKeys(variant);
+    function invalidateAll(queryClient) {
+        queryClient.invalidateQueries({ queryKey: ["providers"] });
+        queryClient.invalidateQueries({ queryKey: keys.currentProviderId() });
+    }
+    function useCurrentProviderId(enabled = true) { /* ... */ }
+    function useReadLocalFile() { /* ... */ }
+    function useDisableCurrent() { /* ... */ }
+    return { invalidateAll, useCurrentProviderId, useReadLocalFile, useDisableCurrent };
+}
+export const omo = createOmoQueryHooks("omo", omoApi);
+export const omoSlim = createOmoQueryHooks("omo-slim", omoSlimApi);
+```
+- 工厂模式：`createOmoQueryKeys()` 和 `createOmoQueryHooks()` 为 OMO 和 OMO-Slim 两个变体生成查询钩子
+- `useCurrentProviderId()` — 获取当前 provider ID
+- `useReadLocalFile()` — 读取本地配置文件
+- `useDisableCurrent()` — 禁用当前 provider
+- `invalidateAll()` — 刷新所有相关查询
 **subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
 ```typescript
 // src/lib/query/subscription.ts:8
@@ -877,6 +905,34 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**omo.ts**（`src/lib/query/omo.ts`，77 行）：
+```typescript
+// src/lib/query/omo.ts:6
+function createOmoQueryKeys(prefix: string) {
+    return {
+        all: [prefix] as const,
+        currentProviderId: () => [prefix, "current-provider-id"] as const,
+    };
+}
+function createOmoQueryHooks(variant: "omo" | "omo-slim", api: typeof omoApi | typeof omoSlimApi) {
+    const keys = createOmoQueryKeys(variant);
+    function invalidateAll(queryClient) {
+        queryClient.invalidateQueries({ queryKey: ["providers"] });
+        queryClient.invalidateQueries({ queryKey: keys.currentProviderId() });
+    }
+    function useCurrentProviderId(enabled = true) { /* ... */ }
+    function useReadLocalFile() { /* ... */ }
+    function useDisableCurrent() { /* ... */ }
+    return { invalidateAll, useCurrentProviderId, useReadLocalFile, useDisableCurrent };
+}
+export const omo = createOmoQueryHooks("omo", omoApi);
+export const omoSlim = createOmoQueryHooks("omo-slim", omoSlimApi);
+```
+- 工厂模式：`createOmoQueryKeys()` 和 `createOmoQueryHooks()` 为 OMO 和 OMO-Slim 两个变体生成查询钩子
+- `useCurrentProviderId()` — 获取当前 provider ID
+- `useReadLocalFile()` — 读取本地配置文件
+- `useDisableCurrent()` — 禁用当前 provider
+- `invalidateAll()` — 刷新所有相关查询
 **subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
 ```typescript
 // src/lib/query/subscription.ts:8
@@ -1573,6 +1629,34 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**omo.ts**（`src/lib/query/omo.ts`，77 行）：
+```typescript
+// src/lib/query/omo.ts:6
+function createOmoQueryKeys(prefix: string) {
+    return {
+        all: [prefix] as const,
+        currentProviderId: () => [prefix, "current-provider-id"] as const,
+    };
+}
+function createOmoQueryHooks(variant: "omo" | "omo-slim", api: typeof omoApi | typeof omoSlimApi) {
+    const keys = createOmoQueryKeys(variant);
+    function invalidateAll(queryClient) {
+        queryClient.invalidateQueries({ queryKey: ["providers"] });
+        queryClient.invalidateQueries({ queryKey: keys.currentProviderId() });
+    }
+    function useCurrentProviderId(enabled = true) { /* ... */ }
+    function useReadLocalFile() { /* ... */ }
+    function useDisableCurrent() { /* ... */ }
+    return { invalidateAll, useCurrentProviderId, useReadLocalFile, useDisableCurrent };
+}
+export const omo = createOmoQueryHooks("omo", omoApi);
+export const omoSlim = createOmoQueryHooks("omo-slim", omoSlimApi);
+```
+- 工厂模式：`createOmoQueryKeys()` 和 `createOmoQueryHooks()` 为 OMO 和 OMO-Slim 两个变体生成查询钩子
+- `useCurrentProviderId()` — 获取当前 provider ID
+- `useReadLocalFile()` — 读取本地配置文件
+- `useDisableCurrent()` — 禁用当前 provider
+- `invalidateAll()` — 刷新所有相关查询
 **subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
 ```typescript
 // src/lib/query/subscription.ts:8
@@ -1890,6 +1974,34 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**omo.ts**（`src/lib/query/omo.ts`，77 行）：
+```typescript
+// src/lib/query/omo.ts:6
+function createOmoQueryKeys(prefix: string) {
+    return {
+        all: [prefix] as const,
+        currentProviderId: () => [prefix, "current-provider-id"] as const,
+    };
+}
+function createOmoQueryHooks(variant: "omo" | "omo-slim", api: typeof omoApi | typeof omoSlimApi) {
+    const keys = createOmoQueryKeys(variant);
+    function invalidateAll(queryClient) {
+        queryClient.invalidateQueries({ queryKey: ["providers"] });
+        queryClient.invalidateQueries({ queryKey: keys.currentProviderId() });
+    }
+    function useCurrentProviderId(enabled = true) { /* ... */ }
+    function useReadLocalFile() { /* ... */ }
+    function useDisableCurrent() { /* ... */ }
+    return { invalidateAll, useCurrentProviderId, useReadLocalFile, useDisableCurrent };
+}
+export const omo = createOmoQueryHooks("omo", omoApi);
+export const omoSlim = createOmoQueryHooks("omo-slim", omoSlimApi);
+```
+- 工厂模式：`createOmoQueryKeys()` 和 `createOmoQueryHooks()` 为 OMO 和 OMO-Slim 两个变体生成查询钩子
+- `useCurrentProviderId()` — 获取当前 provider ID
+- `useReadLocalFile()` — 读取本地配置文件
+- `useDisableCurrent()` — 禁用当前 provider
+- `invalidateAll()` — 刷新所有相关查询
 **subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
 ```typescript
 // src/lib/query/subscription.ts:8
@@ -3531,6 +3643,34 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**omo.ts**（`src/lib/query/omo.ts`，77 行）：
+```typescript
+// src/lib/query/omo.ts:6
+function createOmoQueryKeys(prefix: string) {
+    return {
+        all: [prefix] as const,
+        currentProviderId: () => [prefix, "current-provider-id"] as const,
+    };
+}
+function createOmoQueryHooks(variant: "omo" | "omo-slim", api: typeof omoApi | typeof omoSlimApi) {
+    const keys = createOmoQueryKeys(variant);
+    function invalidateAll(queryClient) {
+        queryClient.invalidateQueries({ queryKey: ["providers"] });
+        queryClient.invalidateQueries({ queryKey: keys.currentProviderId() });
+    }
+    function useCurrentProviderId(enabled = true) { /* ... */ }
+    function useReadLocalFile() { /* ... */ }
+    function useDisableCurrent() { /* ... */ }
+    return { invalidateAll, useCurrentProviderId, useReadLocalFile, useDisableCurrent };
+}
+export const omo = createOmoQueryHooks("omo", omoApi);
+export const omoSlim = createOmoQueryHooks("omo-slim", omoSlimApi);
+```
+- 工厂模式：`createOmoQueryKeys()` 和 `createOmoQueryHooks()` 为 OMO 和 OMO-Slim 两个变体生成查询钩子
+- `useCurrentProviderId()` — 获取当前 provider ID
+- `useReadLocalFile()` — 读取本地配置文件
+- `useDisableCurrent()` — 禁用当前 provider
+- `invalidateAll()` — 刷新所有相关查询
 **subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
 ```typescript
 // src/lib/query/subscription.ts:8
@@ -4373,6 +4513,34 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**omo.ts**（`src/lib/query/omo.ts`，77 行）：
+```typescript
+// src/lib/query/omo.ts:6
+function createOmoQueryKeys(prefix: string) {
+    return {
+        all: [prefix] as const,
+        currentProviderId: () => [prefix, "current-provider-id"] as const,
+    };
+}
+function createOmoQueryHooks(variant: "omo" | "omo-slim", api: typeof omoApi | typeof omoSlimApi) {
+    const keys = createOmoQueryKeys(variant);
+    function invalidateAll(queryClient) {
+        queryClient.invalidateQueries({ queryKey: ["providers"] });
+        queryClient.invalidateQueries({ queryKey: keys.currentProviderId() });
+    }
+    function useCurrentProviderId(enabled = true) { /* ... */ }
+    function useReadLocalFile() { /* ... */ }
+    function useDisableCurrent() { /* ... */ }
+    return { invalidateAll, useCurrentProviderId, useReadLocalFile, useDisableCurrent };
+}
+export const omo = createOmoQueryHooks("omo", omoApi);
+export const omoSlim = createOmoQueryHooks("omo-slim", omoSlimApi);
+```
+- 工厂模式：`createOmoQueryKeys()` 和 `createOmoQueryHooks()` 为 OMO 和 OMO-Slim 两个变体生成查询钩子
+- `useCurrentProviderId()` — 获取当前 provider ID
+- `useReadLocalFile()` — 读取本地配置文件
+- `useDisableCurrent()` — 禁用当前 provider
+- `invalidateAll()` — 刷新所有相关查询
 **subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
 ```typescript
 // src/lib/query/subscription.ts:8
