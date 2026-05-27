@@ -2495,6 +2495,34 @@ export const usageKeys = {  // usage.ts:32
 - `RequestLogsKey`（`usage.ts:21`）— 请求日志查询键
 - `LogFilters`（`types/usage.ts`）— 日志过滤器
 - `UsageRangeSelection`（`types/usage.ts`）— 用量范围选择
+**hermesApi**（`src/lib/api/hermes.ts`，68 行）：
+```typescript
+export const hermesApi = {  // hermes.ts:18
+    async getModelConfig(): Promise<HermesModelConfig | null> {
+        return await invoke("get_hermes_model_config");
+    },
+    async openWebUI(path?: string): Promise<void> {
+        await invoke("open_hermes_web_ui", { path: path ?? null });
+    },
+    async launchDashboard(): Promise<void> {
+        await invoke("launch_hermes_dashboard");
+    },
+    async getMemory(kind: HermesMemoryKind): Promise<string> {
+        return await invoke("get_hermes_memory", { kind });
+    },
+    async setMemory(kind: HermesMemoryKind, content: string): Promise<void> {
+        await invoke("set_hermes_memory", { kind, content });
+    },
+    async getMemoryLimits(): Promise<HermesMemoryLimits> {
+        return await invoke("get_hermes_memory_limits");
+    },
+};
+```
+- CC Switch keeps its Hermes surface minimal — deep configuration lives in Hermes Web UI at `http://127.0.0.1:9119`
+- CC Switch only reads the `model` section to highlight the active provider
+- `HermesMemoryKind`（`types.ts`）— `MEMORY.md` 或 `USER.md`
+- `HermesMemoryLimits`（`types.ts`）— 字符预算 + 启用标志
+- `HermesModelConfig`（`types.ts`）— 模型配置
 **前端 API 层**（`src/lib/api/`，25 个文件）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
