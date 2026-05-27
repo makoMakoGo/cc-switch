@@ -1175,6 +1175,11 @@ CREATE TABLE IF NOT EXISTS providers (
     PRIMARY KEY (id, app_type)
 )
 ```
+**failover_queue 重构**（`schema.rs:344-346`）：
+- 旧版：独立的 `failover_queue` 表
+- 新版：`providers` 表的 `in_failover_queue` 列（`schema.rs:41`）
+- 迁移时删除旧表和索引（`DROP TABLE IF EXISTS failover_queue`）
+- 创建联合索引 `idx_providers_failover`（`app_type, in_failover_queue, sort_index`）
 **provider_endpoints 表**（`schema.rs:50`）：
 ```sql
 CREATE TABLE IF NOT EXISTS provider_endpoints (
