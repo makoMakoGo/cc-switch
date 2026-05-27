@@ -3342,6 +3342,21 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**adapter.rs**（`proxy/providers/adapter.rs`，70 行，2.5KB）：
+```rust
+// proxy/providers/adapter.rs:16
+pub trait ProviderAdapter: Send + Sync {
+    fn name(&self) -> &'static str;
+    fn extract_base_url(&self, provider: &Provider) -> Result<String, ProxyError>;
+    fn extract_auth(&self, provider: &Provider) -> Option<AuthInfo>;
+    fn build_url(&self, base_url: &str, endpoint: &str) -> String;
+    fn auth_headers(&self, auth: &AuthInfo) -> Vec<(String, String)>;
+}
+```
+- `ProviderAdapter` trait — 供应商适配器的统一接口
+- 所有供应商适配器都需要实现此 trait
+- 提供统一的接口来处理：URL 构建、认证信息提取和头部注入、请求/响应格式转换（可选）
+- `auth_headers()` 返回 `(name, value)` 对，forwarder 在原始 auth header 位置插入以保持 header 顺序
 **providers/mod.rs**（`proxy/providers/mod.rs`，518 行，18.3KB）：
 ```rust
 // proxy/providers/mod.rs:1
@@ -3951,6 +3966,21 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**adapter.rs**（`proxy/providers/adapter.rs`，70 行，2.5KB）：
+```rust
+// proxy/providers/adapter.rs:16
+pub trait ProviderAdapter: Send + Sync {
+    fn name(&self) -> &'static str;
+    fn extract_base_url(&self, provider: &Provider) -> Result<String, ProxyError>;
+    fn extract_auth(&self, provider: &Provider) -> Option<AuthInfo>;
+    fn build_url(&self, base_url: &str, endpoint: &str) -> String;
+    fn auth_headers(&self, auth: &AuthInfo) -> Vec<(String, String)>;
+}
+```
+- `ProviderAdapter` trait — 供应商适配器的统一接口
+- 所有供应商适配器都需要实现此 trait
+- 提供统一的接口来处理：URL 构建、认证信息提取和头部注入、请求/响应格式转换（可选）
+- `auth_headers()` 返回 `(name, value)` 对，forwarder 在原始 auth header 位置插入以保持 header 顺序
 **providers/mod.rs**（`proxy/providers/mod.rs`，518 行，18.3KB）：
 ```rust
 // proxy/providers/mod.rs:1
