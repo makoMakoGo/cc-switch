@@ -537,6 +537,25 @@ pub struct VisibleApps {
 }
 ```
 
+**AppSettings 结构体**（`settings.rs:211`）— 主要字段：
+```rust
+pub struct AppSettings {           // settings.rs:211
+    pub show_in_tray: bool,                    // 托盘显示
+    pub minimize_to_tray_on_close: bool,       // 关闭时最小化到托盘
+    pub silent_startup: bool,                  // 静默启动
+    pub enable_local_proxy: bool,              // 启用本地代理
+    pub language: Option<String>,              // 语言设置
+    pub visible_apps: Option<VisibleApps>,     // 主页面显示的应用
+    pub claude_config_dir: Option<String>,     // Claude 配置目录覆盖
+    pub current_provider_claude: Option<String>, // 当前 Claude 供应商 ID
+    pub skill_sync_method: SyncMethod,         // Skill 同步方式
+    pub webdav: WebDavSyncSettings,            // WebDAV 同步设置
+}
+```
+**AppSettings 的 AI Slop 特征**：
+- 每个工具都有 `current_provider_xxx` 字段（7 个），应该用 HashMap 或数组
+- 每个工具都有 `xxx_config_dir` 字段（7 个），同上
+- `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
 **陷阱**：
 - `mutate_settings` 是私有函数，外部模块不能直接调用
 - `unwrap_or_else` 处理锁中毒（`settings.rs:578`），但仍然可能 panic
