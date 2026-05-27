@@ -523,6 +523,23 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**LocalMigrations**（`settings.rs:184`）：
+```rust
+pub struct LocalMigrations {  // settings.rs:184
+    pub codex_third_party_history_provider_bucket_v1:
+        Option<CodexThirdPartyHistoryProviderBucketMigration>,
+}
+pub struct CodexThirdPartyHistoryProviderBucketMigration {  // settings.rs:192
+    pub completed_at: String,
+    pub target_provider_id: String,
+    pub source_provider_ids: Vec<String>,
+    pub migrated_jsonl_files: usize,
+    pub migrated_state_rows: usize,
+    pub scanned_history_files: bool,
+}
+```
+- 设备级操作（修改 `~/.codex` 文件），不随数据库同步
+- 记录 Codex 第三方历史数据迁移状态
 **CustomEndpoint**（`settings.rs:14`）：
 ```rust
 pub struct CustomEndpoint {  // settings.rs:14
@@ -601,6 +618,23 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**LocalMigrations**（`settings.rs:184`）：
+```rust
+pub struct LocalMigrations {  // settings.rs:184
+    pub codex_third_party_history_provider_bucket_v1:
+        Option<CodexThirdPartyHistoryProviderBucketMigration>,
+}
+pub struct CodexThirdPartyHistoryProviderBucketMigration {  // settings.rs:192
+    pub completed_at: String,
+    pub target_provider_id: String,
+    pub source_provider_ids: Vec<String>,
+    pub migrated_jsonl_files: usize,
+    pub migrated_state_rows: usize,
+    pub scanned_history_files: bool,
+}
+```
+- 设备级操作（修改 `~/.codex` 文件），不随数据库同步
+- 记录 Codex 第三方历史数据迁移状态
 **CustomEndpoint**（`settings.rs:14`）：
 ```rust
 pub struct CustomEndpoint {  // settings.rs:14
