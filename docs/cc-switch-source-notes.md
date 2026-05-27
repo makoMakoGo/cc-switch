@@ -1414,10 +1414,23 @@ useTauriEvent("provider-changed", (event) => {
 **统一 config 模块的结构**：
 
 ```rust
+// 定义统一的 config trait
 trait ToolConfig {
     fn read_config(&self) -> Result<Value, AppError>;
     fn write_config(&self, config: &Value) -> Result<(), AppError>;
     fn switch_provider(&self, provider: &Provider) -> Result<(), AppError>;
+    fn import_from_live(&self) -> Result<Vec<Provider>, AppError>;
+    fn build_live_config(&self, provider: &Provider) -> Result<Value, AppError>;
+}
+
+// 每个工具实现这个 trait
+struct ClaudeConfig { db: Arc<Database> }
+impl ToolConfig for ClaudeConfig {
+    fn read_config(&self) -> Result<Value, AppError> {
+        let path = get_claude_settings_path();
+        read_json_file(&path)
+    }
+    // ... 其他方法
 }
 ```
 
