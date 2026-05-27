@@ -3342,6 +3342,32 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**http_client.rs**（`proxy/http_client.rs`，449 行，14.6KB）：
+```rust
+// proxy/http_client.rs:14
+static GLOBAL_CLIENT: OnceCell<RwLock<Client>> = OnceCell::new();
+static CURRENT_PROXY_URL: OnceCell<RwLock<Option<String>>> = OnceCell::new();
+static CC_SWITCH_PROXY_PORT: OnceCell<RwLock<u16>> = OnceCell::new();
+```
+- 全局 HTTP 客户端模块（支持全局代理配置）
+- `GLOBAL_CLIENT`（`http_client.rs:14`）— 全局 HTTP 客户端实例（`OnceCell<RwLock<Client>>`）
+- `CURRENT_PROXY_URL`（`http_client.rs:17`）— 当前代理 URL（用于日志和状态查询）
+- `CC_SWITCH_PROXY_PORT`（`http_client.rs:20`）— CC Switch 代理服务器当前监听的端口
+- `set_proxy_port()`（`http_client.rs:25`）— 设置 CC Switch 代理服务器的监听端口
+- 所有需要发送 HTTP 请求的模块都应使用此模块提供的客户端
+- 使用 `once_cell::sync::OnceCell` 保证单例初始化
+**hyper_client.rs**（`proxy/hyper_client.rs`，739 行，27.2KB）：
+- 基于 Hyper 的底层 HTTP 客户端
+- 处理 HTTP/1.1 和 HTTP/2 协议
+- `ProxyResponse` 结构体封装代理响应
+**json_canonical.rs**（`proxy/json_canonical.rs`，190 行，6.3KB）：
+- JSON 规范化模块
+- 将 JSON 值规范化为标准格式（用于缓存键生成）
+**handler_config.rs**（`proxy/handler_config.rs`，220 行，7.5KB）：
+- 处理器配置模块
+- `UsageParserConfig` — 使用量解析器配置
+- `StreamUsageEventFilter` — 流式使用量事件过滤器
+- `CLAUDE_PARSER_CONFIG`、`CODEX_PARSER_CONFIG`、`GEMINI_PARSER_CONFIG`、`OPENAI_PARSER_CONFIG`
 **gemini_url.rs**（`proxy/gemini_url.rs`，704 行，25.8KB）：
 ```rust
 // proxy/gemini_url.rs:17
@@ -3865,6 +3891,32 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**http_client.rs**（`proxy/http_client.rs`，449 行，14.6KB）：
+```rust
+// proxy/http_client.rs:14
+static GLOBAL_CLIENT: OnceCell<RwLock<Client>> = OnceCell::new();
+static CURRENT_PROXY_URL: OnceCell<RwLock<Option<String>>> = OnceCell::new();
+static CC_SWITCH_PROXY_PORT: OnceCell<RwLock<u16>> = OnceCell::new();
+```
+- 全局 HTTP 客户端模块（支持全局代理配置）
+- `GLOBAL_CLIENT`（`http_client.rs:14`）— 全局 HTTP 客户端实例（`OnceCell<RwLock<Client>>`）
+- `CURRENT_PROXY_URL`（`http_client.rs:17`）— 当前代理 URL（用于日志和状态查询）
+- `CC_SWITCH_PROXY_PORT`（`http_client.rs:20`）— CC Switch 代理服务器当前监听的端口
+- `set_proxy_port()`（`http_client.rs:25`）— 设置 CC Switch 代理服务器的监听端口
+- 所有需要发送 HTTP 请求的模块都应使用此模块提供的客户端
+- 使用 `once_cell::sync::OnceCell` 保证单例初始化
+**hyper_client.rs**（`proxy/hyper_client.rs`，739 行，27.2KB）：
+- 基于 Hyper 的底层 HTTP 客户端
+- 处理 HTTP/1.1 和 HTTP/2 协议
+- `ProxyResponse` 结构体封装代理响应
+**json_canonical.rs**（`proxy/json_canonical.rs`，190 行，6.3KB）：
+- JSON 规范化模块
+- 将 JSON 值规范化为标准格式（用于缓存键生成）
+**handler_config.rs**（`proxy/handler_config.rs`，220 行，7.5KB）：
+- 处理器配置模块
+- `UsageParserConfig` — 使用量解析器配置
+- `StreamUsageEventFilter` — 流式使用量事件过滤器
+- `CLAUDE_PARSER_CONFIG`、`CODEX_PARSER_CONFIG`、`GEMINI_PARSER_CONFIG`、`OPENAI_PARSER_CONFIG`
 **gemini_url.rs**（`proxy/gemini_url.rs`，704 行，25.8KB）：
 ```rust
 // proxy/gemini_url.rs:17
