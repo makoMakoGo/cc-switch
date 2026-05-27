@@ -948,6 +948,11 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**gemini_shadow 模块**（`proxy/providers/gemini_shadow.rs`，400 行）：
+- 保存 Gemini thought signatures 和 tool call metadata
+- `GeminiShadowKey`（`gemini_shadow.rs:13`）— 复合键（provider_id + session_id）
+- `GeminiToolCallMeta`（`gemini_shadow.rs:29`）— function call 元数据
+- 支持流式响应时的 thought/tool call 回放
 **copilot_auth 模块**（`proxy/providers/copilot_auth.rs`，2095 行）：
 - GitHub OAuth 设备码流程和 Copilot 令牌管理
 - `GITHUB_CLIENT_ID`（`copilot_auth.rs:28`）— VS Code OAuth 客户端 ID
