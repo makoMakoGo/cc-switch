@@ -1249,6 +1249,37 @@ CREATE TABLE IF NOT EXISTS model_pricing (
 - 用于存储模型定价信息
 - 通过 `get_model_pricing()` / `update_model_pricing()` 访问
 - 成本计算使用 `Decimal` 类型（`rust_decimal` crate）
+**usage_daily_rollups 表**（`schema.rs:259`）：
+```sql
+CREATE TABLE IF NOT EXISTS usage_daily_rollups (
+    date TEXT NOT NULL,
+    app_type TEXT NOT NULL,
+    provider_id TEXT NOT NULL,
+    model TEXT NOT NULL,
+    request_count INTEGER NOT NULL DEFAULT 0,
+    success_count INTEGER NOT NULL DEFAULT 0,
+    input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens INTEGER NOT NULL DEFAULT 0,
+    cache_read_tokens INTEGER NOT NULL DEFAULT 0,
+    cache_creation_tokens INTEGER NOT NULL DEFAULT 0,
+    total_cost_usd TEXT NOT NULL DEFAULT '0',
+    avg_latency_ms INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (date, app_type, provider_id, model)
+)
+```
+- 复合主键：`date + app_type + provider_id + model`
+- 用于按日聚合用量数据
+- 通过 `rollup_and_prune()` 方法自动维护（`database/mod.rs:147`）
+**session_log_sync 表**（`schema.rs:280`）：
+```sql
+CREATE TABLE IF NOT EXISTS session_log_sync (
+    file_path TEXT PRIMARY KEY,
+    last_modified INTEGER NOT NULL,
+    last_line_offset INTEGER NOT NULL DEFAULT 0
+)
+```
+- 记录会话日志文件的同步状态
+- 用于增量同步 Claude/Codex/Gemini 的会话日志
 **stream_check_logs 表**（`schema.rs:232`）：
 ```sql
 CREATE TABLE IF NOT EXISTS stream_check_logs (
