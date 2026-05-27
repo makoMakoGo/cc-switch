@@ -1210,6 +1210,38 @@ CREATE TABLE IF NOT EXISTS mcp_servers (
     enabled_hermes BOOLEAN NOT NULL DEFAULT 0
 )
 ```
+**model_pricing 表**（`schema.rs:221`）：
+```sql
+CREATE TABLE IF NOT EXISTS model_pricing (
+    model_id TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL,
+    input_cost_per_million TEXT NOT NULL,
+    output_cost_per_million TEXT NOT NULL,
+    cache_read_cost_per_million TEXT NOT NULL DEFAULT '0',
+    cache_creation_cost_per_million TEXT NOT NULL DEFAULT '0'
+)
+```
+- 用于存储模型定价信息
+- 通过 `get_model_pricing()` / `update_model_pricing()` 访问
+- 成本计算使用 `Decimal` 类型（`rust_decimal` crate）
+**stream_check_logs 表**（`schema.rs:232`）：
+```sql
+CREATE TABLE IF NOT EXISTS stream_check_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    provider_id TEXT NOT NULL,
+    provider_name TEXT NOT NULL,
+    app_type TEXT NOT NULL,
+    status TEXT NOT NULL,
+    success INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    response_time_ms INTEGER,
+    http_status INTEGER,
+    model_used TEXT,
+    retry_count INTEGER DEFAULT 0,
+    tested_at INTEGER NOT NULL
+)
+```
+- 索引：`idx_stream_check_logs_provider`（`app_type, provider_id, tested_at DESC`）
 **proxy_request_logs 表**（`schema.rs:184`）：
 ```sql
 CREATE TABLE IF NOT EXISTS proxy_request_logs (
