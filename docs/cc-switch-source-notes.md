@@ -712,6 +712,33 @@ impl Drop for ActiveConnectionGuard {
 **命名不一致的 AI Slop**：
 - `PROXY_AUTH_PLACEHOLDER`（`forwarder.rs:35`）和 `PROXY_TOKEN_PLACEHOLDER`（`services/proxy.rs:22`）值都是 `"PROXY_MANAGED"`，但常量名不同
 ### 4.2 ProxyState 和 ProxyServer
+**ProxyError 枚举**（`proxy/error.rs:10`）— 14 个变体：
+```rust
+#[derive(Debug, Error)]
+pub enum ProxyError {           // proxy/error.rs:10
+    AlreadyRunning,             // 服务器已在运行
+    NotRunning,                 // 服务器未运行
+    BindFailed(String),         // 地址绑定失败
+    StopTimeout,                // 停止超时
+    StopFailed(String),         // 停止失败
+    ForwardFailed(String),      // 请求转发失败
+    NoAvailableProvider,        // 无可用的Provider
+    AllProvidersCircuitOpen,    // 所有供应商已熔断
+    NoProvidersConfigured,      // 未配置供应商
+    ProviderUnhealthy(String),  // Provider不健康
+    UpstreamError { status: u16, body: Option<String> },
+    MaxRetriesExceeded,         // 超过最大重试次数
+    DatabaseError(String),      // 数据库错误
+    ConfigError(String),        // 配置错误
+    TransformError(String),     // 格式转换错误
+    InvalidRequest(String),     // 无效的请求
+    Timeout(String),            // 超时
+    StreamIdleTimeout(u64),     // 流式响应空闲超时
+    AuthError(String),          // 认证失败
+    Internal(String),           // 内部错误
+}
+```
+**ProxyError 实现了 `IntoResponse`**（`proxy/error.rs:79`），可以直接作为 Axum 响应返回
 
 **ProxyState**（`proxy/server.rs:34`）：
 
