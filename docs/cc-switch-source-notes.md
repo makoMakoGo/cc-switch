@@ -1234,6 +1234,13 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**usePromptActions**（`src/hooks/usePromptActions.ts`，153 行）：
+- `usePromptActions(appId)`（`usePromptActions.ts:6`）— Prompt CRUD 操作
+- `reload()`（`usePromptActions.ts:14`）— 重新加载 prompts 和当前文件内容
+- `savePrompt()`（`usePromptActions.ts:34`）— 保存 prompt
+- `deletePrompt()` — 删除 prompt
+- `enablePrompt()` — 启用/禁用 prompt
+- 使用 `promptsApi.getPrompts()` / `promptsApi.upsertPrompt()` / `promptsApi.deletePrompt()`
 **useMcp**（`src/hooks/useMcp.ts`，75 行）：
 - `useAllMcpServers()`（`useMcp.ts:9`）— 查询所有 MCP 服务器（统一管理）
 - `useUpsertMcpServer()`（`useMcp.ts:19`）— 添加/更新 MCP 服务器
