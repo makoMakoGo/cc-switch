@@ -1234,6 +1234,15 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**useSettingsForm**（`src/hooks/useSettingsForm.ts`，204 行）：
+```typescript
+type Language = "zh" | "zh-TW" | "en" | "ja";
+export type SettingsFormState = Omit<Settings, "language"> & {
+    language: Language;
+};
+```
+- `normalizeLanguage()`（`useSettingsForm.ts:12`）— 语言归一化（zh/zh-TW/en/ja）
+- 管理设置表单的本地状态
 **useSettings 接口**（`src/hooks/useSettings.ts:21`）：
 ```typescript
 export interface UseSettingsResult {  // useSettings.ts:21
