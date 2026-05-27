@@ -948,6 +948,11 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**thinking_rectifier 模块**（`proxy/thinking_rectifier.rs`，717 行）：
+- 修复 Anthropic API 中因签名校验失败导致的请求错误
+- `should_rectify_thinking_signature()`（`thinking_rectifier.rs:26`）— 检测是否需要触发整流器
+- `rectify_anthropic_request()` — 移除有问题的签名字段并重试请求
+- `RectifyResult`（`thinking_rectifier.rs:11`）— 整流结果（applied, removed counts）
 **json_canonical 模块**（`proxy/json_canonical.rs`，191 行）：
 - `canonicalize_value()`（`json_canonical.rs:6`）— 递归排序 JSON 对象键（确保确定性输出）
 - `canonical_json_string()`（`json_canonical.rs:23`）— 生成稳定的 JSON 字符串
