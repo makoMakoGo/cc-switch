@@ -558,6 +558,29 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
+```typescript
+// src/lib/api/model-fetch.ts:5
+export interface FetchedModel {
+    id: string;
+    ownedBy: string | null;
+}
+// src/lib/api/model-fetch.ts:16
+export async function fetchModelsForConfig(
+    baseUrl: string, apiKey: string, isFullUrl?: boolean, modelsUrl?: string,
+): Promise<FetchedModel[]> {
+    return invoke("fetch_models_for_config", { baseUrl, apiKey, isFullUrl, modelsUrl });
+}
+// src/lib/api/model-fetch.ts:35
+export async function fetchCodexOauthModels(accountId?: string | null): Promise<FetchedModel[]> {
+    return invoke("get_codex_oauth_models", { accountId: accountId || null });
+}
+```
+- `FetchedModel`（`model-fetch.ts:5`）— 获取到的模型信息（id、ownedBy）
+- `fetchModelsForConfig()`（`model-fetch.ts:16`）— 从供应商获取可用模型列表（使用 OpenAI 兼容的 `GET /v1/models` 端点）
+  - 优先用 `modelsUrl` 精确覆写
+  - 否则后端会对 baseURL 生成候选列表并按序尝试（含"剥离 /anthropic 等兼容子路径"兜底）
+- `fetchCodexOauthModels()`（`model-fetch.ts:35`）— 获取 Codex OAuth 可用模型列表（使用 ChatGPT 的 backend-api/codex 端点，不兼容普通 /v1/models）
 **auth.ts**（`src/lib/api/auth.ts`，107 行）：
 ```typescript
 // src/lib/api/auth.ts:3
@@ -1072,6 +1095,29 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
+```typescript
+// src/lib/api/model-fetch.ts:5
+export interface FetchedModel {
+    id: string;
+    ownedBy: string | null;
+}
+// src/lib/api/model-fetch.ts:16
+export async function fetchModelsForConfig(
+    baseUrl: string, apiKey: string, isFullUrl?: boolean, modelsUrl?: string,
+): Promise<FetchedModel[]> {
+    return invoke("fetch_models_for_config", { baseUrl, apiKey, isFullUrl, modelsUrl });
+}
+// src/lib/api/model-fetch.ts:35
+export async function fetchCodexOauthModels(accountId?: string | null): Promise<FetchedModel[]> {
+    return invoke("get_codex_oauth_models", { accountId: accountId || null });
+}
+```
+- `FetchedModel`（`model-fetch.ts:5`）— 获取到的模型信息（id、ownedBy）
+- `fetchModelsForConfig()`（`model-fetch.ts:16`）— 从供应商获取可用模型列表（使用 OpenAI 兼容的 `GET /v1/models` 端点）
+  - 优先用 `modelsUrl` 精确覆写
+  - 否则后端会对 baseURL 生成候选列表并按序尝试（含"剥离 /anthropic 等兼容子路径"兜底）
+- `fetchCodexOauthModels()`（`model-fetch.ts:35`）— 获取 Codex OAuth 可用模型列表（使用 ChatGPT 的 backend-api/codex 端点，不兼容普通 /v1/models）
 **auth.ts**（`src/lib/api/auth.ts`，107 行）：
 ```typescript
 // src/lib/api/auth.ts:3
@@ -1963,6 +2009,29 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
+```typescript
+// src/lib/api/model-fetch.ts:5
+export interface FetchedModel {
+    id: string;
+    ownedBy: string | null;
+}
+// src/lib/api/model-fetch.ts:16
+export async function fetchModelsForConfig(
+    baseUrl: string, apiKey: string, isFullUrl?: boolean, modelsUrl?: string,
+): Promise<FetchedModel[]> {
+    return invoke("fetch_models_for_config", { baseUrl, apiKey, isFullUrl, modelsUrl });
+}
+// src/lib/api/model-fetch.ts:35
+export async function fetchCodexOauthModels(accountId?: string | null): Promise<FetchedModel[]> {
+    return invoke("get_codex_oauth_models", { accountId: accountId || null });
+}
+```
+- `FetchedModel`（`model-fetch.ts:5`）— 获取到的模型信息（id、ownedBy）
+- `fetchModelsForConfig()`（`model-fetch.ts:16`）— 从供应商获取可用模型列表（使用 OpenAI 兼容的 `GET /v1/models` 端点）
+  - 优先用 `modelsUrl` 精确覆写
+  - 否则后端会对 baseURL 生成候选列表并按序尝试（含"剥离 /anthropic 等兼容子路径"兜底）
+- `fetchCodexOauthModels()`（`model-fetch.ts:35`）— 获取 Codex OAuth 可用模型列表（使用 ChatGPT 的 backend-api/codex 端点，不兼容普通 /v1/models）
 **auth.ts**（`src/lib/api/auth.ts`，107 行）：
 ```typescript
 // src/lib/api/auth.ts:3
@@ -2475,6 +2544,29 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
+```typescript
+// src/lib/api/model-fetch.ts:5
+export interface FetchedModel {
+    id: string;
+    ownedBy: string | null;
+}
+// src/lib/api/model-fetch.ts:16
+export async function fetchModelsForConfig(
+    baseUrl: string, apiKey: string, isFullUrl?: boolean, modelsUrl?: string,
+): Promise<FetchedModel[]> {
+    return invoke("fetch_models_for_config", { baseUrl, apiKey, isFullUrl, modelsUrl });
+}
+// src/lib/api/model-fetch.ts:35
+export async function fetchCodexOauthModels(accountId?: string | null): Promise<FetchedModel[]> {
+    return invoke("get_codex_oauth_models", { accountId: accountId || null });
+}
+```
+- `FetchedModel`（`model-fetch.ts:5`）— 获取到的模型信息（id、ownedBy）
+- `fetchModelsForConfig()`（`model-fetch.ts:16`）— 从供应商获取可用模型列表（使用 OpenAI 兼容的 `GET /v1/models` 端点）
+  - 优先用 `modelsUrl` 精确覆写
+  - 否则后端会对 baseURL 生成候选列表并按序尝试（含"剥离 /anthropic 等兼容子路径"兜底）
+- `fetchCodexOauthModels()`（`model-fetch.ts:35`）— 获取 Codex OAuth 可用模型列表（使用 ChatGPT 的 backend-api/codex 端点，不兼容普通 /v1/models）
 **auth.ts**（`src/lib/api/auth.ts`，107 行）：
 ```typescript
 // src/lib/api/auth.ts:3
@@ -4311,6 +4403,29 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
+```typescript
+// src/lib/api/model-fetch.ts:5
+export interface FetchedModel {
+    id: string;
+    ownedBy: string | null;
+}
+// src/lib/api/model-fetch.ts:16
+export async function fetchModelsForConfig(
+    baseUrl: string, apiKey: string, isFullUrl?: boolean, modelsUrl?: string,
+): Promise<FetchedModel[]> {
+    return invoke("fetch_models_for_config", { baseUrl, apiKey, isFullUrl, modelsUrl });
+}
+// src/lib/api/model-fetch.ts:35
+export async function fetchCodexOauthModels(accountId?: string | null): Promise<FetchedModel[]> {
+    return invoke("get_codex_oauth_models", { accountId: accountId || null });
+}
+```
+- `FetchedModel`（`model-fetch.ts:5`）— 获取到的模型信息（id、ownedBy）
+- `fetchModelsForConfig()`（`model-fetch.ts:16`）— 从供应商获取可用模型列表（使用 OpenAI 兼容的 `GET /v1/models` 端点）
+  - 优先用 `modelsUrl` 精确覆写
+  - 否则后端会对 baseURL 生成候选列表并按序尝试（含"剥离 /anthropic 等兼容子路径"兜底）
+- `fetchCodexOauthModels()`（`model-fetch.ts:35`）— 获取 Codex OAuth 可用模型列表（使用 ChatGPT 的 backend-api/codex 端点，不兼容普通 /v1/models）
 **auth.ts**（`src/lib/api/auth.ts`，107 行）：
 ```typescript
 // src/lib/api/auth.ts:3
@@ -5348,6 +5463,29 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
+```typescript
+// src/lib/api/model-fetch.ts:5
+export interface FetchedModel {
+    id: string;
+    ownedBy: string | null;
+}
+// src/lib/api/model-fetch.ts:16
+export async function fetchModelsForConfig(
+    baseUrl: string, apiKey: string, isFullUrl?: boolean, modelsUrl?: string,
+): Promise<FetchedModel[]> {
+    return invoke("fetch_models_for_config", { baseUrl, apiKey, isFullUrl, modelsUrl });
+}
+// src/lib/api/model-fetch.ts:35
+export async function fetchCodexOauthModels(accountId?: string | null): Promise<FetchedModel[]> {
+    return invoke("get_codex_oauth_models", { accountId: accountId || null });
+}
+```
+- `FetchedModel`（`model-fetch.ts:5`）— 获取到的模型信息（id、ownedBy）
+- `fetchModelsForConfig()`（`model-fetch.ts:16`）— 从供应商获取可用模型列表（使用 OpenAI 兼容的 `GET /v1/models` 端点）
+  - 优先用 `modelsUrl` 精确覆写
+  - 否则后端会对 baseURL 生成候选列表并按序尝试（含"剥离 /anthropic 等兼容子路径"兜底）
+- `fetchCodexOauthModels()`（`model-fetch.ts:35`）— 获取 Codex OAuth 可用模型列表（使用 ChatGPT 的 backend-api/codex 端点，不兼容普通 /v1/models）
 **auth.ts**（`src/lib/api/auth.ts`，107 行）：
 ```typescript
 // src/lib/api/auth.ts:3
