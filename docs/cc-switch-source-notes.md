@@ -523,6 +523,27 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**SyncMethod 枚举**（`services/skill.rs:28`）：
+```rust
+pub enum SyncMethod {  // services/skill.rs:28
+    Auto,    // 自动选择：优先 symlink，失败时回退到 copy（默认）
+    Symlink, // 符号链接（推荐，节省磁盘空间）
+    Copy,    // 文件复制（兼容模式）
+}
+```
+**SkillStorageLocation 枚举**（`services/skill.rs:41`）：
+```rust
+pub enum SkillStorageLocation {  // services/skill.rs:41
+    CcSwitch,  // CC Switch 管理目录 ~/.cc-switch/skills/（默认）
+    Unified,   // Agent Skills 统一标准目录 ~/.agents/skills/
+}
+```
+**DiscoverableSkill**（`services/skill.rs:51`）：
+- `key: String` — 唯一标识 `"owner/name:directory"`
+- `name: String` — 显示名称（从 SKILL.md 解析）
+- `description: String` — 技能描述
+- `directory: String` — 目录名称
+- `readme_url: Option<String>` — GitHub README URL
 **LocalMigrations**（`settings.rs:184`）：
 ```rust
 pub struct LocalMigrations {  // settings.rs:184
@@ -618,6 +639,27 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**SyncMethod 枚举**（`services/skill.rs:28`）：
+```rust
+pub enum SyncMethod {  // services/skill.rs:28
+    Auto,    // 自动选择：优先 symlink，失败时回退到 copy（默认）
+    Symlink, // 符号链接（推荐，节省磁盘空间）
+    Copy,    // 文件复制（兼容模式）
+}
+```
+**SkillStorageLocation 枚举**（`services/skill.rs:41`）：
+```rust
+pub enum SkillStorageLocation {  // services/skill.rs:41
+    CcSwitch,  // CC Switch 管理目录 ~/.cc-switch/skills/（默认）
+    Unified,   // Agent Skills 统一标准目录 ~/.agents/skills/
+}
+```
+**DiscoverableSkill**（`services/skill.rs:51`）：
+- `key: String` — 唯一标识 `"owner/name:directory"`
+- `name: String` — 显示名称（从 SKILL.md 解析）
+- `description: String` — 技能描述
+- `directory: String` — 目录名称
+- `readme_url: Option<String>` — GitHub README URL
 **LocalMigrations**（`settings.rs:184`）：
 ```rust
 pub struct LocalMigrations {  // settings.rs:184
