@@ -1370,6 +1370,16 @@ useTauriEvent("provider-changed", (event) => {
 | `error.rs:8` | `Config(String)` 太宽泛 | 拆分成更具体的变体 |
 | `settings.rs:519` | `OnceLock<RwLock<>>` + `unwrap_or_else` | 用 `parking_lot::RwLock` 避免 poisoned panic |
 
+**代理子系统的 AI Slop 特征**：
+- `forwarder.rs`（3100 行）— 请求转发、格式转换、错误处理全在一起
+- `transform_codex_chat.rs`（2074 行）— 单个转换函数太大
+- `streaming.rs`（1142 行）+ `streaming_codex_chat.rs`（1083 行）+ `streaming_gemini.rs`（1055 行）+ `streaming_responses.rs`（1186 行）— 4 个流式转换模块结构相似但各自实现
+- `copilot_auth.rs`（2095 行）+ `codex_oauth_auth.rs`（1134 行）— 两个 OAuth 模块结构相似
+- `PROXY_AUTH_PLACEHOLDER`（`forwarder.rs:35`）和 `PROXY_TOKEN_PLACEHOLDER`（`services/proxy.rs:22`）值都是 `"PROXY_MANAGED"` 但常量名不同
+**前端 AI Slop 特征**：
+- `App.tsx`（1604 行）— 14 个视图 + 事件处理 + 状态管理全在一个文件
+- `useProviderActions.ts`（385 行）— Claude 插件同步逻辑应该抽到独立 hook
+- 8 个 preset 文件（237KB）— 结构几乎一样但没有抽取公共模板
 ---
 
 ## 第 7 章：重构路线图
