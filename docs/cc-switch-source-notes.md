@@ -3342,6 +3342,49 @@ impl ToolConfig for ClaudeConfig {
 | — workspace/ | 工作区组件 |
 | — icons/ | 图标组件 |
 | — ui/ | 基础 UI 组件（shadcn/ui） |
+**proxy.ts Query Hooks**（`src/lib/query/proxy.ts`，244 行）：
+```typescript
+// src/lib/query/proxy.ts:12
+export function useProxyStatus() {
+    return useQuery({
+        queryKey: ["proxyStatus"],
+        queryFn: () => proxyApi.getProxyStatus(),
+        refetchInterval: 5000, // 每 5 秒刷新一次
+    });
+}
+// src/lib/query/proxy.ts:23
+export function useIsProxyRunning() {
+    return useQuery({
+        queryKey: ["proxyRunning"],
+        queryFn: () => proxyApi.isProxyRunning(),
+        refetchInterval: 2000,
+    });
+}
+// src/lib/query/proxy.ts:34
+export function useIsLiveTakeoverActive() {
+    return useQuery({
+        queryKey: ["liveTakeoverActive"],
+        queryFn: () => proxyApi.isLiveTakeoverActive(),
+        refetchInterval: 2000,
+    });
+}
+// src/lib/query/proxy.ts:45
+export function useProxyTakeoverStatus() {
+    return useQuery({
+        queryKey: ["proxyTakeoverStatus"],
+        queryFn: () => proxyApi.getProxyTakeoverStatus(),
+        refetchInterval: 2000,
+    });
+}
+```
+- `useProxyStatus()`（`proxy.ts:12`）— 获取代理状态（每 5 秒刷新）
+- `useIsProxyRunning()`（`proxy.ts:23`）— 检查代理是否运行（每 2 秒刷新）
+- `useIsLiveTakeoverActive()`（`proxy.ts:34`）— 检查是否处于接管模式（每 2 秒刷新）
+- `useProxyTakeoverStatus()`（`proxy.ts:45`）— 获取各应用接管状态（每 2 秒刷新）
+- `useGlobalProxyConfig()`（`proxy.ts`）— 获取全局代理配置
+- `useUpdateGlobalProxyConfig()`（`proxy.ts`）— 更新全局代理配置（mutation）
+- `useSetProxyTakeoverForApp()`（`proxy.ts`）— 设置应用接管状态（mutation）
+- 所有 query hooks 使用 2-5 秒的 `refetchInterval` 实现实时状态同步
 **env_checker.rs**（`services/env_checker.rs`，168 行，5.9KB）：
 ```rust
 // services/env_checker.rs:7
@@ -3657,6 +3700,49 @@ pub struct UsageSummaryByApp {  // usage_stats.rs:38
 **stream_check.rs**（`services/stream_check.rs`，2166 行，80.9KB）：
 - 流式响应检查服务
 - 验证 provider 的流式 API 连接是否正常
+**proxy.ts Query Hooks**（`src/lib/query/proxy.ts`，244 行）：
+```typescript
+// src/lib/query/proxy.ts:12
+export function useProxyStatus() {
+    return useQuery({
+        queryKey: ["proxyStatus"],
+        queryFn: () => proxyApi.getProxyStatus(),
+        refetchInterval: 5000, // 每 5 秒刷新一次
+    });
+}
+// src/lib/query/proxy.ts:23
+export function useIsProxyRunning() {
+    return useQuery({
+        queryKey: ["proxyRunning"],
+        queryFn: () => proxyApi.isProxyRunning(),
+        refetchInterval: 2000,
+    });
+}
+// src/lib/query/proxy.ts:34
+export function useIsLiveTakeoverActive() {
+    return useQuery({
+        queryKey: ["liveTakeoverActive"],
+        queryFn: () => proxyApi.isLiveTakeoverActive(),
+        refetchInterval: 2000,
+    });
+}
+// src/lib/query/proxy.ts:45
+export function useProxyTakeoverStatus() {
+    return useQuery({
+        queryKey: ["proxyTakeoverStatus"],
+        queryFn: () => proxyApi.getProxyTakeoverStatus(),
+        refetchInterval: 2000,
+    });
+}
+```
+- `useProxyStatus()`（`proxy.ts:12`）— 获取代理状态（每 5 秒刷新）
+- `useIsProxyRunning()`（`proxy.ts:23`）— 检查代理是否运行（每 2 秒刷新）
+- `useIsLiveTakeoverActive()`（`proxy.ts:34`）— 检查是否处于接管模式（每 2 秒刷新）
+- `useProxyTakeoverStatus()`（`proxy.ts:45`）— 获取各应用接管状态（每 2 秒刷新）
+- `useGlobalProxyConfig()`（`proxy.ts`）— 获取全局代理配置
+- `useUpdateGlobalProxyConfig()`（`proxy.ts`）— 更新全局代理配置（mutation）
+- `useSetProxyTakeoverForApp()`（`proxy.ts`）— 设置应用接管状态（mutation）
+- 所有 query hooks 使用 2-5 秒的 `refetchInterval` 实现实时状态同步
 **env_checker.rs**（`services/env_checker.rs`，168 行，5.9KB）：
 ```rust
 // services/env_checker.rs:7
