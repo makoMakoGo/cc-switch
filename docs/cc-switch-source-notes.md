@@ -523,6 +523,21 @@ pub struct Provider {
 - `settings_store()` 函数（`settings.rs:521`）— 获取缓存的入口
 - `mutate_settings(mutator)`（`settings.rs:574`）— 修改设置的唯一入口（私有函数）
 
+**ProxyService**（`services/proxy.rs:55`）：
+```rust
+pub struct ProxyService {  // services/proxy.rs:55
+    db: Arc<Database>,
+    server: Arc<RwLock<Option<ProxyServer>>>,
+    app_handle: Arc<RwLock<Option<tauri::AppHandle>>>,
+    switch_locks: SwitchLockManager,
+}
+```
+**HotSwitchOutcome**（`services/proxy.rs:64`）：
+```rust
+pub struct HotSwitchOutcome {  // services/proxy.rs:64
+    pub logical_target_changed: bool,
+}
+```
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 pub struct ProxyState {  // proxy/server.rs:34
@@ -791,6 +806,21 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
+**ProxyService**（`services/proxy.rs:55`）：
+```rust
+pub struct ProxyService {  // services/proxy.rs:55
+    db: Arc<Database>,
+    server: Arc<RwLock<Option<ProxyServer>>>,
+    app_handle: Arc<RwLock<Option<tauri::AppHandle>>>,
+    switch_locks: SwitchLockManager,
+}
+```
+**HotSwitchOutcome**（`services/proxy.rs:64`）：
+```rust
+pub struct HotSwitchOutcome {  // services/proxy.rs:64
+    pub logical_target_changed: bool,
+}
+```
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 pub struct ProxyState {  // proxy/server.rs:34
@@ -1143,6 +1173,21 @@ pub struct ProviderService;  // 空结构体，纯方法集合
 - `endpoints.rs` — 自定义端点管理
 - `gemini_auth.rs` — Gemini 认证
 - `usage.rs` — 用量脚本验证
+**ProxyService**（`services/proxy.rs:55`）：
+```rust
+pub struct ProxyService {  // services/proxy.rs:55
+    db: Arc<Database>,
+    server: Arc<RwLock<Option<ProxyServer>>>,
+    app_handle: Arc<RwLock<Option<tauri::AppHandle>>>,
+    switch_locks: SwitchLockManager,
+}
+```
+**HotSwitchOutcome**（`services/proxy.rs:64`）：
+```rust
+pub struct HotSwitchOutcome {  // services/proxy.rs:64
+    pub logical_target_changed: bool,
+}
+```
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 pub struct ProxyState {  // proxy/server.rs:34
@@ -1409,6 +1454,21 @@ pub enum ClientFormat {            // proxy/session.rs:19
 **response_processor 模块**（`proxy/response_processor.rs`）：
 - `process_response()` — 处理非流式响应
 - `create_logged_passthrough_stream()` — 创建带日志的透传流
+**ProxyService**（`services/proxy.rs:55`）：
+```rust
+pub struct ProxyService {  // services/proxy.rs:55
+    db: Arc<Database>,
+    server: Arc<RwLock<Option<ProxyServer>>>,
+    app_handle: Arc<RwLock<Option<tauri::AppHandle>>>,
+    switch_locks: SwitchLockManager,
+}
+```
+**HotSwitchOutcome**（`services/proxy.rs:64`）：
+```rust
+pub struct HotSwitchOutcome {  // services/proxy.rs:64
+    pub logical_target_changed: bool,
+}
+```
 **ProxyState**（`proxy/server.rs:34`）：
 
 ```rust
