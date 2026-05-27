@@ -272,6 +272,17 @@ pub fn atomic_write(path: &Path, data: &[u8]) -> Result<(), AppError> {
 }
 ```
 
+**tokio::spawn 异步任务**（`proxy/forwarder.rs:192`）：
+
+```rust
+// 非关键路径的异步任务用 tokio::spawn
+tokio::spawn(async move {
+    if let Err(e) = router.record_result(&provider_id, &app_type, false, true, None).await {
+        log::warn!("异步记录 Provider 成功结果失败: {e}");
+    }
+});
+```
+
 **Mutex 锁获取**（`database/mod.rs:61`）：
 
 ```rust
