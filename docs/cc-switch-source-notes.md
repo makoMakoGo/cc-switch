@@ -580,7 +580,16 @@ pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError>
 - 费用倍率验证（`validate_cost_multiplier`, `validate_pricing_source`）
 **陷阱**：
 - `Option<bool>` 用于 `xxx_confirmed` 字段，但 `false` 和 `None` 语义相同
-**AppSettings 的陷阱**：
+**AppSettings 方法**（`settings.rs:389-480`）：
+- `settings_path()`（`settings.rs:390`）— 返回 `~/.cc-switch/settings.json` 路径
+- `normalize_paths()`（`settings.rs:399`）— 清理路径字段（trim、过滤空字符串、验证语言）
+- `load_from_file()`（`settings.rs:457`）— 从文件加载设置（失败时返回默认值）
+- `save_settings_file()`（`settings.rs:482`）— 保存设置到文件（原子写入）
+**normalize_paths 处理的字段**：
+- 6 个目录覆盖字段：claude_config_dir, codex_config_dir, gemini_config_dir, opencode_config_dir, openclaw_config_dir, hermes_config_dir
+- language 字段：只接受 "en", "zh", "zh-TW", "ja"
+- webdav_sync：调用 `sync.normalize()`，空则设为 None
+**AppSettings 的陷阱**：：
 - `mutate_settings` 是私有函数，外部模块不能直接调用
 - `unwrap_or_else` 处理锁中毒（`settings.rs:578`），但仍然可能 panic
 - 写入失败时内存缓存和文件可能不一致
