@@ -818,6 +818,23 @@ pub enum ProxyError {           // proxy/error.rs:10
 - `handle_messages()`（`handlers.rs:74`）— 处理 `/v1/messages`（Claude API）
 - `handle_claude_desktop_messages()`（`handlers.rs:81`）— Claude Desktop 消息处理
 - `handle_claude_desktop_models()`（`handlers.rs:97`）— Claude Desktop 模型列表
+**请求处理流程**（`handlers.rs:113`）：
+```rust
+async fn handle_messages_for_app(state, request, app_type, tag, app_type_str, strip_prefix) {
+    let (parts, body) = request.into_parts();
+    let body: Value = serde_json::from_slice(&body_bytes)?;
+    let mut ctx = RequestContext::new(&state, &body, &headers, app_type, tag, app_type_str).await?;
+    let forwarder = ctx.create_forwarder(&state);
+    let result = forwarder.forward_with_retry(&app_type, method, endpoint, body, headers, extensions, ctx.get_providers()).await?;
+    // 检查是否需要格式转换
+    let needs_transform = adapter.needs_transform(&ctx.provider);
+    if needs_transform {
+        return handle_claude_transform(response, &ctx, &state, &body, is_stream, &api_format, connection_guard).await;
+    }
+    // 通用响应处理（透传模式）
+    process_response(response, ...).await
+}
+```
 **response_processor 模块**（`proxy/response_processor.rs`）：
 - `process_response()` — 处理非流式响应
 - `create_logged_passthrough_stream()` — 创建带日志的透传流
