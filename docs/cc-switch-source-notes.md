@@ -2475,6 +2475,31 @@ export type AppId =  // types.ts:2
 ```
 - 前端统一使用 `AppId` 作为应用标识（与后端命令参数 `app` 一致）
 - 与后端 `AppType` 枚举对应（`app_config.rs:341`）
+**mutations.ts**（`src/lib/query/mutations.ts`，357 行）：
+```typescript
+// src/lib/query/mutations.ts:13
+export const useAddProviderMutation = (appId: AppId) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (providerInput) => {
+            // OpenCode/OpenClaw/Hermes 需要 providerKey
+            // Claude/Codex/Gemini 使用 generateUUID()
+            const newProvider = { ...providerInput, id, createdAt: Date.now() };
+            await providersApi.add(newProvider, appId, addToLive);
+            return newProvider;
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ["providers", appId] });
+        },
+    });
+};
+```
+- `useAddProviderMutation`（`mutations.ts:13`）— 添加 provider（OpenCode/OpenClaw/Hermes 需要 providerKey）
+- `useUpdateProviderMutation`（`mutations.ts`）— 更新 provider
+- `useDeleteProviderMutation`（`mutations.ts`）— 删除 provider
+- `useSwitchProviderMutation`（`mutations.ts`）— 切换 provider
+- `useDeleteSessionMutation`（`mutations.ts`）— 删除会话
+- 使用 `extractErrorMessage()` 工具函数处理错误
 **前端 Query 层**（`src/lib/query/`，10 个文件）：
 - `queries.ts`（4.2KB）— 查询 hooks（useProvidersQuery, useSettingsQuery, useUsageQuery, useSessionsQuery）
 - `mutations.ts`（10.2KB）— 变更 hooks（useAddProviderMutation, useUpdateProviderMutation, useDeleteProviderMutation, useSwitchProviderMutation）
