@@ -948,6 +948,12 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**body_filter 模块**（`proxy/body_filter.rs`，340 行）：
+- `filter_private_params()`（`body_filter.rs:42`）— 过滤以 `_` 开头的私有参数
+- `filter_private_params_with_whitelist()`（`body_filter.rs:46`）— 支持白名单机制
+- 防止内部信息泄露（`_internal_id`, `_debug_mode`, `_session_token` 等）
+- 支持嵌套对象和数组的深度过滤
+- JSON Schema 的 properties 名称不按私有参数过滤
 **thinking_optimizer 模块**（`proxy/thinking_optimizer.rs`，272 行）：
 - `optimize()`（`thinking_optimizer.rs:12`）— 根据模型类型自动优化 thinking 配置
 - 三路径分发：
