@@ -841,6 +841,22 @@ const [currentView, setCurrentView] = useState(
 | useLastValidValue | useLastValidValue.ts | 20 | 上次有效值 |
 | useSkills.helpers | useSkills.helpers.ts | 19 | Skills 辅助函数 |
 | useDebouncedValue | useDebouncedValue.ts | 16 | 防抖值 |
+**useProviderActions 内部实现**（`src/hooks/useProviderActions.ts:31`）：
+```typescript
+export function useProviderActions(
+    activeApp: AppId,
+    isProxyRunning?: boolean,
+    isProxyTakeover?: boolean,
+) {
+    const addProviderMutation = useAddProviderMutation(activeApp);
+    const updateProviderMutation = useUpdateProviderMutation(activeApp);
+    const deleteProviderMutation = useDeleteProviderMutation(activeApp);
+    const switchProviderMutation = useSwitchProviderMutation(activeApp);
+}
+```
+**AI Slop 特征**：
+- `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
+- Claude 插件同步逻辑应该抽到独立 hook
 
 **前端 → 后端调用模式**：
 
