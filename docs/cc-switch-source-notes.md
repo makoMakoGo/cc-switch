@@ -1210,6 +1210,31 @@ CREATE TABLE IF NOT EXISTS mcp_servers (
     enabled_hermes BOOLEAN NOT NULL DEFAULT 0
 )
 ```
+**proxy_config 表**（`schema.rs:124`）— 三行结构（claude/codex/gemini）：
+```sql
+CREATE TABLE IF NOT EXISTS proxy_config (
+    app_type TEXT PRIMARY KEY CHECK (app_type IN ('claude','codex','gemini')),
+    proxy_enabled INTEGER NOT NULL DEFAULT 0,
+    listen_address TEXT NOT NULL DEFAULT '127.0.0.1',
+    listen_port INTEGER NOT NULL DEFAULT 15721,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    auto_failover_enabled INTEGER NOT NULL DEFAULT 0,
+    max_retries INTEGER NOT NULL DEFAULT 3,
+    streaming_first_byte_timeout INTEGER NOT NULL DEFAULT 60,
+    non_streaming_timeout INTEGER NOT NULL DEFAULT 600,
+    circuit_failure_threshold INTEGER NOT NULL DEFAULT 4,
+    circuit_success_threshold INTEGER NOT NULL DEFAULT 2,
+    circuit_timeout_seconds INTEGER NOT NULL DEFAULT 60,
+    circuit_error_rate_threshold REAL NOT NULL DEFAULT 0.6,
+    circuit_min_requests INTEGER NOT NULL DEFAULT 10,
+    default_cost_multiplier TEXT NOT NULL DEFAULT '1',
+    pricing_model_source TEXT NOT NULL DEFAULT 'response'
+)
+```
+- 三行结构：claude、codex、gemini 各一行
+- CHECK 约束：`app_type IN ('claude','codex','gemini')`
+- 默认监听端口：15721
+- 兼容旧数据库：老版本是单例表，需要迁移为三行结构
 **model_pricing 表**（`schema.rs:221`）：
 ```sql
 CREATE TABLE IF NOT EXISTS model_pricing (
