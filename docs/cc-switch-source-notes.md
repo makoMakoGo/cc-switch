@@ -2475,6 +2475,50 @@ export type AppId =  // types.ts:2
 ```
 - 前端统一使用 `AppId` 作为应用标识（与后端命令参数 `app` 一致）
 - 与后端 `AppType` 枚举对应（`app_config.rs:341`）
+**proxyApi**（`src/lib/api/proxy.ts`，121 行）：
+```typescript
+export const proxyApi = {  // proxy.ts:11
+    // 代理服务器控制 API
+    async startProxyServer(): Promise<ProxyServerInfo> {
+        return invoke("start_proxy_server");
+    },
+    async stopProxyWithRestore(): Promise<void> {
+        return invoke("stop_proxy_with_restore");
+    },
+    async getProxyStatus(): Promise<ProxyStatus> {
+        return invoke("get_proxy_status");
+    },
+    async isProxyRunning(): Promise<boolean> {
+        return invoke("is_proxy_running");
+    },
+    async isLiveTakeoverActive(): Promise<boolean> {
+        return invoke("is_live_takeover_active");
+    },
+    async switchProxyProvider(appType: string, providerId: string): Promise<void> {
+        return invoke("switch_proxy_provider", { appType, providerId });
+    },
+    // 接管状态 API
+    async getProxyTakeoverStatus(): Promise<ProxyTakeoverStatus> {
+        return invoke("get_proxy_takeover_status");
+    },
+    // 全局代理配置 API
+    async getGlobalProxyConfig(): Promise<GlobalProxyConfig> {
+        return invoke("get_global_proxy_config");
+    },
+    async updateGlobalProxyConfig(config: GlobalProxyConfig): Promise<void> {
+        return invoke("update_global_proxy_config", { config });
+    },
+    // 每应用代理配置 API
+    async getProxyConfigForApp(appType: string): Promise<AppProxyConfig> {
+        return invoke("get_proxy_config_for_app", { appType });
+    },
+    async updateProxyConfigForApp(appType: string, config: AppProxyConfig): Promise<void> {
+        return invoke("update_proxy_config_for_app", { appType, config });
+    },
+};
+```
+- 4 个 API 分组：代理服务器控制、接管状态、全局代理配置、每应用代理配置
+- 所有方法都通过 `invoke()` 调用 Tauri 命令
 **mutations.ts**（`src/lib/query/mutations.ts`，357 行）：
 ```typescript
 // src/lib/query/mutations.ts:13
