@@ -1409,7 +1409,11 @@ useTauriEvent("provider-changed", (event) => {
   - `commands_register.rs` — `.invoke_handler()` 命令注册（`lib.rs:1072-1377`）
   - `cleanup.rs` — `cleanup_before_exit()` 和 `restore_proxy_state_on_startup()`（`lib.rs:1513-1598`）
   - `common_config.rs` — `initialize_common_config_snippets()`（`lib.rs:1601`）
-- `services/proxy.rs`（141.3KB）→ 拆分成 `takeover.rs`, `hot_switch.rs`, `config.rs`
+- `services/proxy.rs`（141.3KB，3909 行）→ 拆分建议：
+  - `takeover.rs` — 代理接管逻辑（`services/proxy.rs` 中的 `set_takeover_for_app()`）
+  - `hot_switch.rs` — 热切换逻辑（`hot_switch_provider()`）
+  - `config.rs` — 代理配置管理（`get_proxy_config()`, `update_proxy_config()`）
+  - `restore.rs` — 启动时恢复逻辑（`stop_with_restore_keep_state()`）
 - `provider/mod.rs`（105.5KB）→ 拆分成多个子模块
 - `App.tsx`（1604 行）→ 每个视图一个文件 + `AppRouter.tsx`
 - `codex_config.rs`（66.4KB）→ `codex/` 目录
