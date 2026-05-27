@@ -2305,6 +2305,34 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
+**前端 OMO 类型**（`src/types/omo.ts`，434 行）：
+```typescript
+export interface OmoLocalFileData {  // omo.ts:1
+    agents?: Record<string, Record<string, unknown>>;
+    categories?: Record<string, Record<string, unknown>>;
+    otherFields?: Record<string, unknown>;
+    filePath: string;
+    lastModified?: string;
+}
+export interface OmoAgentDef {  // omo.ts:9
+    key: string;
+    display: string;
+    descKey: string;
+    tooltipKey: string;
+    recommended?: string;
+    group: "main" | "sub";
+}
+export interface OmoCategoryDef {  // omo.ts:18
+    key: string;
+    display: string;
+    descKey: string;
+    tooltipKey: string;
+    recommended?: string;
+}
+```
+- `OMO_BUILTIN_AGENTS`（`omo.ts:26`）— 内置 Agent 列表（Sisyphus, Hephaestus, Prometheus, Atlas 等）
+- 每个 Agent 有 `key`, `display`, `descKey`, `tooltipKey`, `recommended`, `group`
+- `group` 分为 `"main"` 和 `"sub"` 两类
 **前端代理类型**（`src/types/proxy.ts`，141 行）：
 ```typescript
 export interface ProxyConfig {  // proxy.ts:1
