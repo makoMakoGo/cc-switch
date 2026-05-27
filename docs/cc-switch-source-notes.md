@@ -2323,6 +2323,25 @@ pub struct ProxyConfig {  // proxy/types.rs:5
 - `streaming_first_byte_timeout`：等待首个数据块的最大时间（1-120 秒）
 - `streaming_idle_timeout`：两个数据块之间的最大间隔（60-600 秒）
 - `non_streaming_timeout`：非流式请求的总超时时间（60-1200 秒）
+**OptimizerConfig**（`proxy/types.rs:242`）：
+```rust
+pub struct OptimizerConfig {  // proxy/types.rs:242
+    pub enabled: bool,              // 总开关（默认关闭）
+    pub thinking_optimizer: bool,   // Thinking 优化子开关（默认开启）
+    pub cache_injection: bool,      // Cache 注入子开关（默认开启）
+    pub cache_ttl: String,          // Cache TTL: "5m" | "1h"（默认 "1h"）
+}
+```
+**CopilotOptimizerConfig**（`proxy/types.rs:278`）：
+```rust
+pub struct CopilotOptimizerConfig {  // proxy/types.rs:278
+    pub enabled: bool,              // 总开关（默认开启）
+    pub x_initiator: bool,          // x-initiator 请求分类（默认开启）
+    // ... 更多字段
+}
+```
+- 解决 Copilot 代理消耗量异常问题（Issue #1813）
+- 存储在 settings 表中，key = "copilot_optimizer_config"
 **AppProxyConfig**（`proxy/types.rs:170`）：
 ```rust
 pub struct AppProxyConfig {  // proxy/types.rs:170
