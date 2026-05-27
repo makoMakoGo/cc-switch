@@ -558,6 +558,31 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
+```rust
+// src-tauri/src/commands/mod.rs:1
+#![allow(non_snake_case)]
+// src-tauri/src/commands/mod.rs:3-34
+mod auth;           mod balance;        mod codex_oauth;
+mod coding_plan;    mod config;         mod copilot;
+mod deeplink;       mod env;            mod failover;
+mod global_proxy;   mod hermes;         mod import_export;
+mod mcp;            mod misc;           mod model_fetch;
+mod omo;            mod openclaw;       mod plugin;
+mod prompt;         mod provider;       mod proxy;
+mod session_manager; mod settings;      pub mod skill;
+mod stream_check;   mod subscription;   mod sync_support;
+mod lightweight;    mod usage;          mod webdav_sync;
+mod workspace;
+// src-tauri/src/commands/mod.rs:36-67
+pub use auth::*;    pub use balance::*; pub use codex_oauth::*;
+pub use coding_plan::*; pub use config::*; pub use copilot::*;
+// ... 所有模块通过 pub use * 重新导出
+```
+- 33 个子模块声明（commands/mod.rs:3-34）
+- 所有子模块通过 `pub use *` 重新导出（commands/mod.rs:36-67）
+- `#![allow(non_snake_case)]` — 允许非蛇形命名（Tauri 命令使用驼峰命名）
+- `pub mod skill` — skill 模块是公开的（其他模块都是私有的）
 **database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
@@ -1338,6 +1363,31 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
+```rust
+// src-tauri/src/commands/mod.rs:1
+#![allow(non_snake_case)]
+// src-tauri/src/commands/mod.rs:3-34
+mod auth;           mod balance;        mod codex_oauth;
+mod coding_plan;    mod config;         mod copilot;
+mod deeplink;       mod env;            mod failover;
+mod global_proxy;   mod hermes;         mod import_export;
+mod mcp;            mod misc;           mod model_fetch;
+mod omo;            mod openclaw;       mod plugin;
+mod prompt;         mod provider;       mod proxy;
+mod session_manager; mod settings;      pub mod skill;
+mod stream_check;   mod subscription;   mod sync_support;
+mod lightweight;    mod usage;          mod webdav_sync;
+mod workspace;
+// src-tauri/src/commands/mod.rs:36-67
+pub use auth::*;    pub use balance::*; pub use codex_oauth::*;
+pub use coding_plan::*; pub use config::*; pub use copilot::*;
+// ... 所有模块通过 pub use * 重新导出
+```
+- 33 个子模块声明（commands/mod.rs:3-34）
+- 所有子模块通过 `pub use *` 重新导出（commands/mod.rs:36-67）
+- `#![allow(non_snake_case)]` — 允许非蛇形命名（Tauri 命令使用驼峰命名）
+- `pub mod skill` — skill 模块是公开的（其他模块都是私有的）
 **database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
@@ -2495,6 +2545,31 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
+```rust
+// src-tauri/src/commands/mod.rs:1
+#![allow(non_snake_case)]
+// src-tauri/src/commands/mod.rs:3-34
+mod auth;           mod balance;        mod codex_oauth;
+mod coding_plan;    mod config;         mod copilot;
+mod deeplink;       mod env;            mod failover;
+mod global_proxy;   mod hermes;         mod import_export;
+mod mcp;            mod misc;           mod model_fetch;
+mod omo;            mod openclaw;       mod plugin;
+mod prompt;         mod provider;       mod proxy;
+mod session_manager; mod settings;      pub mod skill;
+mod stream_check;   mod subscription;   mod sync_support;
+mod lightweight;    mod usage;          mod webdav_sync;
+mod workspace;
+// src-tauri/src/commands/mod.rs:36-67
+pub use auth::*;    pub use balance::*; pub use codex_oauth::*;
+pub use coding_plan::*; pub use config::*; pub use copilot::*;
+// ... 所有模块通过 pub use * 重新导出
+```
+- 33 个子模块声明（commands/mod.rs:3-34）
+- 所有子模块通过 `pub use *` 重新导出（commands/mod.rs:36-67）
+- `#![allow(non_snake_case)]` — 允许非蛇形命名（Tauri 命令使用驼峰命名）
+- `pub mod skill` — skill 模块是公开的（其他模块都是私有的）
 **database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
@@ -3273,6 +3348,31 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
+```rust
+// src-tauri/src/commands/mod.rs:1
+#![allow(non_snake_case)]
+// src-tauri/src/commands/mod.rs:3-34
+mod auth;           mod balance;        mod codex_oauth;
+mod coding_plan;    mod config;         mod copilot;
+mod deeplink;       mod env;            mod failover;
+mod global_proxy;   mod hermes;         mod import_export;
+mod mcp;            mod misc;           mod model_fetch;
+mod omo;            mod openclaw;       mod plugin;
+mod prompt;         mod provider;       mod proxy;
+mod session_manager; mod settings;      pub mod skill;
+mod stream_check;   mod subscription;   mod sync_support;
+mod lightweight;    mod usage;          mod webdav_sync;
+mod workspace;
+// src-tauri/src/commands/mod.rs:36-67
+pub use auth::*;    pub use balance::*; pub use codex_oauth::*;
+pub use coding_plan::*; pub use config::*; pub use copilot::*;
+// ... 所有模块通过 pub use * 重新导出
+```
+- 33 个子模块声明（commands/mod.rs:3-34）
+- 所有子模块通过 `pub use *` 重新导出（commands/mod.rs:36-67）
+- `#![allow(non_snake_case)]` — 允许非蛇形命名（Tauri 命令使用驼峰命名）
+- `pub mod skill` — skill 模块是公开的（其他模块都是私有的）
 **database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
@@ -5375,6 +5475,31 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
+```rust
+// src-tauri/src/commands/mod.rs:1
+#![allow(non_snake_case)]
+// src-tauri/src/commands/mod.rs:3-34
+mod auth;           mod balance;        mod codex_oauth;
+mod coding_plan;    mod config;         mod copilot;
+mod deeplink;       mod env;            mod failover;
+mod global_proxy;   mod hermes;         mod import_export;
+mod mcp;            mod misc;           mod model_fetch;
+mod omo;            mod openclaw;       mod plugin;
+mod prompt;         mod provider;       mod proxy;
+mod session_manager; mod settings;      pub mod skill;
+mod stream_check;   mod subscription;   mod sync_support;
+mod lightweight;    mod usage;          mod webdav_sync;
+mod workspace;
+// src-tauri/src/commands/mod.rs:36-67
+pub use auth::*;    pub use balance::*; pub use codex_oauth::*;
+pub use coding_plan::*; pub use config::*; pub use copilot::*;
+// ... 所有模块通过 pub use * 重新导出
+```
+- 33 个子模块声明（commands/mod.rs:3-34）
+- 所有子模块通过 `pub use *` 重新导出（commands/mod.rs:36-67）
+- `#![allow(non_snake_case)]` — 允许非蛇形命名（Tauri 命令使用驼峰命名）
+- `pub mod skill` — skill 模块是公开的（其他模块都是私有的）
 **database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
@@ -6678,6 +6803,31 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
+```rust
+// src-tauri/src/commands/mod.rs:1
+#![allow(non_snake_case)]
+// src-tauri/src/commands/mod.rs:3-34
+mod auth;           mod balance;        mod codex_oauth;
+mod coding_plan;    mod config;         mod copilot;
+mod deeplink;       mod env;            mod failover;
+mod global_proxy;   mod hermes;         mod import_export;
+mod mcp;            mod misc;           mod model_fetch;
+mod omo;            mod openclaw;       mod plugin;
+mod prompt;         mod provider;       mod proxy;
+mod session_manager; mod settings;      pub mod skill;
+mod stream_check;   mod subscription;   mod sync_support;
+mod lightweight;    mod usage;          mod webdav_sync;
+mod workspace;
+// src-tauri/src/commands/mod.rs:36-67
+pub use auth::*;    pub use balance::*; pub use codex_oauth::*;
+pub use coding_plan::*; pub use config::*; pub use copilot::*;
+// ... 所有模块通过 pub use * 重新导出
+```
+- 33 个子模块声明（commands/mod.rs:3-34）
+- 所有子模块通过 `pub use *` 重新导出（commands/mod.rs:36-67）
+- `#![allow(non_snake_case)]` — 允许非蛇形命名（Tauri 命令使用驼峰命名）
+- `pub mod skill` — skill 模块是公开的（其他模块都是私有的）
 **database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
