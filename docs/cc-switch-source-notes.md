@@ -2495,6 +2495,35 @@ export const usageKeys = {  // usage.ts:32
 - `RequestLogsKey`（`usage.ts:21`）— 请求日志查询键
 - `LogFilters`（`types/usage.ts`）— 日志过滤器
 - `UsageRangeSelection`（`types/usage.ts`）— 用量范围选择
+**failover.ts**（`src/lib/query/failover.ts`，289 行）：
+```typescript
+// src/lib/query/failover.ts:12
+export function useProviderHealth(providerId: string, appType: string) {
+    return useQuery({
+        queryKey: ["providerHealth", providerId, appType],
+        queryFn: () => failoverApi.getProviderHealth(providerId, appType),
+        enabled: !!providerId && !!appType,
+        refetchInterval: 5000, // 每 5 秒刷新一次
+        retry: false,
+    });
+}
+// src/lib/query/failover.ts:28
+export function useResetCircuitBreaker() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ providerId, appType }) =>
+            failoverApi.resetCircuitBreaker(providerId, appType),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["providerHealth", ...] });
+            queryClient.invalidateQueries({ queryKey: ["providers", ...] });
+            queryClient.invalidateQueries({ queryKey: ["proxyStatus"] });
+        },
+    });
+}
+```
+- `useProviderHealth()`（`failover.ts:12`）— 获取供应商健康状态（每 5 秒刷新）
+- `useResetCircuitBreaker()`（`failover.ts:28`）— 重置熔断器（同时刷新健康状态、供应商列表、代理状态）
+- 重置后后端会检查是否应该切回优先级更高的供应商
 **openclawApi**（`src/lib/api/openclaw.ts`，122 行）：
 ```typescript
 export const openclawApi = {  // openclaw.ts:20
