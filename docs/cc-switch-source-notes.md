@@ -948,6 +948,12 @@ pub struct FailoverSwitchManager {  // proxy/failover_switch.rs:19
 - `try_switch()`（`failover_switch.rs:41`）— 尝试执行故障转移切换
 - 去重控制：如果相同切换已在进行中则跳过（key = `app_type:provider_id`）
 - 切换成功后更新数据库、发射 Tauri 事件通知前端
+**hyper_client 模块**（`proxy/hyper_client.rs`，740 行）：
+- Hyper-based HTTP client for proxy forwarding
+- `OriginalHeaderCases`（`hyper_client.rs:24`）— 保留原始 header casing
+- 使用 raw TCP/TLS writes 保留精确的 header name casing
+- 支持 HTTP CONNECT tunneling
+- 当 raw write 不可行时回退到 hyper-util Client
 **body_filter 模块**（`proxy/body_filter.rs`，340 行）：
 - `filter_private_params()`（`body_filter.rs:42`）— 过滤以 `_` 开头的私有参数
 - `filter_private_params_with_whitelist()`（`body_filter.rs:46`）— 支持白名单机制
