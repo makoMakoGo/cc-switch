@@ -558,6 +558,32 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**database/dao/ 目录**（`src-tauri/src/database/dao/`，12 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| proxy.rs | 33.9KB | 代理配置和请求日志 DAO |
+| providers.rs | 29.5KB | Provider CRUD DAO |
+| usage_rollup.rs | 15.3KB | 用量聚合 DAO |
+| settings.rs | 11.9KB | 设置 DAO |
+| skills.rs | 9.7KB | Skills DAO |
+| failover.rs | 4.8KB | 故障转移 DAO |
+| mcp.rs | 4.1KB | MCP 服务器 DAO |
+| providers_seed.rs | 3.3KB | Provider 种子数据 |
+| prompts.rs | 2.9KB | Prompt DAO |
+| stream_check.rs | 2.7KB | 流式检查 DAO |
+| universal_providers.rs | 2.5KB | 通用 Provider DAO |
+| mod.rs | 448B | 模块导出 |
+- `proxy.rs`（33.9KB）是最大的 DAO 文件，包含代理配置和请求日志操作
+- `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
+- `usage_rollup.rs`（15.3KB）包含用量聚合查询
+- `settings.rs`（11.9KB）包含设置的读写操作
+- `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
+- `failover.rs`（4.8KB）包含故障转移队列操作
+- `mcp.rs`（4.1KB）包含 MCP 服务器的 CRUD 操作
+- `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
+- `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
+- `stream_check.rs`（2.7KB）包含流式检查记录操作
+- `universal_providers.rs`（2.5KB）包含通用 Provider 操作
 **commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
 ```rust
 // src-tauri/src/commands/mod.rs:1
@@ -1363,6 +1389,32 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**database/dao/ 目录**（`src-tauri/src/database/dao/`，12 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| proxy.rs | 33.9KB | 代理配置和请求日志 DAO |
+| providers.rs | 29.5KB | Provider CRUD DAO |
+| usage_rollup.rs | 15.3KB | 用量聚合 DAO |
+| settings.rs | 11.9KB | 设置 DAO |
+| skills.rs | 9.7KB | Skills DAO |
+| failover.rs | 4.8KB | 故障转移 DAO |
+| mcp.rs | 4.1KB | MCP 服务器 DAO |
+| providers_seed.rs | 3.3KB | Provider 种子数据 |
+| prompts.rs | 2.9KB | Prompt DAO |
+| stream_check.rs | 2.7KB | 流式检查 DAO |
+| universal_providers.rs | 2.5KB | 通用 Provider DAO |
+| mod.rs | 448B | 模块导出 |
+- `proxy.rs`（33.9KB）是最大的 DAO 文件，包含代理配置和请求日志操作
+- `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
+- `usage_rollup.rs`（15.3KB）包含用量聚合查询
+- `settings.rs`（11.9KB）包含设置的读写操作
+- `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
+- `failover.rs`（4.8KB）包含故障转移队列操作
+- `mcp.rs`（4.1KB）包含 MCP 服务器的 CRUD 操作
+- `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
+- `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
+- `stream_check.rs`（2.7KB）包含流式检查记录操作
+- `universal_providers.rs`（2.5KB）包含通用 Provider 操作
 **commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
 ```rust
 // src-tauri/src/commands/mod.rs:1
@@ -2545,6 +2597,32 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**database/dao/ 目录**（`src-tauri/src/database/dao/`，12 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| proxy.rs | 33.9KB | 代理配置和请求日志 DAO |
+| providers.rs | 29.5KB | Provider CRUD DAO |
+| usage_rollup.rs | 15.3KB | 用量聚合 DAO |
+| settings.rs | 11.9KB | 设置 DAO |
+| skills.rs | 9.7KB | Skills DAO |
+| failover.rs | 4.8KB | 故障转移 DAO |
+| mcp.rs | 4.1KB | MCP 服务器 DAO |
+| providers_seed.rs | 3.3KB | Provider 种子数据 |
+| prompts.rs | 2.9KB | Prompt DAO |
+| stream_check.rs | 2.7KB | 流式检查 DAO |
+| universal_providers.rs | 2.5KB | 通用 Provider DAO |
+| mod.rs | 448B | 模块导出 |
+- `proxy.rs`（33.9KB）是最大的 DAO 文件，包含代理配置和请求日志操作
+- `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
+- `usage_rollup.rs`（15.3KB）包含用量聚合查询
+- `settings.rs`（11.9KB）包含设置的读写操作
+- `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
+- `failover.rs`（4.8KB）包含故障转移队列操作
+- `mcp.rs`（4.1KB）包含 MCP 服务器的 CRUD 操作
+- `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
+- `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
+- `stream_check.rs`（2.7KB）包含流式检查记录操作
+- `universal_providers.rs`（2.5KB）包含通用 Provider 操作
 **commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
 ```rust
 // src-tauri/src/commands/mod.rs:1
@@ -3348,6 +3426,32 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
     pub logical_target_changed: bool,
 }
 ```
+**database/dao/ 目录**（`src-tauri/src/database/dao/`，12 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| proxy.rs | 33.9KB | 代理配置和请求日志 DAO |
+| providers.rs | 29.5KB | Provider CRUD DAO |
+| usage_rollup.rs | 15.3KB | 用量聚合 DAO |
+| settings.rs | 11.9KB | 设置 DAO |
+| skills.rs | 9.7KB | Skills DAO |
+| failover.rs | 4.8KB | 故障转移 DAO |
+| mcp.rs | 4.1KB | MCP 服务器 DAO |
+| providers_seed.rs | 3.3KB | Provider 种子数据 |
+| prompts.rs | 2.9KB | Prompt DAO |
+| stream_check.rs | 2.7KB | 流式检查 DAO |
+| universal_providers.rs | 2.5KB | 通用 Provider DAO |
+| mod.rs | 448B | 模块导出 |
+- `proxy.rs`（33.9KB）是最大的 DAO 文件，包含代理配置和请求日志操作
+- `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
+- `usage_rollup.rs`（15.3KB）包含用量聚合查询
+- `settings.rs`（11.9KB）包含设置的读写操作
+- `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
+- `failover.rs`（4.8KB）包含故障转移队列操作
+- `mcp.rs`（4.1KB）包含 MCP 服务器的 CRUD 操作
+- `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
+- `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
+- `stream_check.rs`（2.7KB）包含流式检查记录操作
+- `universal_providers.rs`（2.5KB）包含通用 Provider 操作
 **commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
 ```rust
 // src-tauri/src/commands/mod.rs:1
@@ -5475,6 +5579,32 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**database/dao/ 目录**（`src-tauri/src/database/dao/`，12 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| proxy.rs | 33.9KB | 代理配置和请求日志 DAO |
+| providers.rs | 29.5KB | Provider CRUD DAO |
+| usage_rollup.rs | 15.3KB | 用量聚合 DAO |
+| settings.rs | 11.9KB | 设置 DAO |
+| skills.rs | 9.7KB | Skills DAO |
+| failover.rs | 4.8KB | 故障转移 DAO |
+| mcp.rs | 4.1KB | MCP 服务器 DAO |
+| providers_seed.rs | 3.3KB | Provider 种子数据 |
+| prompts.rs | 2.9KB | Prompt DAO |
+| stream_check.rs | 2.7KB | 流式检查 DAO |
+| universal_providers.rs | 2.5KB | 通用 Provider DAO |
+| mod.rs | 448B | 模块导出 |
+- `proxy.rs`（33.9KB）是最大的 DAO 文件，包含代理配置和请求日志操作
+- `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
+- `usage_rollup.rs`（15.3KB）包含用量聚合查询
+- `settings.rs`（11.9KB）包含设置的读写操作
+- `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
+- `failover.rs`（4.8KB）包含故障转移队列操作
+- `mcp.rs`（4.1KB）包含 MCP 服务器的 CRUD 操作
+- `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
+- `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
+- `stream_check.rs`（2.7KB）包含流式检查记录操作
+- `universal_providers.rs`（2.5KB）包含通用 Provider 操作
 **commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
 ```rust
 // src-tauri/src/commands/mod.rs:1
@@ -6803,6 +6933,32 @@ pub trait ProviderAdapter: Send + Sync {
 - `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
 - `gemini_schema.rs`（11.7KB）— Gemini schema 定义
 - `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
+**database/dao/ 目录**（`src-tauri/src/database/dao/`，12 个文件）：
+| 文件 | 大小 | 职责 |
+|------|------|------|
+| proxy.rs | 33.9KB | 代理配置和请求日志 DAO |
+| providers.rs | 29.5KB | Provider CRUD DAO |
+| usage_rollup.rs | 15.3KB | 用量聚合 DAO |
+| settings.rs | 11.9KB | 设置 DAO |
+| skills.rs | 9.7KB | Skills DAO |
+| failover.rs | 4.8KB | 故障转移 DAO |
+| mcp.rs | 4.1KB | MCP 服务器 DAO |
+| providers_seed.rs | 3.3KB | Provider 种子数据 |
+| prompts.rs | 2.9KB | Prompt DAO |
+| stream_check.rs | 2.7KB | 流式检查 DAO |
+| universal_providers.rs | 2.5KB | 通用 Provider DAO |
+| mod.rs | 448B | 模块导出 |
+- `proxy.rs`（33.9KB）是最大的 DAO 文件，包含代理配置和请求日志操作
+- `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
+- `usage_rollup.rs`（15.3KB）包含用量聚合查询
+- `settings.rs`（11.9KB）包含设置的读写操作
+- `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
+- `failover.rs`（4.8KB）包含故障转移队列操作
+- `mcp.rs`（4.1KB）包含 MCP 服务器的 CRUD 操作
+- `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
+- `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
+- `stream_check.rs`（2.7KB）包含流式检查记录操作
+- `universal_providers.rs`（2.5KB）包含通用 Provider 操作
 **commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
 ```rust
 // src-tauri/src/commands/mod.rs:1
