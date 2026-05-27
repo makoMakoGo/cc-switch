@@ -648,7 +648,35 @@ src-tauri/src/proxy/
 ```
 
 **技术栈**：Axum（HTTP）+ Tower（中间件）+ Hyper（底层）+ Tokio（异步）
-
+**RequestForwarder**（`proxy/forwarder.rs:89`）— 核心转发器：
+```rust
+pub struct RequestForwarder {  // proxy/forwarder.rs:89
+    router: Arc<ProviderRouter>,
+    status: Arc<RwLock<ProxyStatus>>,
+    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    max_attempts: usize,  // max_retries + 1
+}
+```
+**ActiveConnectionGuard RAII 模式**（`proxy/forwarder.rs:61`）：
+```rust
+pub(crate) struct ActiveConnectionGuard {  // proxy/forwarder.rs:61
+    status: Arc<RwLock<ProxyStatus>>,
+}
+impl Drop for ActiveConnectionGuard {
+    fn drop(&mut self) {
+        // Drop 不能 await：用 tokio::spawn 调度异步减量
+        let status = self.status.clone();
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(async move {
+                let mut s = status.write().await;
+                s.active_connections = s.active_connections.saturating_sub(1);
+            });
+        }
+    }
+}
+```
+**命名不一致的 AI Slop**：
+- `PROXY_AUTH_PLACEHOLDER`（`forwarder.rs:35`）和 `PROXY_TOKEN_PLACEHOLDER`（`services/proxy.rs:22`）值都是 `"PROXY_MANAGED"`，但常量名不同
 ### 4.2 ProxyState 和 ProxyServer
 
 **ProxyState**（`proxy/server.rs:34`）：
