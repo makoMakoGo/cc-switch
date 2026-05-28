@@ -2228,7 +2228,7 @@ pub struct Database {  // database/mod.rs:76
     pub(crate) conn: Mutex<Connection>,
 }
 ```
-**schema.rs 模块**（`database/schema.rs`，2051 行，77.8KB）：
+**schema.rs 模块**（`database/schema.rs`，2050 行，77.8KB）：
 - `create_tables()`（`schema.rs:18`）— 创建所有数据库表
 - `create_tables_on_conn()`（`schema.rs:24`）— 在指定连接上创建表（供迁移和测试使用）
 **providers 表结构**（`schema.rs:27`）：
@@ -2524,7 +2524,7 @@ pub fn init() -> Result<Self, AppError> {  // database/mod.rs:95
 13. 回收磁盘空间（`PRAGMA incremental_vacuum`）
 **模块结构**：
 - `mod.rs`（9.1KB）— Database 结构体 + 初始化
-- `schema.rs`（79.7KB）— 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`mod.rs:52`）
+- `schema.rs`（77.8KB）— 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`mod.rs:52`）
 - `backup.rs`（32.5KB）— SQL 导入导出 + 快照备份
 - `migration.rs`（9.5KB）— JSON → SQLite 数据迁移
 - `dao/` — 数据访问对象（12 个文件）：

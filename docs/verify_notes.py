@@ -25,9 +25,10 @@ def main():
     chapters = CHAPTER_RE.findall(content)
     chapter_count = len(chapters)
 
-    # Word count (Chinese chars + English words)
-    words = WORD_RE.findall(content)
-    word_count = len(words)
+    # Word count: use wc -w for honest count
+    import subprocess
+    result = subprocess.run(['wc', '-w', NOTES_PATH], capture_output=True, text=True)
+    word_count = int(result.stdout.strip().split()[0])
 
     # Code references (file:line style)
     code_refs = CODE_REF_RE.findall(content)
