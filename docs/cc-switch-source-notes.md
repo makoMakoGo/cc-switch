@@ -3851,7 +3851,30 @@ pub async fn forward_with_retry(
 2. 等待服务器任务完成（`server_handle.await`）
 3. 更新状态（`running = false`）
 
-### 4.2 ProxyState 和 ProxyServer
+### 4.2 ProxyConfig 配置（`proxy/types.rs:5`）
+
+```rust
+// proxy/types.rs:5
+pub struct ProxyConfig {
+    pub listen_address: String,              // 默认 "127.0.0.1"
+    pub listen_port: u16,                    // 默认 15721
+    pub max_retries: u8,                     // 默认 3
+    pub request_timeout: u64,                // 已废弃，保留兼容
+    pub enable_logging: bool,                // 默认 true
+    pub live_takeover_active: bool,          // 是否正在接管 Live 配置
+    pub streaming_first_byte_timeout: u64,   // 默认 60 秒（1-120）
+    pub streaming_idle_timeout: u64,         // 默认 120 秒（60-600，0=禁用）
+    pub non_streaming_timeout: u64,          // 默认 600 秒（60-1200）
+}
+```
+- 默认监听 `127.0.0.1:15721`（`types.rs:46`）
+- `max_retries = 3`（`types.rs:47`）— 最多重试 3 次（实际尝试 4 家 provider）
+- `streaming_first_byte_timeout = 60`（`types.rs:31`）— 等待首个数据块的最大时间
+- `streaming_idle_timeout = 120`（`types.rs:34`）— 两个数据块之间的最大间隔
+- `non_streaming_timeout = 600`（`types.rs:38`）— 非流式请求总超时（10 分钟）
+- `request_timeout` 已废弃（`types.rs:12`），保留兼容
+
+### 4.3 ProxyState 和 ProxyServer
 **ProxyError 枚举**（`proxy/error.rs:10`）— 20 个变体：
 ```rust
 #[derive(Debug, Error)]
