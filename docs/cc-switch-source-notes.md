@@ -69,6 +69,23 @@ main.rs:4                         // 22 行，仅设置 Linux WebKit 环境变�
 - 使用 `stop_with_restore_keep_state()`（`lib.rs:1531`）保留代理状态
 - 短暂等待 100ms 确保 I/O 刷新（`lib.rs:1406`）
 
+### 1.1.1 run() 启动流程（`lib.rs:203`）
+
+`run()` 是应用入口点，初始化顺序：
+
+1. **Panic hook**（`lib.rs:205`）— 设置崩溃日志到 `~/.cc-switch/crash.log`
+2. **Single instance plugin**（`lib.rs:211`）— 防止多实例运行，处理 deep link URL
+3. **Deep link plugin**（`lib.rs:252`）— 处理 macOS AppleEvent 和其他平台的深链接
+4. **Window close interception**（`lib.rs:254`）— 根据设置决定是否最小化到托盘
+5. **Plugin registration**（`lib.rs:270+`）— 注册 9 个插件：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
+6. **Setup closure**（`lib.rs:284-1070`）— 786 行的 `.setup()` 闭包：
+   - 初始化数据库（`Database::init()`）
+   - 初始化设置（`settings::init()`）
+   - 初始化 AppState（`store.rs`）
+   - 导入默认配置（`import_default_config()`）
+   - 注册命令（`.invoke_handler()`，`lib.rs:1072`，约 271 个命令）
+7. **Cleanup**（`lib.rs:1513`）— `cleanup_before_exit()` 退出前清理
+
 ### 1.2 数据流：一次 Provider Switch 的完整调用链
 
 以"用户在 UI 里点击切换 Claude Code 的 provider"为例：
