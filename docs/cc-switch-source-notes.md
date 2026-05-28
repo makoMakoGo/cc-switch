@@ -59,8 +59,8 @@ main.rs:4                         // 22 行，仅设置 Linux WebKit 环境变�
 关键点：
 - `main.rs` 仅 22 行，设置 Linux WebKit 环境变量后调用 `lib::run()`
 - `lib.rs`（1825 行）是整个后端的"上帝文件"
-- `.setup()` 闭包约 790 行（284-1070），包含所有初始化逻辑
-- `.invoke_handler()` 注册约 266 个 Tauri 命令（1072-1377）
+- `.setup()` 闭包位于 `lib.rs:284-1070`（787 行范围），包含所有初始化逻辑
+- `.invoke_handler()` 注册 266 个 Tauri 命令（`lib.rs:1072-1377`）
 - 9 个插件（7 个在 Builder 链顶层注册：single_instance、deep_link、process、dialog、opener、store、window_state；2 个在 .setup() 内注册：updater、log）
 
 **退出流程**（`lib.rs:1383`）：
@@ -78,12 +78,12 @@ main.rs:4                         // 22 行，仅设置 Linux WebKit 环境变�
 3. **Deep link plugin**（`lib.rs:252`）— 处理 macOS AppleEvent 和其他平台的深链接
 4. **Window close interception**（`lib.rs:254`）— 根据设置决定是否最小化到托盘
 5. **Plugin registration**（`lib.rs:270+`）— 注册 9 个插件：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
-6. **Setup closure**（`lib.rs:284-1070`）— 786 行的 `.setup()` 闭包：
+6. **Setup closure**（`lib.rs:284-1070`）— 787 行范围的 `.setup()` 闭包：
    - 初始化数据库（`Database::init()`）
    - 设置缓存通过 OnceLock 惰性初始化（`settings.rs:519`）
    - 初始化 AppState（`store.rs`）
    - 导入默认配置（`import_default_config()`）
-   - 注册命令（`.invoke_handler()`，`lib.rs:1072`，约 266 个命令）
+   - 注册命令（`.invoke_handler()`，`lib.rs:1072`，266 个命令）
 7. **Cleanup**（`lib.rs:1513`）— `cleanup_before_exit()` 退出前清理
 
 ### 1.2 数据流：一次 Provider Switch 的完整调用链
@@ -3020,8 +3020,8 @@ useTauriEvent("provider-changed", (event) => {
 | 文件 | 问题 | 建议 |
 |------|------|------|
 |`lib.rs:1-36` | 34 个 `mod` 声明 | 按功能分组 |
-| `lib.rs:284-1070` | `.setup()` 闭包 786 行 | 拆分成 `init_database()`, `init_plugins()`, `seed_data()` |
-| `lib.rs:1072-1377` | ~266 个命令注册 | 按模块分组 |
+| `lib.rs:284-1070` | `.setup()` 闭包 787 行范围 | 拆分成 `init_database()`, `init_plugins()`, `seed_data()` |
+| `lib.rs:1072-1377` | 266 个命令注册 | 按模块分组 |
 | `services/proxy.rs:55` | ProxyService 3909 行 | 拆分成 `takeover.rs`, `hot_switch.rs`, `config.rs` |
 | 7 个 config 模块 | 重复的读写逻辑 | 抽取 `ToolConfig` trait |
 | 9 个 preset 文件 | 237KB TypeScript 数据 | 移到 JSON 文件 |
