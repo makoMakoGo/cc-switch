@@ -3144,6 +3144,23 @@ impl ToolConfig for ClaudeConfig {
 5. 统一 `AppType` match（低风险，中等收益）— 减少 10+ 处重复 match
 6. 强类型化 `Provider.settings_config`（高风险，高收益）— 用 enum 替代 `serde_json::Value`
 
+
+### 7.4 重构边界和验收信号
+
+**先保住这些不变量**：
+- `AppType::as_str()`（`app_config.rs:357`）是数据库 key、前端 app id、配置路径分发的共同语言；任何重命名都必须同时覆盖 `FromStr` 的别名解析（`app_config.rs:395-414`）和前端调用参数。
+- `is_additive_mode()`（`app_config.rs:373`）是 switch mode 与 additive mode 的分界：Claude/ClaudeDesktop/Codex/Gemini 写当前 provider，OpenCode/OpenClaw/Hermes 保留多 provider live 配置。抽 `ToolConfig` trait 时不要把这两类写入语义抹平。
+- `Provider.settings_config`（`provider.rs:13-14`）当前是 `serde_json::Value`；保存入口依赖 `validate_provider_settings()`（`services/provider/mod.rs:2250`）按 AppType 做运行时校验。强类型化前，先把每个工具的合法 schema 写成测试，否则 enum 会把旧 provider 数据迁坏。
+- `SETTINGS_STORE`（`settings.rs:519`）缓存的是设备级设置，`update_settings()`（`settings.rs:562`）先落盘再换内存，`mutate_settings()`（`settings.rs:574`）复制当前值后修改。拆分 settings 时必须保留“文件成功写入后才更新缓存”的顺序。
+- 代理退出/恢复是跨模块事务：`cleanup_before_exit()`（`lib.rs:1513`）根据 live backup 和占位符检测恢复配置；`restore_proxy_state_on_startup()`（`lib.rs:1558`）从 `proxy_config.enabled` 恢复接管。拆 `services/proxy.rs` 或 `lib.rs` 时，这两条路径要用同一组集成测试覆盖。
+
+**每个重构 PR 的最低验收**：
+1. Provider 切换：覆盖 switch mode 的 `switch_provider` 调用链（`lib.rs:1079` → `commands/provider.rs` → `ProviderService::switch()`），断言 live config 原子写入仍发生在 `write_live_with_common_config()`。
+2. Additive 工具：覆盖 OpenCode/OpenClaw/Hermes 的 `is_additive_mode()` 分支，断言添加/更新 provider 不会错误删除其它 live provider。
+3. 代理恢复：覆盖 `stop_with_restore_keep_state()`（`services/proxy.rs:1027`）和启动恢复（`lib.rs:1558`），断言退出后 live 配置恢复，但 settings 表里的代理启用状态保留。
+4. 动态配置校验：覆盖 `validate_provider_settings()` 的 Codex `auth` 缺失、Gemini settings 校验、usage script/cost multiplier 校验（`services/provider/mod.rs:2273-2352`）。
+5. 前端状态：覆盖 `visible_apps`（`settings.rs:258-260`）和当前 provider id 字段（`settings.rs:276-297`）序列化兼容，避免拆 UI 时把本机显示设置误写进 provider 数据。
+
 ---
 
 ## 附录：文件大小速查表（已验证，2026-05-27）
