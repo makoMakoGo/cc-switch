@@ -1096,6 +1096,39 @@ export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery =
 - `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
 - `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
 - 支持自动轮询（5 分钟）与窗口 focus 重取
+**ProxyServer**（`proxy/server.rs:54`）：
+```rust
+// proxy/server.rs:54
+pub struct ProxyServer {
+    config: ProxyConfig,
+    state: ProxyState,
+    shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>,
+    server_handle: Arc<RwLock<Option<JoinHandle<()>>>>,
+}
+impl ProxyServer {
+    pub fn new(config: ProxyConfig, db: Arc<Database>, app_handle: Option<tauri::AppHandle>) -> Self {
+        let provider_router = Arc::new(ProviderRouter::new(db.clone()));
+        let failover_manager = Arc::new(FailoverSwitchManager::new(db.clone()));
+        let state = ProxyState {
+            db, config: Arc::new(RwLock::new(config.clone())),
+            status: Arc::new(RwLock::new(ProxyStatus::default())),
+            start_time: Arc::new(RwLock::new(None)),
+            current_providers: Arc::new(RwLock::new(HashMap::new())),
+            provider_router, gemini_shadow: Arc::new(GeminiShadowStore::default()),
+            codex_chat_history: Arc::new(CodexChatHistoryStore::default()),
+            app_handle, failover_manager,
+        };
+        Self { config, state, shutdown_tx: Arc::new(RwLock::new(None)), server_handle: Arc::new(RwLock::new(None)) }
+    }
+}
+```
+- `ProxyServer`（`server.rs:54`）— 代理 HTTP 服务器
+- `shutdown_tx`（`server.rs:57`）— 关闭信号发送器（`oneshot::Sender`）
+- `server_handle`（`server.rs:59`）— 服务器任务句柄（`JoinHandle`），用于等待服务器实际关闭
+- `new()` 创建时初始化 `ProviderRouter`（熔断器状态跨所有请求保持）和 `FailoverSwitchManager`
+- 使用 `Arc<RwLock<>>` 包装所有共享状态
+- 使用 `hyper_util::rt::TokioIo` 处理 HTTP/1.1 连接
+- 使用 `preserve_header_case(true)` 保持原始 header-name casing
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 pub struct ProxyState {  // proxy/server.rs:34
@@ -1927,6 +1960,39 @@ export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery =
 - `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
 - `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
 - 支持自动轮询（5 分钟）与窗口 focus 重取
+**ProxyServer**（`proxy/server.rs:54`）：
+```rust
+// proxy/server.rs:54
+pub struct ProxyServer {
+    config: ProxyConfig,
+    state: ProxyState,
+    shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>,
+    server_handle: Arc<RwLock<Option<JoinHandle<()>>>>,
+}
+impl ProxyServer {
+    pub fn new(config: ProxyConfig, db: Arc<Database>, app_handle: Option<tauri::AppHandle>) -> Self {
+        let provider_router = Arc::new(ProviderRouter::new(db.clone()));
+        let failover_manager = Arc::new(FailoverSwitchManager::new(db.clone()));
+        let state = ProxyState {
+            db, config: Arc::new(RwLock::new(config.clone())),
+            status: Arc::new(RwLock::new(ProxyStatus::default())),
+            start_time: Arc::new(RwLock::new(None)),
+            current_providers: Arc::new(RwLock::new(HashMap::new())),
+            provider_router, gemini_shadow: Arc::new(GeminiShadowStore::default()),
+            codex_chat_history: Arc::new(CodexChatHistoryStore::default()),
+            app_handle, failover_manager,
+        };
+        Self { config, state, shutdown_tx: Arc::new(RwLock::new(None)), server_handle: Arc::new(RwLock::new(None)) }
+    }
+}
+```
+- `ProxyServer`（`server.rs:54`）— 代理 HTTP 服务器
+- `shutdown_tx`（`server.rs:57`）— 关闭信号发送器（`oneshot::Sender`）
+- `server_handle`（`server.rs:59`）— 服务器任务句柄（`JoinHandle`），用于等待服务器实际关闭
+- `new()` 创建时初始化 `ProviderRouter`（熔断器状态跨所有请求保持）和 `FailoverSwitchManager`
+- 使用 `Arc<RwLock<>>` 包装所有共享状态
+- 使用 `hyper_util::rt::TokioIo` 处理 HTTP/1.1 连接
+- 使用 `preserve_header_case(true)` 保持原始 header-name casing
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 pub struct ProxyState {  // proxy/server.rs:34
@@ -3135,6 +3201,39 @@ export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery =
 - `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
 - `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
 - 支持自动轮询（5 分钟）与窗口 focus 重取
+**ProxyServer**（`proxy/server.rs:54`）：
+```rust
+// proxy/server.rs:54
+pub struct ProxyServer {
+    config: ProxyConfig,
+    state: ProxyState,
+    shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>,
+    server_handle: Arc<RwLock<Option<JoinHandle<()>>>>,
+}
+impl ProxyServer {
+    pub fn new(config: ProxyConfig, db: Arc<Database>, app_handle: Option<tauri::AppHandle>) -> Self {
+        let provider_router = Arc::new(ProviderRouter::new(db.clone()));
+        let failover_manager = Arc::new(FailoverSwitchManager::new(db.clone()));
+        let state = ProxyState {
+            db, config: Arc::new(RwLock::new(config.clone())),
+            status: Arc::new(RwLock::new(ProxyStatus::default())),
+            start_time: Arc::new(RwLock::new(None)),
+            current_providers: Arc::new(RwLock::new(HashMap::new())),
+            provider_router, gemini_shadow: Arc::new(GeminiShadowStore::default()),
+            codex_chat_history: Arc::new(CodexChatHistoryStore::default()),
+            app_handle, failover_manager,
+        };
+        Self { config, state, shutdown_tx: Arc::new(RwLock::new(None)), server_handle: Arc::new(RwLock::new(None)) }
+    }
+}
+```
+- `ProxyServer`（`server.rs:54`）— 代理 HTTP 服务器
+- `shutdown_tx`（`server.rs:57`）— 关闭信号发送器（`oneshot::Sender`）
+- `server_handle`（`server.rs:59`）— 服务器任务句柄（`JoinHandle`），用于等待服务器实际关闭
+- `new()` 创建时初始化 `ProviderRouter`（熔断器状态跨所有请求保持）和 `FailoverSwitchManager`
+- 使用 `Arc<RwLock<>>` 包装所有共享状态
+- 使用 `hyper_util::rt::TokioIo` 处理 HTTP/1.1 连接
+- 使用 `preserve_header_case(true)` 保持原始 header-name casing
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 pub struct ProxyState {  // proxy/server.rs:34
@@ -5372,6 +5471,39 @@ export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery =
 - `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
 - `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
 - 支持自动轮询（5 分钟）与窗口 focus 重取
+**ProxyServer**（`proxy/server.rs:54`）：
+```rust
+// proxy/server.rs:54
+pub struct ProxyServer {
+    config: ProxyConfig,
+    state: ProxyState,
+    shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>,
+    server_handle: Arc<RwLock<Option<JoinHandle<()>>>>,
+}
+impl ProxyServer {
+    pub fn new(config: ProxyConfig, db: Arc<Database>, app_handle: Option<tauri::AppHandle>) -> Self {
+        let provider_router = Arc::new(ProviderRouter::new(db.clone()));
+        let failover_manager = Arc::new(FailoverSwitchManager::new(db.clone()));
+        let state = ProxyState {
+            db, config: Arc::new(RwLock::new(config.clone())),
+            status: Arc::new(RwLock::new(ProxyStatus::default())),
+            start_time: Arc::new(RwLock::new(None)),
+            current_providers: Arc::new(RwLock::new(HashMap::new())),
+            provider_router, gemini_shadow: Arc::new(GeminiShadowStore::default()),
+            codex_chat_history: Arc::new(CodexChatHistoryStore::default()),
+            app_handle, failover_manager,
+        };
+        Self { config, state, shutdown_tx: Arc::new(RwLock::new(None)), server_handle: Arc::new(RwLock::new(None)) }
+    }
+}
+```
+- `ProxyServer`（`server.rs:54`）— 代理 HTTP 服务器
+- `shutdown_tx`（`server.rs:57`）— 关闭信号发送器（`oneshot::Sender`）
+- `server_handle`（`server.rs:59`）— 服务器任务句柄（`JoinHandle`），用于等待服务器实际关闭
+- `new()` 创建时初始化 `ProviderRouter`（熔断器状态跨所有请求保持）和 `FailoverSwitchManager`
+- 使用 `Arc<RwLock<>>` 包装所有共享状态
+- 使用 `hyper_util::rt::TokioIo` 处理 HTTP/1.1 连接
+- 使用 `preserve_header_case(true)` 保持原始 header-name casing
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 // proxy/server.rs:34
@@ -6726,6 +6858,39 @@ export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery =
 - `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
 - `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
 - 支持自动轮询（5 分钟）与窗口 focus 重取
+**ProxyServer**（`proxy/server.rs:54`）：
+```rust
+// proxy/server.rs:54
+pub struct ProxyServer {
+    config: ProxyConfig,
+    state: ProxyState,
+    shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>,
+    server_handle: Arc<RwLock<Option<JoinHandle<()>>>>,
+}
+impl ProxyServer {
+    pub fn new(config: ProxyConfig, db: Arc<Database>, app_handle: Option<tauri::AppHandle>) -> Self {
+        let provider_router = Arc::new(ProviderRouter::new(db.clone()));
+        let failover_manager = Arc::new(FailoverSwitchManager::new(db.clone()));
+        let state = ProxyState {
+            db, config: Arc::new(RwLock::new(config.clone())),
+            status: Arc::new(RwLock::new(ProxyStatus::default())),
+            start_time: Arc::new(RwLock::new(None)),
+            current_providers: Arc::new(RwLock::new(HashMap::new())),
+            provider_router, gemini_shadow: Arc::new(GeminiShadowStore::default()),
+            codex_chat_history: Arc::new(CodexChatHistoryStore::default()),
+            app_handle, failover_manager,
+        };
+        Self { config, state, shutdown_tx: Arc::new(RwLock::new(None)), server_handle: Arc::new(RwLock::new(None)) }
+    }
+}
+```
+- `ProxyServer`（`server.rs:54`）— 代理 HTTP 服务器
+- `shutdown_tx`（`server.rs:57`）— 关闭信号发送器（`oneshot::Sender`）
+- `server_handle`（`server.rs:59`）— 服务器任务句柄（`JoinHandle`），用于等待服务器实际关闭
+- `new()` 创建时初始化 `ProviderRouter`（熔断器状态跨所有请求保持）和 `FailoverSwitchManager`
+- 使用 `Arc<RwLock<>>` 包装所有共享状态
+- 使用 `hyper_util::rt::TokioIo` 处理 HTTP/1.1 连接
+- 使用 `preserve_header_case(true)` 保持原始 header-name casing
 **ProxyState**（`proxy/server.rs:34`）：
 ```rust
 // proxy/server.rs:34
