@@ -48,11 +48,11 @@ main.rs:4                         // 22 行，仅设置 Linux WebKit 环境变�
        │    ├─ init CopilotAuthManager        // lib.rs:871
        │    ├─ init CodexOAuthManager         // lib.rs:883
        │    ├─ init global proxy client       // lib.rs:893
-       │    ├─ initialize_common_config_snippets() // lib.rs:1601
-       │    ├─ restore_proxy_state_on_startup()    // lib.rs:1558
+       │    ├─ initialize_common_config_snippets() // lib.rs:944  (def @ 1601)
+       │    ├─ restore_proxy_state_on_startup()    // lib.rs:947  (def @ 1558)
        │    ├─ session usage sync loop        // lib.rs:999
        │    └─ silent startup or show window  // lib.rs:1041
-       ├─ .invoke_handler(...)     // lib.rs:1072  注册 ~266 个命令
+       ├─ .invoke_handler(...)     // lib.rs:1072  注册 266 个命令
        └─ app.run()               // lib.rs:1383
 ```
 
@@ -386,7 +386,6 @@ macro_rules! lock_conn {
 #[serde(skip_serializing_if = "Option::is_none")]  // None 时不序列化
 #[serde(default)]                           // 反序列化时缺失字段用默认值
 #[serde(rename = "settingsConfig")]         // 重命名单个字段
-#[serde(alias = "reasoning_content")]       // 支持多个别名（streaming.rs:37）
 ```
 
 **enum 与 match**：
@@ -653,7 +652,7 @@ pub struct AppSettings {           // settings.rs:211
 ```
 **AppSettings 的 AI Slop 特征**：
 - 每个工具都有 `current_provider_xxx` 字段（7 个），应该用 HashMap 或数组
-**DAO proxy 模块**（`database/dao/proxy.rs`，953 行）— 最大的 DAO 模块：
+**DAO proxy 模块**（`database/dao/proxy.rs`，952 行）— 最大的 DAO 模块：
 ```rust
 // 验证费用倍率（database/dao/proxy.rs:16）
 pub(crate) fn validate_cost_multiplier(value: &str) -> Result<Decimal, AppError> {
@@ -1374,18 +1373,7 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
 | stream_check.rs | 2.7KB | 流式检查 DAO |
 | universal_providers.rs | 2.5KB | 通用 Provider DAO |
 | mod.rs | 448B | 模块导出 |
-- `proxy.rs`（7.5KB）是最大的 DAO 文件，包含代理配置和请求日志操作
-- `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
-- `usage_rollup.rs`（15.3KB）包含用量聚合查询
-- `settings.rs`（28.9KB）包含设置的读写操作
-- `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
-- `failover.rs`（5.5KB）包含故障转移队列操作
-- `mcp.rs`（19.6KB）包含 MCP 服务器的 CRUD 操作
-- `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
-- `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
-- `stream_check.rs`（10.9KB）包含流式检查记录操作
-- `universal_providers.rs`（2.5KB）包含通用 Provider 操作
-**commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
+**commands/mod.rs**（`src-tauri/src/commands/mod.rs`，66 行）：
 ```rust
 // src-tauri/src/commands/mod.rs:1
 #![allow(non_snake_case)]
@@ -1488,30 +1476,30 @@ pub struct SwitchResult {
     pub warnings: Vec<String>,  // 切换操作的非致命警告
 }
 ```
-| proxy.rs | 141.3KB | ProxyService（启动、停止、接管、热切换） |
+| proxy.rs | 141.4KB | ProxyService（启动、停止、接管、热切换） |
 | usage_stats.rs | 114.6KB | 用量统计 |
-| skill.rs | 104.7KB | Skills 管理 |
+| skill.rs | 104.8KB | Skills 管理 |
 | stream_check.rs | 80.9KB | 流式检查 |
-| subscription.rs | 1.3KB | 订阅管理 |
-| coding_plan.rs | 607B | Coding Plan |
-| mcp.rs | 16.3KB | MCP 服务器管理 |
+| subscription.rs | 41.1KB | 订阅管理 |
+| coding_plan.rs | 21.9KB | Coding Plan |
+| mcp.rs | 16.4KB | MCP 服务器管理 |
 | prompt.rs | 8.6KB | Prompt 管理 |
 | config.rs | 9.7KB | ConfigService（配置文件读写） |
 | speedtest.rs | 5.9KB | 端点速度测试 |
-| balance.rs | 13.7KB | 余额查询 |
-| model_fetch.rs | 13.1KB | 模型列表获取 |
-| env_checker.rs | 168B | 环境变量检查 |
-| env_manager.rs | 240B | 环境变量管理 |
-| webdav.rs | 554B | WebDAV 客户端 |
-| webdav_sync.rs | 884B | WebDAV 同步逻辑 |
-| webdav_auto_sync.rs | 274B | 自动同步 |
-| session_usage.rs | 682B | Claude 会话用量同步 |
-| session_usage_codex.rs | 787B | Codex 会话用量同步 |
-| session_usage_gemini.rs | 494B | Gemini 会话用量同步 |
-| omo.rs | 560B | OMO 集成 |
+| balance.rs | 13.8KB | 余额查询 |
+| model_fetch.rs | 13.2KB | 模型列表获取 |
+| env_checker.rs | 5.9KB | 环境变量检查 |
+| env_manager.rs | 8.5KB | 环境变量管理 |
+| webdav.rs | 18.0KB | WebDAV 客户端 |
+| webdav_sync.rs | 29.0KB | WebDAV 同步逻辑 |
+| webdav_auto_sync.rs | 8.0KB | 自动同步 |
+| session_usage.rs | 22.6KB | Claude 会话用量同步 |
+| session_usage_codex.rs | 25.6KB | Codex 会话用量同步 |
+| session_usage_gemini.rs | 16.1KB | Gemini 会话用量同步 |
+| omo.rs | 19.1KB | OMO 集成 |
 
 **陷阱**：
-- `provider/mod.rs`（105.5KB）和 `proxy.rs`（7.5KB）太大，应该拆分
+- `provider/mod.rs`（105.5KB）和 `proxy.rs`（141.4KB）太大，应该拆分
 - 有些逻辑直接放在 `commands/` 里，没有经过 services 层
 - 没有统一的 service trait 或接口
 
@@ -1544,7 +1532,7 @@ src-tauri/src/proxy/
 ├── providers/transform_responses.rs   # 61.5KB，通用响应转换
 ├── providers/transform.rs             # 58.3KB，通用请求转换
 ├── copilot_optimizer.rs               # 57.9KB，Copilot 优化器
-├── thinking_rectifier.rs              # 23.0KB，思维整流器
+├── thinking_rectifier.rs              # 23.1KB，思维整流器
 ├── thinking_budget_rectifier.rs       # 11.1KB，思维预算整流
 ├── body_filter.rs                     # 10.5KB，请求体过滤
 ├── model_mapper.rs                    # 10.4KB，模型映射
@@ -1583,12 +1571,12 @@ impl Drop for ActiveConnectionGuard {
 ```
 **命名不一致的 AI Slop**：
 - `PROXY_AUTH_PLACEHOLDER`（`forwarder.rs:35`）和 `PROXY_TOKEN_PLACEHOLDER`（`services/proxy.rs:22`）值都是 `"PROXY_MANAGED"`，但常量名不同
-**transform.rs 模块**（`proxy/providers/transform.rs`，1626 行，58.3KB）：
+**transform.rs 模块**（`proxy/providers/transform.rs`，1625 行，58.3KB）：
 - Anthropic ↔ OpenAI 格式转换，用于 OpenRouter 支持
 - `strip_leading_anthropic_billing_header()`（`transform.rs:18`）— 去掉 Claude Code 的计费头
 - `is_openai_o_series()`（`transform.rs:51`）— 检测 o1/o3/o4-mini 等推理模型
 - `supports_reasoning_effort()`（`transform.rs:62`）— 检测支持 reasoning_effort 的模型
-**transform_codex_chat.rs 模块**（`providers/transform_codex_chat.rs`，2074 行，71.1KB）：
+**transform_codex_chat.rs 模块**（`providers/transform_codex_chat.rs`，2073 行，71.1KB）：
 - Codex Responses API ↔ OpenAI Chat Completions API 转换
 - `responses_to_chat_completions()`（`transform_codex_chat.rs:38`）— 核心转换函数
 - `EXTRA_CHAT_PASSTHROUGH_FIELDS`（`transform_codex_chat.rs:20`）— 透传字段列表
@@ -1596,7 +1584,7 @@ impl Drop for ActiveConnectionGuard {
 - Gemini API ↔ 内部格式转换
 **transform_responses.rs 模块**（`providers/transform_responses.rs`，61.5KB）：
 - OpenAI Responses API 转换
-**model_mapper 模块**（`proxy/model_mapper.rs`，313 行，10.4KB）：
+**model_mapper 模块**（`proxy/model_mapper.rs`，312 行，10.4KB）：
 ```rust
 pub struct ModelMapping {         // proxy/model_mapper.rs:10
     pub haiku_model: Option<String>,
@@ -1620,7 +1608,7 @@ pub enum ClientFormat {            // proxy/session.rs:19
 ```
 - `ClientFormat::from_path()`（`session.rs:37`）— 从请求路径检测格式
 - `ClientFormat::from_body()`（`session.rs:61`）— 从请求体内容检测格式（回退方案）
-**session 模块**（`proxy/session.rs`，627 行）：
+**session 模块**（`proxy/session.rs`，626 行）：
 - 为每个代理请求创建会话上下文
 - 支持从客户端请求中提取 Session ID
 - Claude: 从 `metadata.user_id` 或 `metadata.session_id` 提取
@@ -1814,7 +1802,7 @@ pub struct StreamingTimeoutConfig {  // proxy/handler_context.rs:19
     pub idle_timeout: u64,           // 静默期超时（秒）
 }
 ```
-**sse 模块**（`proxy/sse.rs`，346 行）：
+**sse 模块**（`proxy/sse.rs`，345 行）：
 - `strip_sse_field()`（`sse.rs:2`）— 从 SSE 行中提取字段值
 - `take_sse_block()`（`sse.rs:8`）— 从 buffer 中提取完整的 SSE 块
 - `append_utf8_safe()`（`sse.rs:36`）— 安全地追加 UTF-8 字节到 buffer，处理跨 chunk 的多字节字符
@@ -1823,7 +1811,7 @@ pub struct StreamingTimeoutConfig {  // proxy/handler_context.rs:19
 - `create_logged_passthrough_stream()` — 创建带日志的透传流
 ### 4.4 认证和路由
 
-**ProviderRouter**（`proxy/provider_router.rs`，524 行）：
+**ProviderRouter**（`proxy/provider_router.rs`，523 行）：
 ```rust
 pub struct ProviderRouter {       // proxy/provider_router.rs:16
     db: Arc<Database>,
@@ -2076,7 +2064,7 @@ export const hermesKeys = {  // useHermes.ts:26
 ```
 - `invalidateHermesProviderCaches()`（`useHermes.ts:39`）— 并行失效所有 Hermes 缓存
 - `hermesKeys` 集中管理查询键（SSOT）
-**useImportExport**（`src/hooks/useImportExport.ts`，204 行）：
+**useImportExport**（`src/hooks/useImportExport.ts`，203 行）：
 ```typescript
 export type ImportStatus = "idle" | "importing" | "success" | "partial-success" | "error";
 export interface UseImportExportResult {  // useImportExport.ts:18
@@ -2112,7 +2100,7 @@ export interface ResolvedDirectories {  // useDirectorySettings.ts:18
 - `APP_DIRECTORY_META`（`useDirectorySettings.ts:29`）— 每应用目录元数据（SSOT）
 - 默认目录：`.claude`, `.codex`, `.gemini`, `.config/opencode`, `.openclaw`, `.hermes`
 - `DirectoryAppId` 排除了 `claude-desktop`（因为 Claude Desktop 使用平台特定路径）
-**useSettingsForm**（`src/hooks/useSettingsForm.ts`，204 行）：
+**useSettingsForm**（`src/hooks/useSettingsForm.ts`，203 行）：
 ```typescript
 type Language = "zh" | "zh-TW" | "en" | "ja";
 export type SettingsFormState = Omit<Settings, "language"> & {
@@ -2163,7 +2151,7 @@ export function useProviderActions(
 - `useProviderActions` 有 385 行，但大部分是 Claude 插件同步逻辑（`syncClaudePlugin`，`useProviderActions.ts:45`）
 - Claude 插件同步逻辑应该抽到独立 hook
 
-**Rust 代理类型**（`proxy/types.rs`，496 行）：
+**Rust 代理类型**（`proxy/types.rs`，495 行）：
 ```rust
 pub struct ProxyConfig {  // proxy/types.rs:5
     pub listen_address: String,        // 默认 "127.0.0.1"
@@ -2939,11 +2927,11 @@ useTauriEvent("provider-changed", (event) => {
 | opencodeProviderPresets.ts | 42.6KB |
 | codexProviderPresets.ts | 32.5KB |
 | claudeProviderPresets.ts | 35.6KB |
-| claudeDesktopProviderPresets.ts | 26.9KB |
-| hermesProviderPresets.ts | 35.1KB |
-| geminiProviderPresets.ts | 9.2KB |
+| claudeDesktopProviderPresets.ts | 27.0KB |
+| hermesProviderPresets.ts | 35.2KB |
+| geminiProviderPresets.ts | 9.3KB |
 | universalProviderPresets.ts | 3.0KB |
-| **合计** | **237.3KB** |
+| **合计** | **237.6KB** |
 
 **AI Slop 特征**：
 - 8 个文件结构几乎一样，但没有抽取公共模板
@@ -2975,10 +2963,10 @@ useTauriEvent("provider-changed", (event) => {
 | 文件 | 行数/大小 | 问题 |
 |------|----------|------|
 | `lib.rs` | 1825 行 | 模块声明 + 插件注册 + 命令注册 + 初始化逻辑全混在一起 |
-| `services/proxy.rs` | 141.3KB (3909 行) | ProxyService 所有方法全在一个文件 |
+| `services/proxy.rs` | 141.4KB (3909 行) | ProxyService 所有方法全在一个文件 |
 | `proxy/forwarder.rs` | 122.2KB (3100 行) | 请求转发 + 格式转换 + 错误处理全在一起 |
 | `provider/mod.rs` (services) | 105.5KB (2766 行) | ProviderService 所有方法 |
-| `skill.rs` (services) | 104.7KB (3127 行) | SkillService 所有方法 |
+| `skill.rs` (services) | 104.8KB (3127 行) | SkillService 所有方法 |
 | `usage_stats.rs` (services) | 114.6KB (3250 行) | UsageStatsService 所有方法 |
 | `stream_check.rs` (services) | 80.9KB (2166 行) | StreamCheckService 所有方法 |
 | `hermes_config.rs` | 69.0KB | Hermes 配置读写 |
@@ -2989,7 +2977,7 @@ useTauriEvent("provider-changed", (event) => {
 **复制粘贴的 config 模块**：
 - 7 个工具的 config 模块结构几乎一样
 - 每个都自己实现了一遍 `read → parse → modify → write` 流程
-- 没有公共的 config trait，但共用 `config.rs`（425 行）提供的 `read_json_file`/`write_json_file`/`atomic_write` 等工具函数
+- 没有公共的 config trait，但共用 `config.rs`（424 行）提供的 `read_json_file`/`write_json_file`/`atomic_write` 等工具函数
 
 **冗余的 match 分支**：
 - `AppType` 的 match 在 `McpApps`（`app_config.rs:24`）、`VisibleApps`（`settings.rs:66`）、`CommonConfigSnippets`（`app_config.rs:439`）里重复出现
@@ -3041,6 +3029,7 @@ useTauriEvent("provider-changed", (event) => {
 - `streaming.rs`（1141 行）+ `streaming_codex_chat.rs`（1082 行）+ `streaming_gemini.rs`（1054 行）+ `streaming_responses.rs`（1185 行）— 4 个流式转换模块结构相似但各自实现
 - `copilot_auth.rs`（2094 行）+ `codex_oauth_auth.rs`（1133 行）— 两个 OAuth 模块结构相似
 - `PROXY_AUTH_PLACEHOLDER`（`forwarder.rs:35`）和 `PROXY_TOKEN_PLACEHOLDER`（`services/proxy.rs:22`）值都是 `"PROXY_MANAGED"` 但常量名不同
+
 **数据库层 AI Slop 特征**：
 - `schema.rs`（2050 行，77.8KB）— 所有表定义 + 索引 + 迁移逻辑全在一个文件
 - `backup.rs`（860 行，31.7KB）— SQL 导入导出 + 快照备份全在一起
@@ -3048,8 +3037,8 @@ useTauriEvent("provider-changed", (event) => {
 - `proxy_request_logs` 表（`schema.rs:184`）有 25 列，查询时需要手写 SQL 拼接
 
 **服务层 AI Slop 特征**：
-- `services/proxy.rs`（3909 行，141.3KB）— ProxyService 所有方法全在一个文件，包括接管、热切换、配置管理、启动恢复
-- `services/skill.rs`（3127 行，104.7KB）— SkillService 所有方法全在一个文件
+- `services/proxy.rs`（3909 行，141.4KB）— ProxyService 所有方法全在一个文件，包括接管、热切换、配置管理、启动恢复
+- `services/skill.rs`（3127 行，104.8KB）— SkillService 所有方法全在一个文件
 - `services/usage_stats.rs`（3250 行，114.6KB）— UsageStatsService 所有方法全在一个文件
 - `services/stream_check.rs`（2166 行，80.9KB）— StreamCheckService 所有方法全在一个文件
 - `commands/misc.rs`（176.0KB）— 最大的命令文件，包含大量杂项命令
@@ -3079,7 +3068,7 @@ useTauriEvent("provider-changed", (event) => {
 
 ## 第 7 章：重构路线图
 
-### 7.1 低风险清理（先做，1-2 天）
+### 7.1 低风险清理（先做）
 
 **删除死代码**：
 - 搜索 `#[allow(dead_code)]` 和未使用的函数
@@ -3095,7 +3084,7 @@ useTauriEvent("provider-changed", (event) => {
 - 9 个 preset 文件的结构抽取为公共模板
 - `AppType` 的 match 分支抽取为 trait 方法
 
-### 7.2 中等重构（3-5 天）
+### 7.2 中等重构
 
 **拆分过大的文件**：
 - `lib.rs`（1825 行）→ 拆分建议：
@@ -3104,7 +3093,7 @@ useTauriEvent("provider-changed", (event) => {
   - `commands_register.rs` — `.invoke_handler()` 命令注册（`lib.rs:1072-1377`）
   - `cleanup.rs` — `cleanup_before_exit()` 和 `restore_proxy_state_on_startup()`（`lib.rs:1513-1598`）
   - `common_config.rs` — `initialize_common_config_snippets()`（`lib.rs:1601`）
-- `services/proxy.rs`（141.3KB，3909 行）→ 拆分建议：
+- `services/proxy.rs`（141.4KB，3909 行）→ 拆分建议：
   - `takeover.rs` — 代理接管逻辑（`services/proxy.rs` 中的 `set_takeover_for_app()`）
   - `hot_switch.rs` — 热切换逻辑（`hot_switch_provider()`）
   - `config.rs` — 代理配置管理（`get_proxy_config()`, `update_proxy_config()`）
@@ -3138,7 +3127,7 @@ impl ToolConfig for ClaudeConfig {
 }
 ```
 
-### 7.3 架构级重构（最后做，慎重，1-2 周）
+### 7.3 架构级重构（最后做，慎重）
 
 **Provider 管理的统一抽象**：
 - 定义 `ProviderManager` trait
@@ -3153,10 +3142,11 @@ impl ToolConfig for ClaudeConfig {
   - `transform_dispatch.rs` — 格式转换分发
 - 抽取公共的 API 格式转换框架
 - 统一错误处理和日志记录
+
 **重构优先级排序**（按收益/风险比）：
 1. 抽取 `ToolConfig` trait（中等风险，高收益）— 减少 7 个 config 模块的重复代码
 2. 拆分 `lib.rs`（低风险，中等收益）— 1825 行的上帝文件需要拆分
-3. 拆分 `services/proxy.rs`（中等风险，高收益）— 141.3KB 的 ProxyService 需要拆分
+3. 拆分 `services/proxy.rs`（中等风险，高收益）— 141.4KB 的 ProxyService 需要拆分
 4. 拆分 `forwarder.rs`（高风险，高收益）— 122.2KB 的 RequestForwarder 需要拆分
 5. 统一 `AppType` match（低风险，中等收益）— 减少 10+ 处重复 match
 6. 强类型化 `Provider.settings_config`（高风险，高收益）— 用 enum 替代 `serde_json::Value`
@@ -3189,15 +3179,15 @@ impl ToolConfig for ClaudeConfig {
 | lib.rs | — | 1825 |
 | main.rs | — | 22 |
 | store.rs | — | 23 |
-| error.rs | 3.4KB | 146 |
-| config.rs | 13.9KB | 424 |
-| settings.rs | 28.8KB | 876 |
-| provider.rs | 40.5KB | 1153 |
+| error.rs | 3.5KB | 146 |
+| config.rs | 14.0KB | 424 |
+| settings.rs | 28.9KB | 876 |
+| provider.rs | 40.6KB | 1153 |
 | app_config.rs | 41.0KB | 1183 |
-| services/proxy.rs | 141.3KB | 3909 |
+| services/proxy.rs | 141.4KB | 3909 |
 | services/provider/mod.rs | 105.5KB | 2766 |
 | services/usage_stats.rs | 114.6KB | 3250 |
-| services/skill.rs | 104.7KB | 3127 |
+| services/skill.rs | 104.8KB | 3127 |
 | services/stream_check.rs | 80.9KB | 2166 |
 | proxy/forwarder.rs | 122.2KB | 3100 |
 | proxy/circuit_breaker.rs | — | 495 |
@@ -3208,7 +3198,7 @@ impl ToolConfig for ClaudeConfig {
 | proxy/providers/transform_responses.rs | 61.5KB | — |
 | proxy/providers/transform.rs | 58.3KB | — |
 | proxy/copilot_optimizer.rs | 57.9KB | — |
-| proxy/thinking_rectifier.rs | 23.0KB | — |
+| proxy/thinking_rectifier.rs | 23.1KB | — |
 | proxy/thinking_budget_rectifier.rs | 11.1KB | — |
 | proxy/body_filter.rs | 10.5KB | — |
 | proxy/model_mapper.rs | 10.4KB | — |
@@ -3219,7 +3209,7 @@ impl ToolConfig for ClaudeConfig {
 | claude_desktop_config.rs | 61.5KB | 1826 |
 | codex_config.rs | 66.5KB | 2024 |
 | hermes_config.rs | 69.0KB | 1947 |
-| openclaw_config.rs | 34.9KB | 1089 |
+| openclaw_config.rs | 35.0KB | 1089 |
 | gemini_config.rs | 20.4KB | 654 |
 | opencode_config.rs | 6.9KB | 233 |
 
@@ -4617,4 +4607,4 @@ export function ProxyPanel({ enableLocalProxy, onEnableLocalProxyChange, onToggl
 - 使用 `useGlobalProxyConfig()` 获取全局代理配置
 - 默认监听地址 `127.0.0.1:15721`
 - 包含 `AutoFailoverConfigPanel`、`CircuitBreakerConfigPanel`、`FailoverQueueManager` 子组件
-| config/ presets 合计 | 237.3KB（8 个文件） |
+| config/ presets 合计 | 237.6KB（8 个文件） |
