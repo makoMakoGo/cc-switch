@@ -3709,7 +3709,40 @@ pub enum ClientFormat {            // proxy/session.rs:19
 - Claude: 从 `metadata.user_id` 或 `metadata.session_id` 提取
 - Codex: 从 headers 中的 `session_id` / `x-session-id` 提取
 - 其他: 生成新的 UUID
-### 4.1.1 ProxyServer 生命周期（`proxy/server.rs:94`）
+### 4.1.1 RequestForwarder 配置（`proxy/forwarder.rs:89-122`）
+
+`RequestForwarder` 是请求转发的核心，每个请求创建一个实例：
+
+```rust
+// proxy/forwarder.rs:89
+pub struct RequestForwarder {
+    router: Arc<ProviderRouter>,           // 熔断器状态
+    status: Arc<RwLock<ProxyStatus>>,      // 代理状态
+    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,  // 当前供应商
+    gemini_shadow: Arc<GeminiShadowStore>, // Gemini shadow replay
+    codex_chat_history: Arc<CodexChatHistoryStore>, // Codex Chat bridge
+    failover_manager: Arc<FailoverSwitchManager>,   // 故障转移
+    app_handle: Option<tauri::AppHandle>,  // 事件发射
+    current_provider_id_at_start: String,  // 请求开始时的供应商 ID
+    session_id: String,                    // 代理会话 ID
+    session_client_provided: bool,         // Session ID 是否由客户端提供
+    rectifier_config: RectifierConfig,     // 整流器配置
+    optimizer_config: OptimizerConfig,     // 优化器配置
+    copilot_optimizer_config: CopilotOptimizerConfig, // Copilot 优化器
+    non_streaming_timeout: Duration,       // 非流式请求超时
+    streaming_first_byte_timeout: Duration, // 流式响应头等待超时
+    max_attempts: usize,                   // 最多尝试的 provider 数
+}
+```
+
+- `max_attempts = max_retries + 1`（`forwarder.rs:147`）— `max_retries=0` 仅尝试一家，`max_retries=3` 最多 4 家
+- `non_streaming_timeout` — 非流式请求超时（秒）
+- `streaming_first_byte_timeout` — 流式请求响应头等待超时（秒）
+- `rectifier_config` — Thinking Signature 整流器配置
+- `optimizer_config` — Thinking 模式优化器配置
+- `copilot_optimizer_config` — Copilot 请求优化器配置（处理 x-initiator 头）
+
+### 4.1.2 ProxyServer 生命周期（`proxy/server.rs:94`）
 
 **启动流程**（`start()`，`server.rs:94`）：
 1. 检查是否已在运行（`shutdown_tx.read().await.is_some()`）
