@@ -3709,6 +3709,25 @@ pub enum ClientFormat {            // proxy/session.rs:19
 - Claude: 从 `metadata.user_id` 或 `metadata.session_id` 提取
 - Codex: 从 headers 中的 `session_id` / `x-session-id` 提取
 - 其他: 生成新的 UUID
+### 4.1.1 ProxyServer 生命周期（`proxy/server.rs:94`）
+
+**启动流程**（`start()`，`server.rs:94`）：
+1. 检查是否已在运行（`shutdown_tx.read().await.is_some()`）
+2. 解析监听地址（`listen_address:listen_port`）
+3. 创建关闭通道（`oneshot::channel()`）
+4. 构建路由（`build_router()`）
+5. 绑定 TCP 监听器（`tokio::net::TcpListener::bind()`）
+6. 设置全局代理端口（`http_client::set_proxy_port()`）
+7. 更新状态（`running = true`）
+8. 启动 HTTP/1.1 accept loop（`tokio::spawn`）
+   - 使用 `preserve_header_case(true)` 保持原始 header casing
+   - 每个连接独立 `tokio::spawn` 处理
+
+**停止流程**（`stop()`）：
+1. 发送关闭信号（`shutdown_tx.send(())`）
+2. 等待服务器任务完成（`server_handle.await`）
+3. 更新状态（`running = false`）
+
 ### 4.2 ProxyState 和 ProxyServer
 **ProxyError 枚举**（`proxy/error.rs:10`）— 20 个变体：
 ```rust
