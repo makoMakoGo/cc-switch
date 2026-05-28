@@ -5086,6 +5086,25 @@ useTauriEvent("provider-changed", (event) => {
 - `streaming.rs`（1141 行）+ `streaming_codex_chat.rs`（1082 行）+ `streaming_gemini.rs`（1054 行）+ `streaming_responses.rs`（1185 行）— 4 个流式转换模块结构相似但各自实现
 - `copilot_auth.rs`（2094 行）+ `codex_oauth_auth.rs`（1133 行）— 两个 OAuth 模块结构相似
 - `PROXY_AUTH_PLACEHOLDER`（`forwarder.rs:35`）和 `PROXY_TOKEN_PLACEHOLDER`（`services/proxy.rs:22`）值都是 `"PROXY_MANAGED"` 但常量名不同
+**数据库层 AI Slop 特征**：
+- `schema.rs`（2050 行，77.8KB）— 所有表定义 + 索引 + 迁移逻辑全在一个文件
+- `backup.rs`（860 行，31.7KB）— SQL 导入导出 + 快照备份全在一起
+- 12 个 DAO 模块各自实现 `lock_conn!` + SQL 查询，没有统一的查询构建器
+- `proxy_request_logs` 表（`schema.rs:184`）有 15 列，查询时需要手写 SQL 拼接
+
+**服务层 AI Slop 特征**：
+- `services/proxy.rs`（3909 行，141.3KB）— ProxyService 所有方法全在一个文件，包括接管、热切换、配置管理、启动恢复
+- `services/skill.rs`（3127 行，104.7KB）— SkillService 所有方法全在一个文件
+- `services/usage_stats.rs`（3250 行，114.6KB）— UsageStatsService 所有方法全在一个文件
+- `services/stream_check.rs`（2166 行，80.9KB）— StreamCheckService 所有方法全在一个文件
+- `commands/misc.rs`（176.0KB）— 最大的命令文件，包含大量杂项命令
+
+**配置层 AI Slop 特征**：
+- 7 个 config 模块（`claude_desktop_config.rs` 61.4KB、`codex_config.rs` 66.4KB、`hermes_config.rs` 69.0KB 等）结构几乎一样但各自实现
+- `Provider.settings_config: serde_json::Value`（`provider.rs:14`）— 动态类型，运行时才知道配置是否合法
+- `AppType` 的 match 分支在 `McpApps`、`VisibleApps`、`CommonConfigSnippets` 等处重复出现（`app_config.rs:24`、`settings.rs:66`、`app_config.rs:439`）
+- 每次加新工具都要改 10+ 个 match
+
 **前端 AI Slop 特征**：
 - `App.tsx`（1604 行）— 14 个视图 + 事件处理 + 状态管理全在一个文件
 - `useProviderActions.ts`（385 行）— Claude 插件同步逻辑应该抽到独立 hook
