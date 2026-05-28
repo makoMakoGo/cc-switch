@@ -1096,6 +1096,55 @@ export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery =
 - `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
 - `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
 - 支持自动轮询（5 分钟）与窗口 focus 重取
+**RequestForwarder**（`proxy/forwarder.rs:89`）：
+```rust
+// proxy/forwarder.rs:61
+pub(crate) struct ActiveConnectionGuard {
+    status: Arc<RwLock<ProxyStatus>>,
+}
+impl ActiveConnectionGuard {
+    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
+        let mut s = status.write().await;
+        s.active_connections = s.active_connections.saturating_add(1);
+        Self { status }
+    }
+}
+impl Drop for ActiveConnectionGuard {
+    fn drop(&mut self) {
+        // Drop 不能 await：把减量操作调度到 tokio runtime
+        let status = self.status.clone();
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(async move {
+                let mut s = status.write().await;
+                s.active_connections = s.active_connections.saturating_sub(1);
+            });
+        }
+    }
+}
+// proxy/forwarder.rs:89
+pub struct RequestForwarder {
+    router: Arc<ProviderRouter>,
+    status: Arc<RwLock<ProxyStatus>>,
+    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    gemini_shadow: Arc<GeminiShadowStore>,
+    codex_chat_history: Arc<CodexChatHistoryStore>,
+    failover_manager: Arc<FailoverSwitchManager>,
+    app_handle: Option<tauri::AppHandle>,
+    current_provider_id_at_start: String,
+    session_id: String,
+}
+```
+- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
+  - `acquire()` 增加计数，`Drop` 减少计数
+  - Drop 不能 await，所以把减量操作调度到 tokio runtime
+  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
+- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
+  - 持有 `ProviderRouter`（熔断器状态）
+  - 持有 `FailoverSwitchManager`（故障转移切换）
+  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
+  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
+  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
+  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
 **ProxyServer**（`proxy/server.rs:54`）：
 ```rust
 // proxy/server.rs:54
@@ -1144,6 +1193,55 @@ pub struct ProxyState {  // proxy/server.rs:34
     pub failover_manager: Arc<FailoverSwitchManager>,
 }
 ```
+**RequestForwarder**（`proxy/forwarder.rs:89`）：
+```rust
+// proxy/forwarder.rs:61
+pub(crate) struct ActiveConnectionGuard {
+    status: Arc<RwLock<ProxyStatus>>,
+}
+impl ActiveConnectionGuard {
+    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
+        let mut s = status.write().await;
+        s.active_connections = s.active_connections.saturating_add(1);
+        Self { status }
+    }
+}
+impl Drop for ActiveConnectionGuard {
+    fn drop(&mut self) {
+        // Drop 不能 await：把减量操作调度到 tokio runtime
+        let status = self.status.clone();
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(async move {
+                let mut s = status.write().await;
+                s.active_connections = s.active_connections.saturating_sub(1);
+            });
+        }
+    }
+}
+// proxy/forwarder.rs:89
+pub struct RequestForwarder {
+    router: Arc<ProviderRouter>,
+    status: Arc<RwLock<ProxyStatus>>,
+    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    gemini_shadow: Arc<GeminiShadowStore>,
+    codex_chat_history: Arc<CodexChatHistoryStore>,
+    failover_manager: Arc<FailoverSwitchManager>,
+    app_handle: Option<tauri::AppHandle>,
+    current_provider_id_at_start: String,
+    session_id: String,
+}
+```
+- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
+  - `acquire()` 增加计数，`Drop` 减少计数
+  - Drop 不能 await，所以把减量操作调度到 tokio runtime
+  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
+- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
+  - 持有 `ProviderRouter`（熔断器状态）
+  - 持有 `FailoverSwitchManager`（故障转移切换）
+  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
+  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
+  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
+  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
 **ProxyServer**（`proxy/server.rs:54`）：
 - `config: ProxyConfig` — 代理配置
 - `state: ProxyState` — 共享状态
@@ -1960,6 +2058,55 @@ export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery =
 - `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
 - `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
 - 支持自动轮询（5 分钟）与窗口 focus 重取
+**RequestForwarder**（`proxy/forwarder.rs:89`）：
+```rust
+// proxy/forwarder.rs:61
+pub(crate) struct ActiveConnectionGuard {
+    status: Arc<RwLock<ProxyStatus>>,
+}
+impl ActiveConnectionGuard {
+    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
+        let mut s = status.write().await;
+        s.active_connections = s.active_connections.saturating_add(1);
+        Self { status }
+    }
+}
+impl Drop for ActiveConnectionGuard {
+    fn drop(&mut self) {
+        // Drop 不能 await：把减量操作调度到 tokio runtime
+        let status = self.status.clone();
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(async move {
+                let mut s = status.write().await;
+                s.active_connections = s.active_connections.saturating_sub(1);
+            });
+        }
+    }
+}
+// proxy/forwarder.rs:89
+pub struct RequestForwarder {
+    router: Arc<ProviderRouter>,
+    status: Arc<RwLock<ProxyStatus>>,
+    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    gemini_shadow: Arc<GeminiShadowStore>,
+    codex_chat_history: Arc<CodexChatHistoryStore>,
+    failover_manager: Arc<FailoverSwitchManager>,
+    app_handle: Option<tauri::AppHandle>,
+    current_provider_id_at_start: String,
+    session_id: String,
+}
+```
+- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
+  - `acquire()` 增加计数，`Drop` 减少计数
+  - Drop 不能 await，所以把减量操作调度到 tokio runtime
+  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
+- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
+  - 持有 `ProviderRouter`（熔断器状态）
+  - 持有 `FailoverSwitchManager`（故障转移切换）
+  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
+  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
+  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
+  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
 **ProxyServer**（`proxy/server.rs:54`）：
 ```rust
 // proxy/server.rs:54
@@ -2008,6 +2155,55 @@ pub struct ProxyState {  // proxy/server.rs:34
     pub failover_manager: Arc<FailoverSwitchManager>,
 }
 ```
+**RequestForwarder**（`proxy/forwarder.rs:89`）：
+```rust
+// proxy/forwarder.rs:61
+pub(crate) struct ActiveConnectionGuard {
+    status: Arc<RwLock<ProxyStatus>>,
+}
+impl ActiveConnectionGuard {
+    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
+        let mut s = status.write().await;
+        s.active_connections = s.active_connections.saturating_add(1);
+        Self { status }
+    }
+}
+impl Drop for ActiveConnectionGuard {
+    fn drop(&mut self) {
+        // Drop 不能 await：把减量操作调度到 tokio runtime
+        let status = self.status.clone();
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(async move {
+                let mut s = status.write().await;
+                s.active_connections = s.active_connections.saturating_sub(1);
+            });
+        }
+    }
+}
+// proxy/forwarder.rs:89
+pub struct RequestForwarder {
+    router: Arc<ProviderRouter>,
+    status: Arc<RwLock<ProxyStatus>>,
+    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    gemini_shadow: Arc<GeminiShadowStore>,
+    codex_chat_history: Arc<CodexChatHistoryStore>,
+    failover_manager: Arc<FailoverSwitchManager>,
+    app_handle: Option<tauri::AppHandle>,
+    current_provider_id_at_start: String,
+    session_id: String,
+}
+```
+- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
+  - `acquire()` 增加计数，`Drop` 减少计数
+  - Drop 不能 await，所以把减量操作调度到 tokio runtime
+  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
+- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
+  - 持有 `ProviderRouter`（熔断器状态）
+  - 持有 `FailoverSwitchManager`（故障转移切换）
+  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
+  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
+  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
+  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
 **ProxyServer**（`proxy/server.rs:54`）：
 - `config: ProxyConfig` — 代理配置
 - `state: ProxyState` — 共享状态
@@ -3201,6 +3397,55 @@ export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery =
 - `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
 - `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
 - 支持自动轮询（5 分钟）与窗口 focus 重取
+**RequestForwarder**（`proxy/forwarder.rs:89`）：
+```rust
+// proxy/forwarder.rs:61
+pub(crate) struct ActiveConnectionGuard {
+    status: Arc<RwLock<ProxyStatus>>,
+}
+impl ActiveConnectionGuard {
+    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
+        let mut s = status.write().await;
+        s.active_connections = s.active_connections.saturating_add(1);
+        Self { status }
+    }
+}
+impl Drop for ActiveConnectionGuard {
+    fn drop(&mut self) {
+        // Drop 不能 await：把减量操作调度到 tokio runtime
+        let status = self.status.clone();
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(async move {
+                let mut s = status.write().await;
+                s.active_connections = s.active_connections.saturating_sub(1);
+            });
+        }
+    }
+}
+// proxy/forwarder.rs:89
+pub struct RequestForwarder {
+    router: Arc<ProviderRouter>,
+    status: Arc<RwLock<ProxyStatus>>,
+    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    gemini_shadow: Arc<GeminiShadowStore>,
+    codex_chat_history: Arc<CodexChatHistoryStore>,
+    failover_manager: Arc<FailoverSwitchManager>,
+    app_handle: Option<tauri::AppHandle>,
+    current_provider_id_at_start: String,
+    session_id: String,
+}
+```
+- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
+  - `acquire()` 增加计数，`Drop` 减少计数
+  - Drop 不能 await，所以把减量操作调度到 tokio runtime
+  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
+- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
+  - 持有 `ProviderRouter`（熔断器状态）
+  - 持有 `FailoverSwitchManager`（故障转移切换）
+  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
+  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
+  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
+  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
 **ProxyServer**（`proxy/server.rs:54`）：
 ```rust
 // proxy/server.rs:54
@@ -3249,6 +3494,55 @@ pub struct ProxyState {  // proxy/server.rs:34
     pub failover_manager: Arc<FailoverSwitchManager>,
 }
 ```
+**RequestForwarder**（`proxy/forwarder.rs:89`）：
+```rust
+// proxy/forwarder.rs:61
+pub(crate) struct ActiveConnectionGuard {
+    status: Arc<RwLock<ProxyStatus>>,
+}
+impl ActiveConnectionGuard {
+    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
+        let mut s = status.write().await;
+        s.active_connections = s.active_connections.saturating_add(1);
+        Self { status }
+    }
+}
+impl Drop for ActiveConnectionGuard {
+    fn drop(&mut self) {
+        // Drop 不能 await：把减量操作调度到 tokio runtime
+        let status = self.status.clone();
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(async move {
+                let mut s = status.write().await;
+                s.active_connections = s.active_connections.saturating_sub(1);
+            });
+        }
+    }
+}
+// proxy/forwarder.rs:89
+pub struct RequestForwarder {
+    router: Arc<ProviderRouter>,
+    status: Arc<RwLock<ProxyStatus>>,
+    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    gemini_shadow: Arc<GeminiShadowStore>,
+    codex_chat_history: Arc<CodexChatHistoryStore>,
+    failover_manager: Arc<FailoverSwitchManager>,
+    app_handle: Option<tauri::AppHandle>,
+    current_provider_id_at_start: String,
+    session_id: String,
+}
+```
+- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
+  - `acquire()` 增加计数，`Drop` 减少计数
+  - Drop 不能 await，所以把减量操作调度到 tokio runtime
+  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
+- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
+  - 持有 `ProviderRouter`（熔断器状态）
+  - 持有 `FailoverSwitchManager`（故障转移切换）
+  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
+  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
+  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
+  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
 **ProxyServer**（`proxy/server.rs:54`）：
 - `config: ProxyConfig` — 代理配置
 - `state: ProxyState` — 共享状态
@@ -5471,6 +5765,55 @@ export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery =
 - `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
 - `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
 - 支持自动轮询（5 分钟）与窗口 focus 重取
+**RequestForwarder**（`proxy/forwarder.rs:89`）：
+```rust
+// proxy/forwarder.rs:61
+pub(crate) struct ActiveConnectionGuard {
+    status: Arc<RwLock<ProxyStatus>>,
+}
+impl ActiveConnectionGuard {
+    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
+        let mut s = status.write().await;
+        s.active_connections = s.active_connections.saturating_add(1);
+        Self { status }
+    }
+}
+impl Drop for ActiveConnectionGuard {
+    fn drop(&mut self) {
+        // Drop 不能 await：把减量操作调度到 tokio runtime
+        let status = self.status.clone();
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(async move {
+                let mut s = status.write().await;
+                s.active_connections = s.active_connections.saturating_sub(1);
+            });
+        }
+    }
+}
+// proxy/forwarder.rs:89
+pub struct RequestForwarder {
+    router: Arc<ProviderRouter>,
+    status: Arc<RwLock<ProxyStatus>>,
+    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    gemini_shadow: Arc<GeminiShadowStore>,
+    codex_chat_history: Arc<CodexChatHistoryStore>,
+    failover_manager: Arc<FailoverSwitchManager>,
+    app_handle: Option<tauri::AppHandle>,
+    current_provider_id_at_start: String,
+    session_id: String,
+}
+```
+- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
+  - `acquire()` 增加计数，`Drop` 减少计数
+  - Drop 不能 await，所以把减量操作调度到 tokio runtime
+  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
+- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
+  - 持有 `ProviderRouter`（熔断器状态）
+  - 持有 `FailoverSwitchManager`（故障转移切换）
+  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
+  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
+  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
+  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
 **ProxyServer**（`proxy/server.rs:54`）：
 ```rust
 // proxy/server.rs:54
@@ -6858,6 +7201,55 @@ export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery =
 - `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
 - `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
 - 支持自动轮询（5 分钟）与窗口 focus 重取
+**RequestForwarder**（`proxy/forwarder.rs:89`）：
+```rust
+// proxy/forwarder.rs:61
+pub(crate) struct ActiveConnectionGuard {
+    status: Arc<RwLock<ProxyStatus>>,
+}
+impl ActiveConnectionGuard {
+    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
+        let mut s = status.write().await;
+        s.active_connections = s.active_connections.saturating_add(1);
+        Self { status }
+    }
+}
+impl Drop for ActiveConnectionGuard {
+    fn drop(&mut self) {
+        // Drop 不能 await：把减量操作调度到 tokio runtime
+        let status = self.status.clone();
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(async move {
+                let mut s = status.write().await;
+                s.active_connections = s.active_connections.saturating_sub(1);
+            });
+        }
+    }
+}
+// proxy/forwarder.rs:89
+pub struct RequestForwarder {
+    router: Arc<ProviderRouter>,
+    status: Arc<RwLock<ProxyStatus>>,
+    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
+    gemini_shadow: Arc<GeminiShadowStore>,
+    codex_chat_history: Arc<CodexChatHistoryStore>,
+    failover_manager: Arc<FailoverSwitchManager>,
+    app_handle: Option<tauri::AppHandle>,
+    current_provider_id_at_start: String,
+    session_id: String,
+}
+```
+- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
+  - `acquire()` 增加计数，`Drop` 减少计数
+  - Drop 不能 await，所以把减量操作调度到 tokio runtime
+  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
+- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
+  - 持有 `ProviderRouter`（熔断器状态）
+  - 持有 `FailoverSwitchManager`（故障转移切换）
+  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
+  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
+  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
+  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
 **ProxyServer**（`proxy/server.rs:54`）：
 ```rust
 // proxy/server.rs:54
