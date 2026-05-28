@@ -269,7 +269,36 @@ App.tsx
 | 泛型约束 (`where T: ...`) | 有但不复杂，跟着类型提示走就行 |
 | 宏 (`macro_rules!`) | 只有 `lock_conn!` 一个自定义宏（`database/mod.rs:61`） |
 
-### 2.3 常见模式速查
+### 2.3 Tauri 特有模式
+
+**Tauri State 注入**（`commands/`）：
+```rust
+#[tauri::command]
+async fn get_providers(
+    state: tauri::State<'_, AppState>,  // 自动注入全局状态
+) -> Result<Vec<Provider>, AppError> {
+    // 返回 Result，Tauri 自动转为 JS 的 reject
+}
+```
+- `tauri::State<'_, AppState>` 是 Tauri 的依赖注入机制
+- 前端通过 `invoke("get_providers")` 调用
+- 参数名必须与 Rust 函数参数名一致（camelCase 转换）
+
+**Tauri 事件发射**（`lib.rs`）：
+```rust
+app_handle.emit("provider-changed", payload)?;  // 发射事件到前端
+```
+- 前端通过 `useTauriEvent("provider-changed", callback)` 监听
+- 用于后端状态变化时通知前端刷新
+
+**Tauri 插件注册**（`lib.rs:270+`）：
+```rust
+builder.plugin(tauri_plugin_single_instance::init(|app, args, _cwd| { ... }))
+```
+- 插件在 `.setup()` 之前注册
+- 9 个插件：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
+
+### 2.4 常见模式速查
 
 **读取配置文件并处理错误**（`config.rs`）：
 
