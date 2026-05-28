@@ -1,0 +1,1325 @@
+swarm:
+  name: cc-switch-notes-factcheck
+  workspace: ..
+  mode: parallel
+  model: xiaomi-token-plan/mimo-v2.5-pro:xhigh
+  agents:
+    inventory:
+      role: note-audit-inventory
+      task: |
+        You are preparing a high-concurrency audit of docs/cc-switch-source-notes.md.
+
+        Goal: create a worklist that lets many agents redundantly fact-check the notes.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Treat source files as authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in this step.
+        - Do not run broad formatters or project-wide test suites.
+        - Create autoresearch/cc-switch-notes/ before writing outputs.
+        - Use repository tools and direct source reads to identify claims with concrete file:line, counts, module names, command names, and architecture descriptions.
+        - A claim is actionable only if it can be checked against source or repo metadata.
+
+        Inspect:
+        - docs/cc-switch-source-notes.md
+        - src-tauri/src/**/*.rs
+        - src/**/*.ts and src/**/*.tsx as needed
+        - package.json, src-tauri/Cargo.toml, src-tauri/tauri.conf.json as needed
+
+        Write autoresearch/cc-switch-notes/01-inventory.md with:
+        1. A chapter map for all note sections.
+        2. A prioritized list of concrete claims to verify, grouped by chapter.
+        3. Source files each verifier should inspect.
+        4. Obvious internal inconsistencies in the notes themselves.
+        5. A warning that later verifier agents must independently re-check source instead of trusting this inventory.
+    ch1_architecture_source_trace:
+      role: architecture-source-trace-fact-checker
+      waits_for:
+      - inventory
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 1 source-trace pass: follow startup, setup, invoke handler, provider switch, proxy switch, and cleanup call chains end to end.
+
+        Scope:
+        - 第 1 章：架构全景
+        - Application lifecycle, Tauri setup, plugin registration, invoke handler, startup/import/sync loops, shutdown cleanup.
+        - Provider switch and proxy switch data-flow claims.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - src-tauri/src/lib.rs
+        - src-tauri/src/commands/**/*.rs
+        - src-tauri/src/services/**/*.rs
+        - src-tauri/src/config.rs
+
+        Write autoresearch/cc-switch-notes/02-ch1-source-trace-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch1_architecture_skeptic:
+      role: architecture-skeptic-fact-checker
+      waits_for:
+      - inventory
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 1 adversarial pass: assume architecture statements are fabricated until source proves them.
+
+        Scope:
+        - 第 1 章：架构全景
+        - Counts, plugin names, line references, flow diagrams, and causal statements.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - src-tauri/src/lib.rs
+        - src-tauri/src/**/*.rs
+
+        Write autoresearch/cc-switch-notes/03-ch1-skeptic-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch1_line_ref_auditor:
+      role: architecture-line-reference-auditor
+      waits_for:
+      - inventory
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 1 reference pass: check stale file:line references and brittle counts.
+
+        Scope:
+        - All Chapter 1 file:line references, command counts, plugin counts, and startup step counts.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - src-tauri/src/lib.rs
+        - src-tauri/src/**/*.rs
+
+        Write autoresearch/cc-switch-notes/04-ch1-line-ref-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch2_rust_tauri_source_trace:
+      role: rust-tauri-source-trace-fact-checker
+      waits_for:
+      - inventory
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 2 source-trace pass: verify every repo-specific Rust/Tauri pattern claim.
+
+        Scope:
+        - 第 2 章：Tauri/Rust 基础速查
+        - Commands, AppState, async/await, errors, serde, filesystem handling, and patterns claimed to appear in this repo.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - src-tauri/src/**/*.rs
+        - src-tauri/Cargo.toml
+
+        Write autoresearch/cc-switch-notes/05-ch2-source-trace-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch2_rust_tauri_skeptic:
+      role: rust-tauri-skeptic-fact-checker
+      waits_for:
+      - ch1_architecture_source_trace
+      - ch1_architecture_skeptic
+      - ch1_line_ref_auditor
+      - ch2_rust_tauri_source_trace
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 2 adversarial pass: distinguish true general Rust advice from false repo-specific claims.
+
+        Scope:
+        - 第 2 章：Tauri/Rust 基础速查
+        - Any statement that says cc-switch uses a specific Rust/Tauri pattern.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - src-tauri/src/**/*.rs
+        - src-tauri/Cargo.toml
+
+        Write autoresearch/cc-switch-notes/06-ch2-skeptic-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch3_core_models_api_trace:
+      role: backend-core-api-fact-checker
+      waits_for:
+      - ch1_architecture_source_trace
+      - ch1_architecture_skeptic
+      - ch1_line_ref_auditor
+      - ch2_rust_tauri_source_trace
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 3 core API pass: verify types, fields, enums, functions, and public contracts.
+
+        Scope:
+        - Chapter 3 sections 3.1 through 3.5.
+        - config.rs, error.rs, app_config.rs, provider.rs, settings.rs.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - src-tauri/src/config.rs
+        - src-tauri/src/error.rs
+        - src-tauri/src/app_config.rs
+        - src-tauri/src/provider.rs
+        - src-tauri/src/settings.rs
+        - src-tauri/src/store.rs
+        - src-tauri/src/**/*test*.rs
+
+        Write autoresearch/cc-switch-notes/07-ch3-core-api-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch3_core_models_data_skeptic:
+      role: backend-core-data-skeptic
+      waits_for:
+      - ch1_architecture_source_trace
+      - ch1_architecture_skeptic
+      - ch1_line_ref_auditor
+      - ch2_rust_tauri_source_trace
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 3 data-model adversarial pass: look for wrong fields, wrong enum variants, unsupported app/provider claims, and invented migrations.
+
+        Scope:
+        - Chapter 3 sections 3.1 through 3.5.
+        - Data models, settings defaults, migrations, path handling, and provider abstractions.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - src-tauri/src/app_config.rs
+        - src-tauri/src/provider.rs
+        - src-tauri/src/settings.rs
+        - src-tauri/src/config.rs
+
+        Write autoresearch/cc-switch-notes/08-ch3-core-skeptic-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch3_core_models_line_ref:
+      role: backend-core-line-reference-auditor
+      waits_for:
+      - ch1_architecture_source_trace
+      - ch1_architecture_skeptic
+      - ch1_line_ref_auditor
+      - ch2_rust_tauri_source_trace
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 3 core line-reference pass: verify line numbers and file-size/count claims for core backend modules.
+
+        Scope:
+        - Chapter 3 sections 3.1 through 3.5 line references and size/count claims.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - src-tauri/src/config.rs
+        - src-tauri/src/error.rs
+        - src-tauri/src/app_config.rs
+        - src-tauri/src/provider.rs
+        - src-tauri/src/settings.rs
+
+        Write autoresearch/cc-switch-notes/09-ch3-core-line-ref-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch3_database_persistence_trace:
+      role: database-persistence-fact-checker
+      waits_for:
+      - ch2_rust_tauri_skeptic
+      - ch3_core_models_api_trace
+      - ch3_core_models_data_skeptic
+      - ch3_core_models_line_ref
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 3 database pass: verify SQLite schema, migrations, persistence flows, and database API claims.
+
+        Scope:
+        - Chapter 3 sections 3.6 through 3.8.
+        - database/ persistence and migration claims.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - src-tauri/src/database/**/*.rs
+        - src-tauri/src/services/**/*.rs
+        - src-tauri/src/commands/**/*.rs
+        - src-tauri/src/**/*test*.rs
+
+        Write autoresearch/cc-switch-notes/10-ch3-database-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch3_services_flow_trace:
+      role: backend-services-flow-fact-checker
+      waits_for:
+      - ch2_rust_tauri_skeptic
+      - ch3_core_models_api_trace
+      - ch3_core_models_data_skeptic
+      - ch3_core_models_line_ref
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 3 services pass: verify service module responsibilities, command flows, import/export behavior, and config-writing behavior.
+
+        Scope:
+        - Chapter 3 sections 3.6 through 3.8.
+        - services/ business logic and tool config module comparison.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - src-tauri/src/services/**/*.rs
+        - src-tauri/src/commands/**/*.rs
+        - src-tauri/src/*_config.rs
+        - src-tauri/src/config.rs
+
+        Write autoresearch/cc-switch-notes/11-ch3-services-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch3_db_services_skeptic:
+      role: backend-db-services-skeptic
+      waits_for:
+      - ch2_rust_tauri_skeptic
+      - ch3_core_models_api_trace
+      - ch3_core_models_data_skeptic
+      - ch3_core_models_line_ref
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 3 database/services adversarial pass: look for invented module counts, stale command names, and unsupported flow diagrams.
+
+        Scope:
+        - Chapter 3 sections 3.6 through 3.8.
+        - Tool config module comparison, database, services, commands, migrations.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - src-tauri/src/database/**/*.rs
+        - src-tauri/src/services/**/*.rs
+        - src-tauri/src/commands/**/*.rs
+        - src-tauri/src/*_config.rs
+
+        Write autoresearch/cc-switch-notes/12-ch3-db-services-skeptic-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch4_proxy_request_trace:
+      role: proxy-request-path-fact-checker
+      waits_for:
+      - ch2_rust_tauri_skeptic
+      - ch3_core_models_api_trace
+      - ch3_core_models_data_skeptic
+      - ch3_core_models_line_ref
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 4 request-path pass: verify request forwarding, auth, routing, provider selection, and response handling.
+
+        Scope:
+        - 第 4 章：本地代理子系统
+        - RequestForwarder, routing/auth, ProviderRouter, proxy provider behavior.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - src-tauri/src/proxy/**/*.rs
+        - src-tauri/src/services/proxy.rs
+        - src-tauri/src/commands/proxy.rs
+        - src-tauri/src/**/*proxy*test*.rs
+
+        Write autoresearch/cc-switch-notes/13-ch4-request-path-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch4_proxy_lifecycle_trace:
+      role: proxy-lifecycle-fact-checker
+      waits_for:
+      - ch3_database_persistence_trace
+      - ch3_services_flow_trace
+      - ch3_db_services_skeptic
+      - ch4_proxy_request_trace
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 4 lifecycle pass: verify ProxyServer lifecycle, ProxyState, startup/shutdown, takeover, and restore behavior.
+
+        Scope:
+        - 第 4 章：本地代理子系统
+        - ProxyServer lifecycle, ProxyConfig, ProxyState, takeover mechanism.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - src-tauri/src/proxy/**/*.rs
+        - src-tauri/src/services/proxy.rs
+        - src-tauri/src/lib.rs
+        - src-tauri/src/commands/proxy.rs
+
+        Write autoresearch/cc-switch-notes/14-ch4-lifecycle-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch4_proxy_fault_skeptic:
+      role: proxy-fault-tolerance-skeptic
+      waits_for:
+      - ch3_database_persistence_trace
+      - ch3_services_flow_trace
+      - ch3_db_services_skeptic
+      - ch4_proxy_request_trace
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 4 adversarial pass: verify failover, circuit breaker, retry, streaming, and error claims.
+
+        Scope:
+        - 第 4 章：本地代理子系统
+        - Fault tolerance, circuit breaker, fallback/failover, streaming, error handling, duplicated headings.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - src-tauri/src/proxy/**/*.rs
+        - src-tauri/src/services/proxy.rs
+
+        Write autoresearch/cc-switch-notes/15-ch4-fault-skeptic-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch5_frontend_ipc_state_trace:
+      role: frontend-ipc-state-fact-checker
+      waits_for:
+      - ch3_database_persistence_trace
+      - ch3_services_flow_trace
+      - ch3_db_services_skeptic
+      - ch4_proxy_request_trace
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 5 IPC/state pass: verify App.tsx routing, hooks, Tauri invoke calls, and state management claims.
+
+        Scope:
+        - 第 5 章：前端架构
+        - App.tsx, hooks, IPC, React Query/state, command names.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - src/App.tsx
+        - src/hooks/**/*.ts
+        - src/hooks/**/*.tsx
+        - src/**/*.ts
+        - src/**/*.tsx
+        - src-tauri/src/commands/**/*.rs
+
+        Write autoresearch/cc-switch-notes/16-ch5-ipc-state-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch5_frontend_component_trace:
+      role: frontend-component-structure-fact-checker
+      waits_for:
+      - ch3_database_persistence_trace
+      - ch3_services_flow_trace
+      - ch3_db_services_skeptic
+      - ch4_proxy_request_trace
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 5 component/config pass: verify component structure, config preset data, dependencies, scripts, and tests.
+
+        Scope:
+        - 第 5 章：前端架构
+        - src/config, src/components, package.json, tests, vite/vitest/tsconfig files.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - src/config/**/*.ts
+        - src/components/**/*.tsx
+        - src/components/**/*.ts
+        - package.json
+        - tests/**/*.ts
+        - tests/**/*.tsx
+        - vite.config.ts
+        - vitest.config.ts
+        - tsconfig.json
+
+        Write autoresearch/cc-switch-notes/17-ch5-components-config-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch5_frontend_skeptic:
+      role: frontend-architecture-skeptic
+      waits_for:
+      - ch4_proxy_lifecycle_trace
+      - ch4_proxy_fault_skeptic
+      - ch5_frontend_ipc_state_trace
+      - ch5_frontend_component_trace
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 5 adversarial pass: look for invented frontend architecture, stale counts, wrong dependencies, and unsupported UI flow claims.
+
+        Scope:
+        - 第 5 章：前端架构
+        - Any frontend-related claim in Chapters 1, 5, 6, and 7.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - src/**/*.ts
+        - src/**/*.tsx
+        - package.json
+        - tests/**/*
+
+        Write autoresearch/cc-switch-notes/18-ch5-skeptic-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch6_quality_evidence_trace:
+      role: code-quality-evidence-fact-checker
+      waits_for:
+      - ch4_proxy_lifecycle_trace
+      - ch4_proxy_fault_skeptic
+      - ch5_frontend_ipc_state_trace
+      - ch5_frontend_component_trace
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 6 evidence pass: verify every code-quality criticism against source evidence.
+
+        Scope:
+        - 第 6 章：AI Slop 特征模式识别
+        - File sizes, over-abstraction, dynamic typing, duplicated concepts, naming/organization problems, concrete case table.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - All files named in Chapter 6
+        - Nearby architecture/source files needed to validate the criticism
+
+        Write autoresearch/cc-switch-notes/19-ch6-quality-evidence-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch6_quality_counterexample_skeptic:
+      role: code-quality-counterexample-skeptic
+      waits_for:
+      - ch4_proxy_lifecycle_trace
+      - ch4_proxy_fault_skeptic
+      - ch5_frontend_ipc_state_trace
+      - ch5_frontend_component_trace
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 6 counterexample pass: find places where the critique overstates, misreads, or ignores existing simplifications.
+
+        Scope:
+        - 第 6 章：AI Slop 特征模式识别
+        - Any quality/refactor criticism that may be unsupported or outdated.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - src-tauri/src/**/*.rs
+        - src/**/*.ts
+        - src/**/*.tsx
+
+        Write autoresearch/cc-switch-notes/20-ch6-counterexample-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch7_roadmap_source_support:
+      role: roadmap-source-support-fact-checker
+      waits_for:
+      - ch4_proxy_lifecycle_trace
+      - ch4_proxy_fault_skeptic
+      - ch5_frontend_ipc_state_trace
+      - ch5_frontend_component_trace
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 7 support pass: verify whether roadmap recommendations follow from current source facts.
+
+        Scope:
+        - 第 7 章：重构路线图
+        - Low-risk cleanup, medium refactor, architecture-level refactor recommendations.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - Files named in Chapter 7
+        - tests/**/*
+        - package.json
+        - src-tauri/src/**/*.rs
+        - src/**/*.ts
+        - src/**/*.tsx
+
+        Write autoresearch/cc-switch-notes/21-ch7-source-support-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    ch7_roadmap_skeptic:
+      role: roadmap-skeptic-fact-checker
+      waits_for:
+      - ch5_frontend_skeptic
+      - ch6_quality_evidence_trace
+      - ch6_quality_counterexample_skeptic
+      - ch7_roadmap_source_support
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Chapter 7 adversarial pass: reject roadmap items based on false premises, stale metrics, or unsupported design claims.
+
+        Scope:
+        - 第 7 章：重构路线图
+        - Dead code, file splits, services, ProviderManager abstraction, settings type safety, test coverage.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - src-tauri/src/**/*.rs
+        - src/**/*.ts
+        - src/**/*.tsx
+        - tests/**/*
+
+        Write autoresearch/cc-switch-notes/22-ch7-skeptic-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    global_file_line_auditor:
+      role: global-file-line-reference-auditor
+      waits_for:
+      - ch5_frontend_skeptic
+      - ch6_quality_evidence_trace
+      - ch6_quality_counterexample_skeptic
+      - ch7_roadmap_source_support
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Global file:line audit: verify a large sample of line-numbered source references across the whole notes file.
+
+        Scope:
+        - All chapters.
+        - Backtick references like `file.rs:123`, `file.tsx:456`, counts, and file sizes.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - src-tauri/src/**/*.rs
+        - src/**/*.ts
+        - src/**/*.tsx
+        - package.json
+        - src-tauri/Cargo.toml
+
+        Write autoresearch/cc-switch-notes/23-global-file-line-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    global_internal_consistency_auditor:
+      role: global-internal-consistency-auditor
+      waits_for:
+      - ch5_frontend_skeptic
+      - ch6_quality_evidence_trace
+      - ch6_quality_counterexample_skeptic
+      - ch7_roadmap_source_support
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Global consistency audit: find contradictions inside the notes, duplicated headings, inconsistent terminology, and claims that conflict across chapters.
+
+        Scope:
+        - All chapters.
+        - Cross-chapter terminology, repeated counts, duplicated headings, inconsistent flow diagrams, inconsistent app/provider lists.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - Source files needed to resolve contradictions
+
+        Write autoresearch/cc-switch-notes/24-global-consistency-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    global_random_claims_auditor_a:
+      role: random-claims-auditor-a
+      waits_for:
+      - ch5_frontend_skeptic
+      - ch6_quality_evidence_trace
+      - ch6_quality_counterexample_skeptic
+      - ch7_roadmap_source_support
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Randomized broad audit A: sample many claims across the notes and independently verify them for missed hallucinations.
+
+        Scope:
+        - All chapters.
+        - Choose a broad sample across architecture, backend, proxy, frontend, quality, and roadmap.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - Any source files needed to verify sampled claims
+
+        Write autoresearch/cc-switch-notes/25-random-claims-a-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    global_random_claims_auditor_b:
+      role: random-claims-auditor-b
+      waits_for:
+      - ch7_roadmap_skeptic
+      - global_file_line_auditor
+      - global_internal_consistency_auditor
+      - global_random_claims_auditor_a
+      task: |
+        You are one of several independent agents verifying the same notes from a different angle.
+
+        Goal: Randomized broad audit B: choose a different claim sample from auditor A and independently verify it.
+
+        Scope:
+        - All chapters.
+        - Choose a broad sample that intentionally differs from global_random_claims_auditor_a.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code and repo metadata are authoritative; the notes are suspect until verified.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in verifier/synthesis/auditor steps; only repair agents may edit it.
+        - Do not run broad formatters or project-wide test suites.
+        - Prefer exact source-grounded findings over broad commentary.
+        - For every non-ok finding, include source evidence with file paths and line numbers or exact repo metadata.
+        - Do not trust any other verifier's conclusion; independently re-check source.
+        - Be intentionally redundant: if a claim looks suspicious, verify it even if another agent likely will.
+
+        Read first:
+        - autoresearch/cc-switch-notes/01-inventory.md
+
+        Inspect as needed:
+        - docs/cc-switch-source-notes.md
+        - Any source files needed to verify sampled claims
+
+        Write autoresearch/cc-switch-notes/26-random-claims-b-findings.md with one finding per issue:
+        - note location: chapter/heading and quoted claim
+        - verdict: hallucination | wrong | stale | unsupported | ambiguous | ok
+        - source evidence: file paths and line numbers or repo metadata
+        - exact replacement text when a fix is needed
+        - severity: high for misleading architecture/API claims, medium for stale numbers, low for wording
+    synthesis_referee:
+      role: cross-verifier-referee
+      waits_for:
+      - ch1_architecture_source_trace
+      - ch1_architecture_skeptic
+      - ch1_line_ref_auditor
+      - ch2_rust_tauri_source_trace
+      - ch2_rust_tauri_skeptic
+      - ch3_core_models_api_trace
+      - ch3_core_models_data_skeptic
+      - ch3_core_models_line_ref
+      - ch3_database_persistence_trace
+      - ch3_services_flow_trace
+      - ch3_db_services_skeptic
+      - ch4_proxy_request_trace
+      - ch4_proxy_lifecycle_trace
+      - ch4_proxy_fault_skeptic
+      - ch5_frontend_ipc_state_trace
+      - ch5_frontend_component_trace
+      - ch5_frontend_skeptic
+      - ch6_quality_evidence_trace
+      - ch6_quality_counterexample_skeptic
+      - ch7_roadmap_source_support
+      - ch7_roadmap_skeptic
+      - global_file_line_auditor
+      - global_internal_consistency_auditor
+      - global_random_claims_auditor_a
+      - global_random_claims_auditor_b
+      task: |
+        You are the referee synthesizing many redundant fact-check reports.
+
+        Goal: cross-check verifier outputs, deduplicate findings, resolve disagreements, and produce a single repair plan.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code is authoritative; if reports conflict, re-check source before deciding.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md in this step.
+        - Do not run broad formatters or project-wide test suites.
+        - Read every findings file under autoresearch/cc-switch-notes/ from 02 through 26.
+        - Treat disagreement as signal: verify the claim yourself before discarding either side.
+        - Classify each issue as must-fix, should-fix, or leave-unchanged.
+
+        Write autoresearch/cc-switch-notes/27-synthesis-repair-plan.md with:
+        1. A deduplicated issue table sorted by severity and chapter.
+        2. For every must-fix issue, exact replacement/deletion instructions.
+        3. Conflicting verifier conclusions and how source evidence resolved them.
+        4. Findings rejected as unsupported, with reasons.
+        5. A repair checklist that the repairer can apply without rereading every report.
+    repairer:
+      role: documentation-repair-editor
+      waits_for:
+      - synthesis_referee
+      task: |
+        You are repairing docs/cc-switch-source-notes.md using the synthesized repair plan.
+
+        Goal: remove hallucinations and wrong/stale claims while preserving useful study-note structure.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Read autoresearch/cc-switch-notes/27-synthesis-repair-plan.md before editing.
+        - You may read original findings files if the plan is ambiguous.
+        - Edit docs/cc-switch-source-notes.md directly.
+        - Do not use the network.
+        - Do not run broad formatters or project-wide test suites.
+        - Do not add editor-facing notes, process commentary, TODOs, or caveats about this audit.
+        - If a claim is unsupported and no exact verified replacement exists, remove or soften it to what source evidence proves.
+        - Prefer deleting brittle exact counts over replacing them with new brittle counts unless the count is central to the note.
+        - Keep comments and prose in Chinese, matching the existing style.
+        - Preserve chapter structure unless a finding proves a section is fundamentally wrong.
+        - Resolve every must-fix item. If a repair-plan instruction is unsafe or contradictory, re-check source and document the decision in the repair log, not in the notes.
+
+        After editing, write autoresearch/cc-switch-notes/28-repair-log.md with:
+        - files changed
+        - each repaired claim and the repair-plan item it came from
+        - claims intentionally left unchanged and why
+    post_repair_backend_auditor:
+      role: post-repair-backend-auditor
+      waits_for:
+      - repairer
+      task: |
+        You are auditing the repaired notes after the repairer has edited docs/cc-switch-source-notes.md.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code is authoritative.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md; write a review report only.
+        - Do not run broad formatters or project-wide test suites.
+        - Read autoresearch/cc-switch-notes/27-synthesis-repair-plan.md and autoresearch/cc-switch-notes/28-repair-log.md first.
+        - Re-check source for any suspected unresolved issue.
+
+        Goal: audit backend/proxy unresolved issues.
+
+        Scope:
+        - Chapters 1-4 backend/proxy claims
+        - High-severity backend findings from the synthesis plan
+
+        Write autoresearch/cc-switch-notes/29-post-repair-backend-audit.md with:
+        - unresolved must-fix issues, if any
+        - evidence-backed suggested edits
+        - false alarms you checked and rejected
+        - pass/fail for your scope
+    post_repair_frontend_auditor:
+      role: post-repair-frontend-auditor
+      waits_for:
+      - repairer
+      task: |
+        You are auditing the repaired notes after the repairer has edited docs/cc-switch-source-notes.md.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code is authoritative.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md; write a review report only.
+        - Do not run broad formatters or project-wide test suites.
+        - Read autoresearch/cc-switch-notes/27-synthesis-repair-plan.md and autoresearch/cc-switch-notes/28-repair-log.md first.
+        - Re-check source for any suspected unresolved issue.
+
+        Goal: audit frontend/config unresolved issues.
+
+        Scope:
+        - Chapter 5 frontend claims
+        - Frontend-related Chapter 1, 6, and 7 claims
+
+        Write autoresearch/cc-switch-notes/30-post-repair-frontend-audit.md with:
+        - unresolved must-fix issues, if any
+        - evidence-backed suggested edits
+        - false alarms you checked and rejected
+        - pass/fail for your scope
+    post_repair_line_ref_auditor:
+      role: post-repair-line-reference-auditor
+      waits_for:
+      - repairer
+      task: |
+        You are auditing the repaired notes after the repairer has edited docs/cc-switch-source-notes.md.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code is authoritative.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md; write a review report only.
+        - Do not run broad formatters or project-wide test suites.
+        - Read autoresearch/cc-switch-notes/27-synthesis-repair-plan.md and autoresearch/cc-switch-notes/28-repair-log.md first.
+        - Re-check source for any suspected unresolved issue.
+
+        Goal: audit remaining stale file:line references and broken markdown.
+
+        Scope:
+        - All edited areas
+        - File:line references
+        - Markdown headings and code fences
+
+        Write autoresearch/cc-switch-notes/31-post-repair-line-ref-audit.md with:
+        - unresolved must-fix issues, if any
+        - evidence-backed suggested edits
+        - false alarms you checked and rejected
+        - pass/fail for your scope
+    post_repair_skeptic:
+      role: post-repair-adversarial-skeptic
+      waits_for:
+      - repairer
+      task: |
+        You are auditing the repaired notes after the repairer has edited docs/cc-switch-source-notes.md.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code is authoritative.
+        - Do not use the network.
+        - Do not edit docs/cc-switch-source-notes.md; write a review report only.
+        - Do not run broad formatters or project-wide test suites.
+        - Read autoresearch/cc-switch-notes/27-synthesis-repair-plan.md and autoresearch/cc-switch-notes/28-repair-log.md first.
+        - Re-check source for any suspected unresolved issue.
+
+        Goal: audit missed hallucinations after repair.
+
+        Scope:
+        - Whole document
+        - Any claim that still sounds too specific or unsupported
+
+        Write autoresearch/cc-switch-notes/32-post-repair-skeptic-audit.md with:
+        - unresolved must-fix issues, if any
+        - evidence-backed suggested edits
+        - false alarms you checked and rejected
+        - pass/fail for your scope
+    final_patch_integrator:
+      role: final-patch-integrator
+      waits_for:
+      - post_repair_backend_auditor
+      - post_repair_frontend_auditor
+      - post_repair_line_ref_auditor
+      - post_repair_skeptic
+      task: |
+        You are applying final fixes from post-repair audits.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Read:
+          - autoresearch/cc-switch-notes/29-post-repair-backend-audit.md
+          - autoresearch/cc-switch-notes/30-post-repair-frontend-audit.md
+          - autoresearch/cc-switch-notes/31-post-repair-line-ref-audit.md
+          - autoresearch/cc-switch-notes/32-post-repair-skeptic-audit.md
+        - You may edit docs/cc-switch-source-notes.md only for evidence-backed unresolved issues.
+        - Do not use the network.
+        - Do not run broad formatters or project-wide test suites.
+        - Do not add process commentary to the notes.
+        - Re-check source before applying any suggested edit that is not fully evidenced.
+
+        Write autoresearch/cc-switch-notes/33-final-patch-log.md with:
+        - edits applied
+        - post-repair findings intentionally rejected and why
+    final_reviewer:
+      role: final-fact-check-reviewer
+      waits_for:
+      - final_patch_integrator
+      task: |
+        You are the final reviewer for the repaired notes.
+
+        Goal: produce the final pass/fail report and run the notes verifier.
+
+        Rules:
+        - Work in /home/travis/01-workspace/cc-switch.
+        - Source code is authoritative.
+        - Do not use the network.
+        - You may edit docs/cc-switch-source-notes.md only to fix immediately verified blockers such as broken markdown or stale references found during final review.
+        - Do not run broad formatters or project-wide test suites.
+        - Run python3 docs/verify_notes.py after review; if it fails because of notes content, fix the notes and rerun.
+        - Do not add process commentary to the notes.
+
+        Read:
+        - docs/cc-switch-source-notes.md
+        - autoresearch/cc-switch-notes/27-synthesis-repair-plan.md
+        - autoresearch/cc-switch-notes/28-repair-log.md
+        - autoresearch/cc-switch-notes/33-final-patch-log.md
+
+        Check at minimum:
+        - all must-fix/high-severity findings are resolved
+        - stale file:line references around edited claims are corrected or removed
+        - markdown headings and code fences are balanced
+        - docs/verify_notes.py succeeds
+
+        Write autoresearch/cc-switch-notes/34-final-report.md with:
+        - verifier command output
+        - final status: pass or fail
+        - remaining known limitations, only if backed by concrete evidence

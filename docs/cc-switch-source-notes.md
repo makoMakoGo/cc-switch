@@ -52,16 +52,16 @@ main.rs:4                         // 22 行，仅设置 Linux WebKit 环境变�
        │    ├─ restore_proxy_state_on_startup()    // lib.rs:1558
        │    ├─ session usage sync loop        // lib.rs:999
        │    └─ silent startup or show window  // lib.rs:1041
-       ├─ .invoke_handler(...)     // lib.rs:1072  注册 ~271 个命令
-       └─ .run()                   // lib.rs:1379
+       ├─ .invoke_handler(...)     // lib.rs:1072  注册 ~266 个命令
+       └─ app.run()               // lib.rs:1383
 ```
 
 关键点：
 - `main.rs` 仅 22 行，设置 Linux WebKit 环境变量后调用 `lib::run()`
 - `lib.rs`（1825 行）是整个后端的"上帝文件"
 - `.setup()` 闭包约 790 行（284-1070），包含所有初始化逻辑
-- `.invoke_handler()` 注册约 271 个 Tauri 命令（1072-1377）
-- 9 个插件被注册（single_instance、deep_link、process、dialog、opener、store、window_state、updater、log）
+- `.invoke_handler()` 注册约 266 个 Tauri 命令（1072-1377）
+- 9 个插件（7 个在 Builder 链顶层注册：single_instance、deep_link、process、dialog、opener、store、window_state；2 个在 .setup() 内注册：updater、log）
 
 **退出流程**（`lib.rs:1383`）：
 - 用户主动退出时，先保存窗口状态（`lib.rs:1401`）
@@ -80,10 +80,10 @@ main.rs:4                         // 22 行，仅设置 Linux WebKit 环境变�
 5. **Plugin registration**（`lib.rs:270+`）— 注册 9 个插件：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
 6. **Setup closure**（`lib.rs:284-1070`）— 786 行的 `.setup()` 闭包：
    - 初始化数据库（`Database::init()`）
-   - 初始化设置（`settings::init()`）
+   - 设置缓存通过 OnceLock 惰性初始化（`settings.rs:519`）
    - 初始化 AppState（`store.rs`）
    - 导入默认配置（`import_default_config()`）
-   - 注册命令（`.invoke_handler()`，`lib.rs:1072`，约 271 个命令）
+   - 注册命令（`.invoke_handler()`，`lib.rs:1072`，约 266 个命令）
 7. **Cleanup**（`lib.rs:1513`）— `cleanup_before_exit()` 退出前清理
 
 ### 1.2 数据流：一次 Provider Switch 的完整调用链
@@ -101,12 +101,12 @@ Tauri IPC 层
   ▼
 Rust 命令处理器 (commands/provider.rs)
   │  fn switch_provider(state, app_type, provider_id)
-  │    → state.db.get_provider(provider_id)      // 从 SQLite 取 provider
-  │    → services::provider::switch_provider()    // 写配置文件
+    → state.db.get_all_providers(app_type) → .get(id)  // 从 SQLite 取 provider
+    → ProviderService::switch()             // 写配置文件
   │
   ▼
 services/provider/mod.rs
-  │  switch_provider()
+  │  ProviderService::switch()
   │    → read_live_settings()                     // 读取当前 live 配置
   │    → build_effective_settings_with_common_config()  // 合并公共配置
   │    → write_live_with_common_config()          // 写入目标工具的配置文件
@@ -139,12 +139,12 @@ Additive 模式（OpenCode、OpenClaw、Hermes）：
 
 ```text
 前端 → invoke("switch_proxy_provider", { app_type, provider_id })
-  → ProxyService::hot_switch_provider()          // services/proxy.rs
-    → switch_locks.acquire(app_type)             // 防止并发切换
+  → ProxyService::switch_proxy_target() → hot_switch_provider()  // services/proxy.rs
+    → switch_locks.lock_for_app(app_type).await  // 防止并发切换
+    → 更新 DB 中的 current_provider 和 settings
     → 更新内存中的路由表（current_providers）
-    → 重写 live 配置，把 API key 替换为 PROXY_TOKEN_PLACEHOLDER 占位符
-    → 设置 base URL 为 localhost:代理端口
-    → 发射 Tauri 事件通知前端
+    → sync_live_from_provider 同步 live 配置
+    → server.set_active_target() 设置活跃目标
     → 释放锁
 ```
 
@@ -163,12 +163,6 @@ pub struct AppState {           // src-tauri/src/store.rs:6
 `Arc<T>` = 原子引用计数，允许多个地方共享同一份数据（`store.rs:3`）。
 `Database` 内部用 `Mutex<Connection>` 包装（`database/mod.rs:76`），因为 `rusqlite::Connection` 不是 `Sync` 的。
 
-**SwitchLockManager**（`proxy/switch_lock.rs:14`）：
-```rust
-pub struct SwitchLockManager {  // proxy/switch_lock.rs:14
-    locks: Arc<RwLock<HashMap<String, Arc<Mutex<()>>>>>,
-}
-```
 - `lock_for_app(&self, app_type: &str)`（`switch_lock.rs:26`）— 获取指定应用的切换锁
 - 每个应用类型一把互斥锁，保证同一应用的切换操作串行执行
 - 不同应用之间（如 Claude 和 Codex）可以并行切换
@@ -200,25 +194,25 @@ static SETTINGS_STORE: OnceLock<RwLock<AppSettings>> = OnceLock::new();  // sett
 **前端状态管理层次**：
 ```text
 App.tsx (1604 行)
-  ├─ localStorage("currentView")     ← 当前视图状态（14 个视图）
+  ├─ localStorage("cc-switch-last-view")     ← 当前视图状态（14 个视图）
   ├─ useQuery(["providers"])          ← React Query 缓存 provider 列表
   ├─ useTauriEvent("provider-changed") ← 监听后端事件刷新 UI
-  └─ useProxyStatus()                 ← 轮询代理状态（每 5 秒）
+  └─ useProxyStatus()                 ← 轮询代理状态（运行时每 2 秒）
 
 hooks/ 目录（25 个 hooks）：
-  ├─ useSettings.ts (512 行)         ← 设置管理（读写、同步）
+  ├─ useSettings.ts (505 行)         ← 设置管理（读写、同步）
   ├─ useProviderActions.ts (385 行)  ← Provider CRUD 操作
-  ├─ useProxyStatus.ts (185 行)      ← 代理状态轮询
-  ├─ useDirectorySettings.ts (275 行) ← 目录配置
-  └─ useDragSort.ts (95 行)          ← 拖拽排序
+  ├─ useProxyStatus.ts (245 行)      ← 代理状态轮询
+  ├─ useDirectorySettings.ts (373 行) ← 目录配置
+  └─ useDragSort.ts (119 行)          ← 拖拽排序
 
 lib/query/ 目录（10 个文件）：
-  ├─ queries.ts (156 行)             ← 查询钩子（useProvidersQuery 等）
-  ├─ mutations.ts (357 行)           ← 变更钩子（useAddProviderMutation 等）
-  ├─ proxy.ts (244 行)               ← 代理查询钩子
-  ├─ failover.ts (289 行)            ← 故障转移查询钩子
-  ├─ usage.ts (320 行)               ← 用量查询钩子
-  └─ subscription.ts (64 行)         ← 订阅查询钩子
+  ├─ queries.ts (155 行)             ← 查询钩子（useProvidersQuery 等）
+  ├─ mutations.ts (356 行)           ← 变更钩子（useAddProviderMutation 等）
+  ├─ proxy.ts (243 行)               ← 代理查询钩子
+  ├─ failover.ts (288 行)            ← 故障转移查询钩子
+  ├─ usage.ts (319 行)               ← 用量查询钩子
+  └─ subscription.ts (63 行)         ← 订阅查询钩子
 ```
 - React Query 管理所有服务端状态（缓存、刷新、乐观更新）
 - Tauri event listeners 管理后端→前端的实时通知
@@ -228,7 +222,7 @@ lib/query/ 目录（10 个文件）：
 
 ```text
 App.tsx
-  ├─ localStorage("currentView")     ← 当前视图状态
+  ├─ localStorage("cc-switch-last-view")     ← 当前视图状态
   ├─ useQuery(["providers"])          ← React Query 缓存 provider 列表
   ├─ useTauriEvent("provider-changed") ← 监听后端事件刷新 UI
   └─ useProxyStatus()                 ← 轮询代理状态
@@ -249,7 +243,7 @@ App.tsx
           │                │                │
    ┌──────▼──────┐  ┌─────▼──────┐  ┌──────▼──────┐
    │  commands/  │  │  services/ │  │   proxy/    │
-   │ 34 个子模块 │  │ 25 个子模块│  │ 35+ 个模块  │
+   │ 31 个子模块 │
    └──────┬──────┘  └─────┬──────┘  └──────┬──────┘
           │                │                │
           └────────────────┼────────────────┘
@@ -386,7 +380,7 @@ macro_rules! lock_conn {
 #[serde(skip_serializing_if = "Option::is_none")]  // None 时不序列化
 #[serde(default)]                           // 反序列化时缺失字段用默认值
 #[serde(rename = "settingsConfig")]         // 重命名单个字段
-#[serde(alias = "claudeDesktop")]           // 支持多个别名
+#[serde(alias = "reasoning_content")]       // 支持多个别名（streaming.rs:37）
 ```
 
 **enum 与 match**：
@@ -438,7 +432,7 @@ where
 
 按依赖顺序读，不是按文件大小。
 
-### 3.1 config.rs — 路径解析和文件 I/O（13.9KB，424 行）
+### 3.1 config.rs — 路径解析和文件 I/O（14.0KB，424 行）
 
 **接口**：提供所有模块需要的路径解析和文件读写工具函数。
 
@@ -463,7 +457,7 @@ where
 - `get_home_dir()` 在 Windows 上使用 `dirs::home_dir()`，不使用 `HOME` 环境变量（可能被 Git/Cygwin 注入）
 - 路径硬编码了 `~/.claude` 等，如果用户自定义了配置目录会出问题
 
-### 3.2 error.rs — 错误模型（3.4KB，146 行）
+### 3.2 error.rs — 错误模型（3.5KB，146 行）
 
 **接口**：统一的错误类型 `AppError`（`error.rs:6`），所有后端函数都用它。
 
@@ -471,17 +465,17 @@ where
 
 | 变体 | 行号 | 触发场景 |
 |------|------|---------|
-| `Config(String)` | :8 | 配置错误 |
-| `InvalidInput(String)` | :10 | 无效输入 |
-| `Io { path, source }` | :12 | 文件 I/O 错误 |
-| `IoContext { context, source }` | :18 | 带上下文的 I/O 错误 |
-| `Json { path, source }` | :24 | JSON 解析错误 |
-| `JsonSerialize { source }` | :30 | JSON 序列化失败 |
-| `Toml { path, source }` | :35 | TOML 解析错误 |
-| `Lock(String)` | :41 | 锁获取失败 |
-| `McpValidation(String)` | :43 | MCP 校验失败 |
-| `Message(String)` | :45 | 通用消息 |
-| `HttpStatus { status, body }` | :47 | HTTP 错误 |
+|`Config(String)` | :9 | 配置错误 |
+|`InvalidInput(String)` | :11 | 无效输入 |
+|`Io { path, source }` | :13 | 文件 I/O 错误 |
+|`IoContext { context, source }` | :19 | 带上下文的 I/O 错误 |
+|`Json { path, source }` | :25 | JSON 解析错误 |
+|`JsonSerialize { source }` | :31 | JSON 序列化失败 |
+|`Toml { path, source }` | :36 | TOML 解析错误 |
+|`Lock(String)` | :42 | 锁获取失败 |
+|`McpValidation(String)` | :44 | MCP 校验失败 |
+|`Message(String)` | :46 | 通用消息 |
+|`HttpStatus { status, body }` | :48 | HTTP 错误 |
 | `Localized { key, zh, en }` | :50 | 中英双语错误 |
 | `Database(String)` | :56 | 数据库错误 |
 | `OmoConfigNotFound` | :58 | OMO 配置不存在 |
@@ -562,7 +556,7 @@ impl FromStr for AppType {
 - 41KB 太大，包含了太多职责
 - `AppType` 的 match 到处都是（`McpApps:24`、`VisibleApps:66`、`CommonConfigSnippets:439`），加新工具需要改 10+ 处
 
-### 3.4 provider.rs — 核心数据模型（40.5KB，1153 行）
+### 3.4 provider.rs — 核心数据模型（40.6KB，1153 行）
 
 **接口**：Provider 是 cc-switch 的核心数据单元（`provider.rs:10`）。
 
@@ -597,9 +591,9 @@ pub struct Provider {
 - Provider 和 AppType 的关系是 N:1，但代码里很多地方假设 1:1
 - `ProviderMeta` 的类型定义很深，阅读困难
 
-### 3.5 settings.rs — 设置管理（28.8KB，877 行）
+### 3.5 settings.rs — 设置管理（28.9KB，876 行）
 
-**接口**：全局应用设置的读写（`settings.rs:5`）。
+**接口**：全局应用设置的读写（`settings.rs:211`）。
 
 **核心机制**：
 - `SETTINGS_STORE: OnceLock<RwLock<AppSettings>>`（`settings.rs:519`）— 全局设置缓存
@@ -610,25 +604,6 @@ pub struct Provider {
 ```rust
 pub struct SwitchLockManager {  // proxy/switch_lock.rs:14
     locks: Arc<RwLock<HashMap<String, Arc<Mutex<()>>>>>,
-}
-```
-- `lock_for_app(&self, app_type: &str)`（`switch_lock.rs:26`）— 获取指定应用的切换锁
-- 每个应用类型一把互斥锁，保证同一应用的切换操作串行执行
-- 不同应用之间（如 Claude 和 Codex）可以并行切换
-- 返回 `OwnedMutexGuard`，持有期间同一 `app_type` 的其他切换会排队等待
-**ProxyService**（`services/proxy.rs:55`）：
-```rust
-pub struct ProxyService {  // services/proxy.rs:55
-    db: Arc<Database>,
-    server: Arc<RwLock<Option<ProxyServer>>>,
-    app_handle: Arc<RwLock<Option<tauri::AppHandle>>>,
-    switch_locks: SwitchLockManager,
-}
-```
-**HotSwitchOutcome**（`services/proxy.rs:64`）：
-```rust
-pub struct HotSwitchOutcome {  // services/proxy.rs:64
-    pub logical_target_changed: bool,
 }
 ```
 **database/dao/ 目录**（`src-tauri/src/database/dao/`，12 个文件）：
@@ -646,16 +621,16 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
 | stream_check.rs | 2.7KB | 流式检查 DAO |
 | universal_providers.rs | 2.5KB | 通用 Provider DAO |
 | mod.rs | 448B | 模块导出 |
-- `proxy.rs`（7.5KB）是最大的 DAO 文件，包含代理配置和请求日志操作
+- `proxy.rs`（33.9KB）是最大的 DAO 文件，包含代理配置和请求日志操作
 - `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
 - `usage_rollup.rs`（15.3KB）包含用量聚合查询
-- `settings.rs`（28.9KB）包含设置的读写操作
+- `settings.rs`（11.9KB）包含设置的读写操作
 - `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
-- `failover.rs`（5.5KB）包含故障转移队列操作
-- `mcp.rs`（19.6KB）包含 MCP 服务器的 CRUD 操作
+- `failover.rs`（4.8KB）包含故障转移队列操作
+- `mcp.rs`（4.1KB）包含 MCP 服务器的 CRUD 操作
 - `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
 - `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
-- `stream_check.rs`（10.9KB）包含流式检查记录操作
+- `stream_check.rs`（2.7KB）包含流式检查记录操作
 - `universal_providers.rs`（2.5KB）包含通用 Provider 操作
 **commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
 ```rust
@@ -678,14 +653,14 @@ pub use auth::*;    pub use balance::*; pub use codex_oauth::*;
 pub use coding_plan::*; pub use config::*; pub use copilot::*;
 // ... 所有模块通过 pub use * 重新导出
 ```
-- 33 个子模块声明（commands/mod.rs:3-34）
+- 31 个子模块声明（commands/mod.rs:3-34）
 - 所有子模块通过 `pub use *` 重新导出（commands/mod.rs:36-67）
 - `#![allow(non_snake_case)]` — 允许非蛇形命名（Tauri 命令使用驼峰命名）
 - `pub mod skill` — skill 模块是公开的（其他模块都是私有的）
 **database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
-| schema.rs | 77.8KB | 数据库 schema 定义（15 张表的 SQL） |
+| schema.rs | 77.8KB | 数据库 schema 定义（23 张表的 SQL） |
 | backup.rs | 31.7KB | 数据库备份和恢复 |
 | tests.rs | 22.7KB | 数据库测试 |
 | mod.rs | 8.9KB | Database 结构体和初始化 |
@@ -695,7 +670,7 @@ pub use coding_plan::*; pub use config::*; pub use copilot::*;
 - `SCHEMA_VERSION = 10`（`database/mod.rs:52`）— 当前 schema 版本
 - `lock_conn!` 宏（`database/mod.rs:61`）— 获取数据库连接
 - `init()`（`database/mod.rs:95`）— 初始化数据库
-- `dao/` 子目录包含 12 个 DAO 模块：providers、settings、mcp_servers、prompts、skills、proxy_config、proxy_request_logs、session_usage、subscription、usage_cache、universal_providers、stream_check
+- `dao/` 子目录包含 11 个 DAO 模块：providers、settings、mcp、prompts、skills、proxy（代理配置 + 请求日志）、failover、providers_seed、usage_rollup、stream_check、universal_providers
 **commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
@@ -732,7 +707,7 @@ pub use coding_plan::*; pub use config::*; pub use copilot::*;
 | coding_plan.rs | 278B | Coding Plan 命令 |
 | balance.rs | 217B | 余额查询命令 |
 - `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
-- `provider.rs`（40.6KB）包含 Provider CRUD 和切换命令
+- `provider.rs`（32.3KB）包含 Provider CRUD 和切换命令
 - 所有命令通过 `#[tauri::command]` 宏注册
 - 命令参数从 JavaScript 通过 Tauri IPC 传递
 **lib.rs 模块列表**（`src-tauri/src/lib.rs`， 1825 行）：
@@ -751,588 +726,6 @@ mod proxy;             mod services;          mod session_manager;
 mod settings;          mod store;             mod tray;
 mod usage_script;
 ```
-- 34 个模块声明（lib.rs:1-36）
-- 公开导出：`AppType`、`InstalledSkill`、`McpApps`、`McpServer`、`MultiAppConfig`、`SkillApps`（lib.rs:38）
-- `run()` 函数（lib.rs:203）— 应用入口点，初始化插件、注册命令、创建窗口
-- `.invoke_handler()`（lib.rs:1072）— 注册约 271 个 Tauri 命令
-- `cleanup_before_exit()`（lib.rs:1513）— 退出前清理
-- 9 个插件注册：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
-**base64.ts**（`src/lib/utils/base64.ts`，44 行）：
-```typescript
-// src/lib/utils/base64.ts:13
-export function decodeBase64Utf8(str: string): string {
-    let cleaned = str.trim().replace(/ /g, "+");  // URL 解析可能将 + 转为空格
-    try {
-        const binString = atob(cleaned);
-        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
-        return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-    } catch (e1) {
-        // 尝试修复缺失的 padding
-        // ...
-    }
-}
-```
-- Base64 解码工具（处理 URL 传递中的边缘情况）
-- 处理空格（URL 解析可能将 `+` 转为空格）
-- 处理缺失的 padding（`=` 字符）
-- 处理不同的 Base64 变体
-- 使用 `TextDecoder("utf-8", { fatal: false })` 解码 UTF-8
-**clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
-```typescript
-// src/lib/clipboard.ts:3
-export async function copyText(text: string): Promise<void> {
-    try {
-        await invoke("copy_text_to_clipboard", { text });
-        return;
-    } catch (nativeError) {
-        try {
-            await navigator.clipboard.writeText(text);
-            return;
-        } catch (webError) {
-            throw webError instanceof Error ? webError
-                : nativeError instanceof Error ? nativeError
-                : new Error(String(webError || nativeError));
-        }
-    }
-}
-```
-- 剪贴板操作工具（双层回退策略）
-- 优先使用 Tauri 原生命令 `copy_text_to_clipboard`
-- 原生失败时回退到 Web API `navigator.clipboard.writeText`
-- 错误处理：优先抛出 webError，其次 nativeError
-**updater.ts**（`src/lib/updater.ts`，127 行）：
-```typescript
-// src/lib/updater.ts:8
-export type UpdateChannel = "stable" | "beta";
-// src/lib/updater.ts:10
-export type UpdaterPhase = "idle" | "checking" | "available" | "downloading" | "installing" | "restarting" | "upToDate" | "error";
-// src/lib/updater.ts:20
-export interface UpdateInfo {
-    currentVersion: string;
-    availableVersion: string;
-    notes?: string;
-    pubDate?: string;
-}
-// src/lib/updater.ts:27
-export interface UpdateProgressEvent {
-    event: "Started" | "Progress" | "Finished";
-    total?: number;
-    downloaded?: number;
-}
-// src/lib/updater.ts:33
-export interface UpdateHandle {
-    version: string;
-    notes?: string;
-    date?: string;
-    downloadAndInstall: (onProgress?: (e: UpdateProgressEvent) => void) => Promise<void>;
-    download?: () => Promise<void>;
-    install?: () => Promise<void>;
-}
-```
-- `UpdateChannel`（`updater.ts:8`）— 更新通道：`"stable"` 或 `"beta"`
-- `UpdaterPhase`（`updater.ts:10`）— 更新器阶段：idle → checking → available → downloading → installing → restarting
-- `UpdateInfo`（`updater.ts:20`）— 更新信息（currentVersion、availableVersion、notes、pubDate）
-- `UpdateProgressEvent`（`updater.ts:27`）— 下载进度事件（Started、Progress、Finished）
-- `UpdateHandle`（`updater.ts:33`）— 更新句柄（version、notes、date、downloadAndInstall）
-- 使用 `@tauri-apps/plugin-updater` 插件
-- 可选导入：在未注册插件或非 Tauri 环境下，调用时会抛错，外层需做兜底
-**platform.ts**（`src/lib/platform.ts`，49 行）：
-```typescript
-// src/lib/platform.ts:2
-export const isMac = (): boolean => {
-    try {
-        const ua = navigator.userAgent || "";
-        const plat = (navigator.platform || "").toLowerCase();
-        return /mac/i.test(ua) || plat.includes("mac");
-    } catch { return false; }
-};
-export const isWindows = (): boolean => { /* /windows|win32|win64/i */ };
-export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
-```
-- 轻量平台检测，避免在 SSR 或无 navigator 的环境报错
-- `isMac()`、`isWindows()`、`isLinux()` — 检测当前操作系统
-- Linux 上禁用所有 drag region，规避 Wayland 下 `gtk_window_begin_move_drag` 问题
-- 使用 try-catch 包裹，避免 navigator 不存在时崩溃
-**Query Layer Index**（`src/lib/query/index.ts`，6 行）：
-- Query 层统一导出入口
-- 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
-- `queryClient.ts`（264B）— QueryClient 配置
-- `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
-- `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
-- `proxy.ts`（3.2KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
-- `subscription.ts`（0.6KB）— 订阅查询钩子（useSubscriptionQuota）
-- `copilot.ts`（5.9KB）— Copilot 查询钩子（useCopilotQuota）
-- `failover.ts`（2.7KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
-- `omo.ts`（12.1KB）— OMO 查询钩子（工厂模式）
-- `usage.ts`（6.0KB）— 用量查询钩子
-**copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
-```typescript
-// src/lib/query/copilot.ts:5
-const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
-// src/lib/query/copilot.ts:7
-export interface CopilotQuota {
-    success: boolean;
-    plan: string | null;
-    resetDate: string | null;
-    tiers: QuotaTier[];
-    error: string | null;
-    queriedAt: number | null;
-}
-// src/lib/query/copilot.ts:22
-export function useCopilotQuota(accountId: string | null, options: UseCopilotQuotaOptions = {}) {
-    const { enabled = true, autoQuery = false } = options;
-    return useQuery<CopilotQuota>({
-        queryKey: ["copilot", "quota", accountId ?? "default"],
-        queryFn: async (): Promise<CopilotQuota> => {
-            const usage = accountId
-                ? await copilotGetUsageForAccount(accountId)
-                : await copilotGetUsage();
-            // ...
-        },
-        enabled,
-        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
-        staleTime: REFETCH_INTERVAL,
-        retry: 1,
-    });
-}
-```
-- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
-- `CopilotQuota` — Copilot 配额信息（success、plan、resetDate、tiers、error、queriedAt）
-- `useCopilotQuota()` — 获取 Copilot 配额（支持指定 accountId 或使用默认账号）
-- 支持自动轮询（5 分钟）与窗口 focus 重取
-- `copilotGetUsage()` — 获取默认账号的使用量
-- `copilotGetUsageForAccount()` — 获取指定账号的使用量
-**index.ts**（`src/lib/api/index.ts`，31 行）：
-- API 层统一导出入口
-- 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
-- 导出类型：AppId、ProviderSwitchEvent、Prompt、CopilotDeviceCodeResponse、CopilotAuthStatus、GitHubAccount、ManagedAuthProvider、ManagedAuthAccount、ManagedAuthStatus、ManagedAuthDeviceCodeResponse
-**config.ts**（`src/lib/api/config.ts`，78 行）：
-```typescript
-// src/lib/api/config.ts:4
-export type AppType = "claude" | "codex" | "gemini" | "omo" | "omo_slim";
-// src/lib/api/config.ts:32
-export async function getCommonConfigSnippet(appType: AppType): Promise<string | null> {
-    return invoke<string | null>("get_common_config_snippet", { appType });
-}
-// src/lib/api/config.ts:43
-export async function setCommonConfigSnippet(appType: AppType, snippet: string): Promise<void> {
-    return invoke("set_common_config_snippet", { appType, snippet });
-}
-```
-- `AppType` 类型：`"claude" | "codex" | "gemini" | "omo" | "omo_slim"`
-- `getCommonConfigSnippet()`（`config.ts:32`）— 获取通用配置片段（统一接口）
-- `setCommonConfigSnippet()`（`config.ts:43`）— 设置通用配置片段（统一接口）
-- `getClaudeCommonConfigSnippet()`（`config.ts:11`）— 已废弃，使用 `getCommonConfigSnippet('claude')` 替代
-- `setClaudeCommonConfigSnippet()`（`config.ts:21`）— 已废弃，使用 `setCommonConfigSnippet('claude', snippet)` 替代
-- Claude/Gemini 验证 JSON 格式，Codex 暂不验证
-**model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
-```typescript
-// src/lib/api/model-fetch.ts:5
-export interface FetchedModel {
-    id: string;
-    ownedBy: string | null;
-}
-// src/lib/api/model-fetch.ts:16
-export async function fetchModelsForConfig(
-    baseUrl: string, apiKey: string, isFullUrl?: boolean, modelsUrl?: string,
-): Promise<FetchedModel[]> {
-    return invoke("fetch_models_for_config", { baseUrl, apiKey, isFullUrl, modelsUrl });
-}
-// src/lib/api/model-fetch.ts:35
-export async function fetchCodexOauthModels(accountId?: string | null): Promise<FetchedModel[]> {
-    return invoke("get_codex_oauth_models", { accountId: accountId || null });
-}
-```
-- `FetchedModel`（`model-fetch.ts:5`）— 获取到的模型信息（id、ownedBy）
-- `fetchModelsForConfig()`（`model-fetch.ts:16`）— 从供应商获取可用模型列表（使用 OpenAI 兼容的 `GET /v1/models` 端点）
-  - 优先用 `modelsUrl` 精确覆写
-  - 否则后端会对 baseURL 生成候选列表并按序尝试（含"剥离 /anthropic 等兼容子路径"兜底）
-- `fetchCodexOauthModels()`（`model-fetch.ts:35`）— 获取 Codex OAuth 可用模型列表（使用 ChatGPT 的 backend-api/codex 端点，不兼容普通 /v1/models）
-**auth.ts**（`src/lib/api/auth.ts`，107 行）：
-```typescript
-// src/lib/api/auth.ts:3
-export type ManagedAuthProvider = "github_copilot" | "codex_oauth";
-// src/lib/api/auth.ts:5
-export interface ManagedAuthAccount {
-    id: string;
-    provider: ManagedAuthProvider;
-    login: string;
-    avatar_url: string | null;
-    authenticated_at: number;
-    is_default: boolean;
-    github_domain: string;
-}
-// src/lib/api/auth.ts:15
-export interface ManagedAuthStatus {
-    provider: ManagedAuthProvider;
-    authenticated: boolean;
-    default_account_id: string | null;
-    migration_error?: string | null;
-    accounts: ManagedAuthAccount[];
-}
-// src/lib/api/auth.ts:23
-export interface ManagedAuthDeviceCodeResponse {
-    provider: ManagedAuthProvider;
-    device_code: string;
-    user_code: string;
-    verification_uri: string;
-    expires_in: number;
-    interval: number;
-}
-export async function authStartLogin(authProvider: ManagedAuthProvider, githubDomain?: string): Promise<ManagedAuthDeviceCodeResponse>;
-export async function authPollForAccount(authProvider: ManagedAuthProvider, deviceCode: string): Promise<ManagedAuthAccount>;
-export async function authLogout(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
-export async function authSetDefault(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
-export async function authGetStatus(authProvider: ManagedAuthProvider): Promise<ManagedAuthStatus>;
-```
-- 统一的托管认证 API（支持 GitHub Copilot 和 Codex OAuth）
-- `ManagedAuthProvider` 类型：`"github_copilot"` 或 `"codex_oauth"`
-- `ManagedAuthAccount` — 托管认证账号（id、provider、login、avatar_url、authenticated_at、is_default、github_domain）
-- `ManagedAuthStatus` — 认证状态（authenticated、default_account_id、accounts）
-- `ManagedAuthDeviceCodeResponse` — 设备码流程响应
-- `authStartLogin()` — 启动登录流程
-- `authPollForAccount()` — 轮询账号
-- `authLogout()` — 登出
-- `authSetDefault()` — 设置默认账号
-- `authGetStatus()` — 获取认证状态
-**failoverApi**（`src/lib/api/failover.ts`，100 行）：
-```typescript
-// src/lib/api/failover.ts:23
-export const failoverApi = {
-    // 熔断器 API
-    async getProviderHealth(providerId: string, appType: string): Promise<ProviderHealth> {
-        return invoke("get_provider_health", { providerId, appType });
-    },
-    async resetCircuitBreaker(providerId: string, appType: string): Promise<void> {
-        return invoke("reset_circuit_breaker", { providerId, appType });
-    },
-    async getCircuitBreakerConfig(): Promise<CircuitBreakerConfig> {
-        return invoke("get_circuit_breaker_config");
-    },
-    async updateCircuitBreakerConfig(config: CircuitBreakerConfig): Promise<void> {
-        return invoke("update_circuit_breaker_config", { config });
-    },
-    async getCircuitBreakerStats(providerId: string, appType: string): Promise<CircuitBreakerStats> {
-        return invoke("get_circuit_breaker_stats", { providerId, appType });
-    },
-    // 故障转移队列 API
-    async getFailoverQueue(appType: string): Promise<FailoverQueueItem[]> {
-        return invoke("get_failover_queue", { appType });
-    },
-    async updateFailoverQueue(appType: string, queue: FailoverQueueItem[]): Promise<void> {
-        return invoke("update_failover_queue", { appType, queue });
-    },
-};
-```
-- 3 个 API 分组：熔断器、故障转移队列、熔断器配置
-- `getProviderHealth()` — 获取供应商健康状态
-- `resetCircuitBreaker()` — 重置熔断器
-- `getCircuitBreakerConfig()` / `updateCircuitBreakerConfig()` — 获取/更新熔断器配置
-- `getCircuitBreakerStats()` — 获取熔断器统计
-- `getFailoverQueue()` / `updateFailoverQueue()` — 获取/更新故障转移队列
-- `ProviderHealth`、`CircuitBreakerConfig`、`CircuitBreakerStats`、`FailoverQueueItem` 类型定义在 `types/proxy.ts`
-**sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
-```typescript
-// src/lib/api/sessions.ts:4
-export interface DeleteSessionOptions {
-    providerId: string;
-    sessionId: string;
-    sourcePath: string;
-}
-export interface DeleteSessionResult extends DeleteSessionOptions {
-    success: boolean;
-    error?: string;
-}
-// src/lib/api/sessions.ts:15
-export const sessionsApi = {
-    async list(): Promise<SessionMeta[]> { return await invoke("list_sessions"); },
-    async getMessages(providerId: string, sourcePath: string): Promise<SessionMessage[]> {
-        return await invoke("get_session_messages", { providerId, sourcePath });
-    },
-    async delete(options: DeleteSessionOptions): Promise<boolean> {
-        return await invoke("delete_session", { providerId, sessionId, sourcePath });
-    },
-    async deleteMany(items: DeleteSessionOptions[]): Promise<DeleteSessionResult[]> {
-        return await invoke("delete_sessions", { items });
-    },
-    async launchTerminal(options: { command: string; cwd: string }): Promise<void> {
-        return await invoke("launch_terminal", options);
-    },
-};
-```
-- `DeleteSessionOptions`（`sessions.ts:4`）— 删除会话选项（providerId、sessionId、sourcePath）
-- `DeleteSessionResult`（`sessions.ts:10`）— 删除结果（继承 DeleteSessionOptions + success + error）
-- `list()` — 获取会话列表
-- `getMessages()` — 获取会话消息
-- `delete()` — 删除单个会话
-- `deleteMany()` — 批量删除会话
-- `launchTerminal()` — 启动终端
-**authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
-```typescript
-// src/lib/authBinding.ts:3
-export function resolveManagedAccountId(
-    meta: ProviderMeta | undefined,
-    authProvider: string,
-): string | null {
-    const binding = meta?.authBinding;
-    if (binding?.source === "managed_account" && binding.authProvider === authProvider) {
-        return binding.accountId ?? null;
-    }
-    if (authProvider === "github_copilot") {
-        return meta?.githubAccountId ?? null;
-    }
-    return null;
-}
-```
-- 解析托管账号 ID（用于 OAuth 认证绑定）
-- 支持两种绑定来源：`managed_account`（通过 `authBinding` 字段）和 `github_copilot`（通过 `githubAccountId` 字段）
-- `ProviderMeta.authBinding` 包含 `source`、`authProvider`、`accountId` 字段
-**usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
-```typescript
-// src/lib/usageRange.ts:3
-const DAY_SECONDS = 24 * 60 * 60;
-const DAY_MS = DAY_SECONDS * 1000;
-// src/lib/usageRange.ts:6
-export interface ResolvedUsageRange {
-    startDate: number;
-    endDate: number;
-}
-// src/lib/usageRange.ts:26
-export function resolveUsageRange(selection: UsageRangeSelection, nowMs: number = Date.now()): ResolvedUsageRange {
-    switch (selection.preset) {
-        case "today": { /* 今天 00:00 至今 */ }
-        case "1d": { /* 最近 24 小时 */ }
-        case "7d": { /* 最近 7 天 */ }
-        case "14d": { /* 最近 14 天 */ }
-        case "30d": { /* 最近 30 天 */ }
-        case "custom": { /* 自定义日期范围 */ }
-    }
-}
-```
-- 用量查询的时间范围解析工具
-- `ResolvedUsageRange` 包含 `startDate` 和 `endDate`（Unix 秒）
-- `resolveUsageRange()` 将预设（today/1d/7d/14d/30d/custom）转换为实际的日期范围
-- `getStartOfLocalDayDate()` 获取本地日期的开始时间
-- `getPresetLookbackStart()` 计算预设的回溯起始时间
-- 使用 Unix 秒（非毫秒）与后端数据库一致
-**omo.ts**（`src/lib/query/omo.ts`，77 行）：
-```typescript
-// src/lib/query/omo.ts:6
-function createOmoQueryKeys(prefix: string) {
-    return {
-        all: [prefix] as const,
-        currentProviderId: () => [prefix, "current-provider-id"] as const,
-    };
-}
-function createOmoQueryHooks(variant: "omo" | "omo-slim", api: typeof omoApi | typeof omoSlimApi) {
-    const keys = createOmoQueryKeys(variant);
-    function invalidateAll(queryClient) {
-        queryClient.invalidateQueries({ queryKey: ["providers"] });
-        queryClient.invalidateQueries({ queryKey: keys.currentProviderId() });
-    }
-    function useCurrentProviderId(enabled = true) { /* ... */ }
-    function useReadLocalFile() { /* ... */ }
-    function useDisableCurrent() { /* ... */ }
-    return { invalidateAll, useCurrentProviderId, useReadLocalFile, useDisableCurrent };
-}
-export const omo = createOmoQueryHooks("omo", omoApi);
-export const omoSlim = createOmoQueryHooks("omo-slim", omoSlimApi);
-```
-- 工厂模式：`createOmoQueryKeys()` 和 `createOmoQueryHooks()` 为 OMO 和 OMO-Slim 两个变体生成查询钩子
-- `useCurrentProviderId()` — 获取当前 provider ID
-- `useReadLocalFile()` — 读取本地配置文件
-- `useDisableCurrent()` — 禁用当前 provider
-- `invalidateAll()` — 刷新所有相关查询
-**subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
-```typescript
-// src/lib/query/subscription.ts:8
-const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
-// src/lib/query/subscription.ts:10
-export const subscriptionKeys = {
-    all: ["subscription"] as const,
-    quota: (appId: AppId) => [...subscriptionKeys.all, "quota", appId] as const,
-};
-// src/lib/query/subscription.ts:15
-export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery = false) {
-    return useQuery({
-        queryKey: subscriptionKeys.quota(appId),
-        queryFn: () => subscriptionApi.getQuota(appId),
-        enabled: enabled && ["claude", "codex", "gemini"].includes(appId),
-        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
-        staleTime: REFETCH_INTERVAL,
-        retry: 1,
-    });
-}
-```
-- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
-- `subscriptionKeys` 定义查询键（`all` 和 `quota`）
-- `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
-- `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
-- 支持自动轮询（5 分钟）与窗口 focus 重取
-**RequestForwarder**（`proxy/forwarder.rs:89`）：
-```rust
-// proxy/forwarder.rs:61
-pub(crate) struct ActiveConnectionGuard {
-    status: Arc<RwLock<ProxyStatus>>,
-}
-impl ActiveConnectionGuard {
-    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
-        let mut s = status.write().await;
-        s.active_connections = s.active_connections.saturating_add(1);
-        Self { status }
-    }
-}
-impl Drop for ActiveConnectionGuard {
-    fn drop(&mut self) {
-        // Drop 不能 await：把减量操作调度到 tokio runtime
-        let status = self.status.clone();
-        if let Ok(handle) = tokio::runtime::Handle::try_current() {
-            handle.spawn(async move {
-                let mut s = status.write().await;
-                s.active_connections = s.active_connections.saturating_sub(1);
-            });
-        }
-    }
-}
-// proxy/forwarder.rs:89
-pub struct RequestForwarder {
-    router: Arc<ProviderRouter>,
-    status: Arc<RwLock<ProxyStatus>>,
-    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
-    gemini_shadow: Arc<GeminiShadowStore>,
-    codex_chat_history: Arc<CodexChatHistoryStore>,
-    failover_manager: Arc<FailoverSwitchManager>,
-    app_handle: Option<tauri::AppHandle>,
-    current_provider_id_at_start: String,
-    session_id: String,
-}
-```
-- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
-  - `acquire()` 增加计数，`Drop` 减少计数
-  - Drop 不能 await，所以把减量操作调度到 tokio runtime
-  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
-- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
-  - 持有 `ProviderRouter`（熔断器状态）
-  - 持有 `FailoverSwitchManager`（故障转移切换）
-  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
-  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
-  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
-  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
-**ProxyServer**（`proxy/server.rs:54`）：
-```rust
-// proxy/server.rs:54
-pub struct ProxyServer {
-    config: ProxyConfig,
-    state: ProxyState,
-    shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>,
-    server_handle: Arc<RwLock<Option<JoinHandle<()>>>>,
-}
-impl ProxyServer {
-    pub fn new(config: ProxyConfig, db: Arc<Database>, app_handle: Option<tauri::AppHandle>) -> Self {
-        let provider_router = Arc::new(ProviderRouter::new(db.clone()));
-        let failover_manager = Arc::new(FailoverSwitchManager::new(db.clone()));
-        let state = ProxyState {
-            db, config: Arc::new(RwLock::new(config.clone())),
-            status: Arc::new(RwLock::new(ProxyStatus::default())),
-            start_time: Arc::new(RwLock::new(None)),
-            current_providers: Arc::new(RwLock::new(HashMap::new())),
-            provider_router, gemini_shadow: Arc::new(GeminiShadowStore::default()),
-            codex_chat_history: Arc::new(CodexChatHistoryStore::default()),
-            app_handle, failover_manager,
-        };
-        Self { config, state, shutdown_tx: Arc::new(RwLock::new(None)), server_handle: Arc::new(RwLock::new(None)) }
-    }
-}
-```
-- `ProxyServer`（`server.rs:54`）— 代理 HTTP 服务器
-- `shutdown_tx`（`server.rs:57`）— 关闭信号发送器（`oneshot::Sender`）
-- `server_handle`（`server.rs:59`）— 服务器任务句柄（`JoinHandle`），用于等待服务器实际关闭
-- `new()` 创建时初始化 `ProviderRouter`（熔断器状态跨所有请求保持）和 `FailoverSwitchManager`
-- 使用 `Arc<RwLock<>>` 包装所有共享状态
-- 使用 `hyper_util::rt::TokioIo` 处理 HTTP/1.1 连接
-- 使用 `preserve_header_case(true)` 保持原始 header-name casing
-**ProxyState**（`proxy/server.rs:34`）：
-```rust
-pub struct ProxyState {  // proxy/server.rs:34
-    pub db: Arc<Database>,
-    pub config: Arc<RwLock<ProxyConfig>>,
-    pub status: Arc<RwLock<ProxyStatus>>,
-    pub start_time: Arc<RwLock<Option<std::time::Instant>>>,
-    pub current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
-    pub provider_router: Arc<ProviderRouter>,
-    pub gemini_shadow: Arc<GeminiShadowStore>,
-    pub codex_chat_history: Arc<CodexChatHistoryStore>,
-    pub app_handle: Option<tauri::AppHandle>,
-    pub failover_manager: Arc<FailoverSwitchManager>,
-}
-```
-**RequestForwarder**（`proxy/forwarder.rs:89`）：
-```rust
-// proxy/forwarder.rs:61
-pub(crate) struct ActiveConnectionGuard {
-    status: Arc<RwLock<ProxyStatus>>,
-}
-impl ActiveConnectionGuard {
-    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
-        let mut s = status.write().await;
-        s.active_connections = s.active_connections.saturating_add(1);
-        Self { status }
-    }
-}
-impl Drop for ActiveConnectionGuard {
-    fn drop(&mut self) {
-        // Drop 不能 await：把减量操作调度到 tokio runtime
-        let status = self.status.clone();
-        if let Ok(handle) = tokio::runtime::Handle::try_current() {
-            handle.spawn(async move {
-                let mut s = status.write().await;
-                s.active_connections = s.active_connections.saturating_sub(1);
-            });
-        }
-    }
-}
-// proxy/forwarder.rs:89
-pub struct RequestForwarder {
-    router: Arc<ProviderRouter>,
-    status: Arc<RwLock<ProxyStatus>>,
-    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
-    gemini_shadow: Arc<GeminiShadowStore>,
-    codex_chat_history: Arc<CodexChatHistoryStore>,
-    failover_manager: Arc<FailoverSwitchManager>,
-    app_handle: Option<tauri::AppHandle>,
-    current_provider_id_at_start: String,
-    session_id: String,
-}
-```
-- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
-  - `acquire()` 增加计数，`Drop` 减少计数
-  - Drop 不能 await，所以把减量操作调度到 tokio runtime
-  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
-- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
-  - 持有 `ProviderRouter`（熔断器状态）
-  - 持有 `FailoverSwitchManager`（故障转移切换）
-  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
-  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
-  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
-  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
-**ProxyServer**（`proxy/server.rs:54`）：
-- `config: ProxyConfig` — 代理配置
-- `state: ProxyState` — 共享状态
-- `shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>` — 关闭信号
-- `server_handle: Arc<RwLock<Option<JoinHandle<()>>>>` — 服务器任务句柄
-**SwitchResult**（`services/provider/mod.rs:51`）：
-```rust
-pub struct SwitchResult {  // services/provider/mod.rs:51
-    pub warnings: Vec<String>,  // 切换操作的非致命警告
-}
-```
-**ProviderManager**（`provider.rs:114`）：
-```rust
-pub struct ProviderManager {  // provider.rs:114
-    pub providers: IndexMap<String, Provider>,  // 有序 HashMap
-    pub current: String,                        // 当前 provider ID
-}
-```
 **UsageScript**（`provider.rs:121`）：
 ```rust
 pub struct UsageScript {  // provider.rs:121
@@ -1340,175 +733,13 @@ pub struct UsageScript {  // provider.rs:121
     pub language: String,
     pub code: String,
     pub timeout: Option<u64>,
-    pub api_key: Option<String>,   // 用量查询专用 API Key
-    pub base_url: Option<String>,  // 用量查询专用 Base URL
-}
-```
-**SkillApps**（`app_config.rs:78`）：
-```rust
-pub struct SkillApps {  // app_config.rs:78
-    pub claude: bool,
-    pub codex: bool,
-    pub gemini: bool,
-    pub opencode: bool,
-    pub hermes: bool,
-}
-```
-- `is_enabled_for(&self, app: &AppType)`（`app_config.rs:93`）— 检查指定应用是否启用
-- OpenClaw 不支持 Skills（`app_config.rs:100`）
-- ClaudeDesktop 不支持 Skills（`app_config.rs:101`）
-**McpApps**（`app_config.rs:9`）：
-```rust
-pub struct McpApps {  // app_config.rs:9
-    pub claude: bool,
-    pub codex: bool,
-    pub gemini: bool,
-    pub opencode: bool,
-    pub hermes: bool,
-}
-```
-- `is_enabled_for(&self, app: &AppType)`（`app_config.rs:24`）— 检查指定应用是否启用
-- OpenClaw 不支持 MCP（`app_config.rs:30`）
-- ClaudeDesktop 不支持 MCP（`app_config.rs:32`）
-**PromptConfig**（`app_config.rs:304`）：
-```rust
-pub struct PromptConfig {  // app_config.rs:304
-    pub prompts: HashMap<String, crate::prompt::Prompt>,
-}
-```
-**PromptRoot**（`app_config.rs:311`）— 按客户端分开维护：
-```rust
-pub struct PromptRoot {  // app_config.rs:311
-    pub claude: PromptConfig,
-    pub claude_desktop: PromptConfig,  // 别名 claude-desktop, claudeDesktop
-    pub codex: PromptConfig,
-    pub gemini: PromptConfig,
-    pub opencode: PromptConfig,
-    pub openclaw: PromptConfig,
-    pub hermes: PromptConfig,
-}
-```
-**MultiAppConfig**（`app_config.rs:469`）— 旧版 JSON 配置格式（用于迁移）：
-```rust
-pub struct MultiAppConfig {  // app_config.rs:469
-    pub version: u32,                        // 版本号（默认 2）
-    pub apps: HashMap<String, ProviderManager>,  // 应用管理器
-    pub mcp: McpRoot,                        // MCP 配置
-    pub prompts: PromptRoot,                 // Prompt 配置
-    pub skills: SkillStore,                  // Skills 配置
-    pub common_config_snippets: CommonConfigSnippets,  // 通用配置片段
-    pub claude_common_config_snippet: Option<String>,  // 旧字段向后兼容
-}
-```
-- `Default` 实现（`app_config.rs:496`）— 7 个应用的默认 ProviderManager
-- 用于 JSON → SQLite 迁移（`database/migration.rs`）
-**McpServer**（`app_config.rs:222`）：
-```rust
-pub struct McpServer {  // app_config.rs:222
-    pub id: String,
-    pub name: String,
-    pub server: serde_json::Value,  // 服务器配置（JSON）
-    pub apps: McpApps,               // 应用启用状态
-    pub description: Option<String>,
-    pub homepage: Option<String>,
-    pub docs: Option<String>,
-    pub tags: Vec<String>,
-}
-```
-**McpConfig**（`app_config.rs:239`）— 单客户端维度（v3.6.x 向后兼容）：
-```rust
-pub struct McpConfig {  // app_config.rs:239
-    pub servers: HashMap<String, serde_json::Value>,
-}
-```
-**McpRoot**（`app_config.rs:254`）— v3.7.0 新旧结构并存：
-```rust
-pub struct McpRoot {  // app_config.rs:254
-    pub servers: Option<HashMap<String, McpServer>>,  // v3.7.0+ 统一存储
-    pub claude: McpConfig,       // 旧的分应用存储
-    pub claude_desktop: McpConfig,
-    pub codex: McpConfig,
-    pub gemini: McpConfig,
-    pub opencode: McpConfig,
-    pub openclaw: McpConfig,
-    pub hermes: McpConfig,
-}
-```
-**InstalledSkill**（`app_config.rs:169`）：
-```rust
-pub struct InstalledSkill {  // app_config.rs:169
-    pub id: String,                    // 唯一标识 "owner/repo:directory"
-    pub name: String,                  // 显示名称
-    pub description: Option<String>,   // 描述
-    pub directory: String,             // 安装目录名
-    pub repo_owner: Option<String>,    // 仓库所有者
-    pub repo_name: Option<String>,     // 仓库名称
-    pub repo_branch: Option<String>,   // 仓库分支
-    pub readme_url: Option<String>,    // README URL
-    pub apps: SkillApps,               // 应用启用状态
-    pub installed_at: i64,             // 安装时间
-    pub content_hash: Option<String>,  // 内容哈希（SHA-256）
-    pub updated_at: i64,               // 最近更新时间
-}
-```
-- `UnmanagedSkill`（`app_config.rs:203`）— 在应用目录中发现但未被 CC Switch 管理的 Skill
-**SyncMethod 枚举**（`services/skill.rs:28`）：
-```rust
-pub enum SyncMethod {  // services/skill.rs:28
-    Auto,    // 自动选择：优先 symlink，失败时回退到 copy（默认）
-    Symlink, // 符号链接（推荐，节省磁盘空间）
-    Copy,    // 文件复制（兼容模式）
-}
-```
-**SkillStorageLocation 枚举**（`services/skill.rs:41`）：
-```rust
-pub enum SkillStorageLocation {  // services/skill.rs:41
-    CcSwitch,  // CC Switch 管理目录 ~/.cc-switch/skills/（默认）
-    Unified,   // Agent Skills 统一标准目录 ~/.agents/skills/
-}
-```
-**DiscoverableSkill**（`services/skill.rs:51`）：
-- `key: String` — 唯一标识 `"owner/name:directory"`
-- `name: String` — 显示名称（从 SKILL.md 解析）
-- `description: String` — 技能描述
-- `directory: String` — 目录名称
-- `readme_url: Option<String>` — GitHub README URL
-**LocalMigrations**（`settings.rs:184`）：
-```rust
-pub struct LocalMigrations {  // settings.rs:184
-    pub codex_third_party_history_provider_bucket_v1:
-        Option<CodexThirdPartyHistoryProviderBucketMigration>,
-}
-pub struct CodexThirdPartyHistoryProviderBucketMigration {  // settings.rs:192
-    pub completed_at: String,
-    pub target_provider_id: String,
-    pub source_provider_ids: Vec<String>,
-    pub migrated_jsonl_files: usize,
-    pub migrated_state_rows: usize,
-    pub scanned_history_files: bool,
-}
-```
-- 设备级操作（修改 `~/.codex` 文件），不随数据库同步
-- 记录 Codex 第三方历史数据迁移状态
-**CustomEndpoint**（`settings.rs:14`）：
-```rust
-pub struct CustomEndpoint {  // settings.rs:14
-    pub url: String,           // 端点 URL
-    pub added_at: i64,         // 添加时间
-    pub last_used: Option<i64>, // 上次使用时间
-}
-```
-- 历史兼容，实际存储在 `provider.meta.custom_endpoints`
-- 用于自定义 API 端点管理
-**WebDavSyncStatus**（`settings.rs:82`）：
-```rust
-pub struct WebDavSyncStatus {  // settings.rs:82
-    pub last_sync_at: Option<i64>,             // 上次同步时间
-    pub last_error: Option<String>,            // 上次错误信息
-    pub last_error_source: Option<String>,     // 错误来源
-    pub last_remote_etag: Option<String>,      // 远程 ETag
-    pub last_local_manifest_hash: Option<String>,  // 本地清单哈希
-    pub last_remote_manifest_hash: Option<String>, // 远程清单哈希
+    pub api_key: Option<String>,           // 用量查询专用 API Key
+    pub base_url: Option<String>,          // 用量查询专用 Base URL
+    pub access_token: Option<String>,      // 用量查询专用访问令牌（NewAPI 模板使用）
+    pub user_id: Option<String>,           // 用量查询专用用户 ID（NewAPI 模板使用）
+    pub template_type: Option<String>,     // 模板类型（后端验证规则）
+    pub auto_query_interval: Option<u64>,  // 自动查询间隔（分钟，0 = 禁用）
+    pub coding_plan_provider: Option<String>, // Coding Plan 供应商标识
 }
 ```
 **VisibleApps**（`settings.rs:28`）：
@@ -1537,7 +768,7 @@ pub struct AppSettings {           // settings.rs:211
     pub claude_config_dir: Option<String>,     // Claude 配置目录覆盖
     pub current_provider_claude: Option<String>, // 当前 Claude 供应商 ID
     pub skill_sync_method: SyncMethod,         // Skill 同步方式
-    pub webdav: WebDavSyncSettings,            // WebDAV 同步设置
+    pub webdav_sync: Option<WebDavSyncSettings>, // WebDAV 同步设置
 }
 ```
 **AppSettings 的 AI Slop 特征**：
@@ -1574,25 +805,6 @@ pub struct SwitchLockManager {  // proxy/switch_lock.rs:14
     locks: Arc<RwLock<HashMap<String, Arc<Mutex<()>>>>>,
 }
 ```
-- `lock_for_app(&self, app_type: &str)`（`switch_lock.rs:26`）— 获取指定应用的切换锁
-- 每个应用类型一把互斥锁，保证同一应用的切换操作串行执行
-- 不同应用之间（如 Claude 和 Codex）可以并行切换
-- 返回 `OwnedMutexGuard`，持有期间同一 `app_type` 的其他切换会排队等待
-**ProxyService**（`services/proxy.rs:55`）：
-```rust
-pub struct ProxyService {  // services/proxy.rs:55
-    db: Arc<Database>,
-    server: Arc<RwLock<Option<ProxyServer>>>,
-    app_handle: Arc<RwLock<Option<tauri::AppHandle>>>,
-    switch_locks: SwitchLockManager,
-}
-```
-**HotSwitchOutcome**（`services/proxy.rs:64`）：
-```rust
-pub struct HotSwitchOutcome {  // services/proxy.rs:64
-    pub logical_target_changed: bool,
-}
-```
 **database/dao/ 目录**（`src-tauri/src/database/dao/`，12 个文件）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
@@ -1619,7 +831,7 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
 - `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
 - `stream_check.rs`（10.9KB）包含流式检查记录操作
 - `universal_providers.rs`（2.5KB）包含通用 Provider 操作
-**commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
+**commands/mod.rs**（`src-tauri/src/commands/mod.rs`，66 行）：
 ```rust
 // src-tauri/src/commands/mod.rs:1
 #![allow(non_snake_case)]
@@ -1647,7 +859,7 @@ pub use coding_plan::*; pub use config::*; pub use copilot::*;
 **database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
-| schema.rs | 77.8KB | 数据库 schema 定义（15 张表的 SQL） |
+|schema.rs | 77.8KB | 数据库 schema 定义（23 张表的 SQL） |
 | backup.rs | 31.7KB | 数据库备份和恢复 |
 | tests.rs | 22.7KB | 数据库测试 |
 | mod.rs | 8.9KB | Database 结构体和初始化 |
@@ -1657,10 +869,9 @@ pub use coding_plan::*; pub use config::*; pub use copilot::*;
 - `SCHEMA_VERSION = 10`（`database/mod.rs:52`）— 当前 schema 版本
 - `lock_conn!` 宏（`database/mod.rs:61`）— 获取数据库连接
 - `init()`（`database/mod.rs:95`）— 初始化数据库
-- `dao/` 子目录包含 12 个 DAO 模块：providers、settings、mcp_servers、prompts、skills、proxy_config、proxy_request_logs、session_usage、subscription、usage_cache、universal_providers、stream_check
+- `dao/` 子目录包含 11 个 DAO 模块：providers、settings、mcp、prompts、skills、proxy（代理配置 + 请求日志）、failover、providers_seed、usage_rollup、stream_check、universal_providers
 **commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
-| 文件 | 大小 | 职责 |
-|------|------|------|
+|文件 | 大小 | 职责 |
 | misc.rs | 176.0KB | 杂项命令（最大的命令文件） |
 | provider.rs | 32.3KB | Provider CRUD 和切换命令 |
 | config.rs | 12.6KB | 配置导入导出命令 |
@@ -1712,559 +923,6 @@ mod prompt_files;      mod provider;          mod provider_defaults;
 mod proxy;             mod services;          mod session_manager;
 mod settings;          mod store;             mod tray;
 mod usage_script;
-```
-- 34 个模块声明（lib.rs:1-36）
-- 公开导出：`AppType`、`InstalledSkill`、`McpApps`、`McpServer`、`MultiAppConfig`、`SkillApps`（lib.rs:38）
-- `run()` 函数（lib.rs:203）— 应用入口点，初始化插件、注册命令、创建窗口
-- `.invoke_handler()`（lib.rs:1072）— 注册约 271 个 Tauri 命令
-- `cleanup_before_exit()`（lib.rs:1513）— 退出前清理
-- 9 个插件注册：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
-**base64.ts**（`src/lib/utils/base64.ts`，44 行）：
-```typescript
-// src/lib/utils/base64.ts:13
-export function decodeBase64Utf8(str: string): string {
-    let cleaned = str.trim().replace(/ /g, "+");  // URL 解析可能将 + 转为空格
-    try {
-        const binString = atob(cleaned);
-        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
-        return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-    } catch (e1) {
-        // 尝试修复缺失的 padding
-        // ...
-    }
-}
-```
-- Base64 解码工具（处理 URL 传递中的边缘情况）
-- 处理空格（URL 解析可能将 `+` 转为空格）
-- 处理缺失的 padding（`=` 字符）
-- 处理不同的 Base64 变体
-- 使用 `TextDecoder("utf-8", { fatal: false })` 解码 UTF-8
-**clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
-```typescript
-// src/lib/clipboard.ts:3
-export async function copyText(text: string): Promise<void> {
-    try {
-        await invoke("copy_text_to_clipboard", { text });
-        return;
-    } catch (nativeError) {
-        try {
-            await navigator.clipboard.writeText(text);
-            return;
-        } catch (webError) {
-            throw webError instanceof Error ? webError
-                : nativeError instanceof Error ? nativeError
-                : new Error(String(webError || nativeError));
-        }
-    }
-}
-```
-- 剪贴板操作工具（双层回退策略）
-- 优先使用 Tauri 原生命令 `copy_text_to_clipboard`
-- 原生失败时回退到 Web API `navigator.clipboard.writeText`
-- 错误处理：优先抛出 webError，其次 nativeError
-**updater.ts**（`src/lib/updater.ts`，127 行）：
-```typescript
-// src/lib/updater.ts:8
-export type UpdateChannel = "stable" | "beta";
-// src/lib/updater.ts:10
-export type UpdaterPhase = "idle" | "checking" | "available" | "downloading" | "installing" | "restarting" | "upToDate" | "error";
-// src/lib/updater.ts:20
-export interface UpdateInfo {
-    currentVersion: string;
-    availableVersion: string;
-    notes?: string;
-    pubDate?: string;
-}
-// src/lib/updater.ts:27
-export interface UpdateProgressEvent {
-    event: "Started" | "Progress" | "Finished";
-    total?: number;
-    downloaded?: number;
-}
-// src/lib/updater.ts:33
-export interface UpdateHandle {
-    version: string;
-    notes?: string;
-    date?: string;
-    downloadAndInstall: (onProgress?: (e: UpdateProgressEvent) => void) => Promise<void>;
-    download?: () => Promise<void>;
-    install?: () => Promise<void>;
-}
-```
-- `UpdateChannel`（`updater.ts:8`）— 更新通道：`"stable"` 或 `"beta"`
-- `UpdaterPhase`（`updater.ts:10`）— 更新器阶段：idle → checking → available → downloading → installing → restarting
-- `UpdateInfo`（`updater.ts:20`）— 更新信息（currentVersion、availableVersion、notes、pubDate）
-- `UpdateProgressEvent`（`updater.ts:27`）— 下载进度事件（Started、Progress、Finished）
-- `UpdateHandle`（`updater.ts:33`）— 更新句柄（version、notes、date、downloadAndInstall）
-- 使用 `@tauri-apps/plugin-updater` 插件
-- 可选导入：在未注册插件或非 Tauri 环境下，调用时会抛错，外层需做兜底
-**platform.ts**（`src/lib/platform.ts`，49 行）：
-```typescript
-// src/lib/platform.ts:2
-export const isMac = (): boolean => {
-    try {
-        const ua = navigator.userAgent || "";
-        const plat = (navigator.platform || "").toLowerCase();
-        return /mac/i.test(ua) || plat.includes("mac");
-    } catch { return false; }
-};
-export const isWindows = (): boolean => { /* /windows|win32|win64/i */ };
-export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
-```
-- 轻量平台检测，避免在 SSR 或无 navigator 的环境报错
-- `isMac()`、`isWindows()`、`isLinux()` — 检测当前操作系统
-- Linux 上禁用所有 drag region，规避 Wayland 下 `gtk_window_begin_move_drag` 问题
-- 使用 try-catch 包裹，避免 navigator 不存在时崩溃
-**Query Layer Index**（`src/lib/query/index.ts`，6 行）：
-- Query 层统一导出入口
-- 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
-- `queryClient.ts`（264B）— QueryClient 配置
-- `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
-- `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
-- `proxy.ts`（3.2KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
-- `subscription.ts`（0.6KB）— 订阅查询钩子（useSubscriptionQuota）
-- `copilot.ts`（5.9KB）— Copilot 查询钩子（useCopilotQuota）
-- `failover.ts`（2.7KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
-- `omo.ts`（12.1KB）— OMO 查询钩子（工厂模式）
-- `usage.ts`（6.0KB）— 用量查询钩子
-**copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
-```typescript
-// src/lib/query/copilot.ts:5
-const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
-// src/lib/query/copilot.ts:7
-export interface CopilotQuota {
-    success: boolean;
-    plan: string | null;
-    resetDate: string | null;
-    tiers: QuotaTier[];
-    error: string | null;
-    queriedAt: number | null;
-}
-// src/lib/query/copilot.ts:22
-export function useCopilotQuota(accountId: string | null, options: UseCopilotQuotaOptions = {}) {
-    const { enabled = true, autoQuery = false } = options;
-    return useQuery<CopilotQuota>({
-        queryKey: ["copilot", "quota", accountId ?? "default"],
-        queryFn: async (): Promise<CopilotQuota> => {
-            const usage = accountId
-                ? await copilotGetUsageForAccount(accountId)
-                : await copilotGetUsage();
-            // ...
-        },
-        enabled,
-        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
-        staleTime: REFETCH_INTERVAL,
-        retry: 1,
-    });
-}
-```
-- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
-- `CopilotQuota` — Copilot 配额信息（success、plan、resetDate、tiers、error、queriedAt）
-- `useCopilotQuota()` — 获取 Copilot 配额（支持指定 accountId 或使用默认账号）
-- 支持自动轮询（5 分钟）与窗口 focus 重取
-- `copilotGetUsage()` — 获取默认账号的使用量
-- `copilotGetUsageForAccount()` — 获取指定账号的使用量
-**index.ts**（`src/lib/api/index.ts`，31 行）：
-- API 层统一导出入口
-- 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
-- 导出类型：AppId、ProviderSwitchEvent、Prompt、CopilotDeviceCodeResponse、CopilotAuthStatus、GitHubAccount、ManagedAuthProvider、ManagedAuthAccount、ManagedAuthStatus、ManagedAuthDeviceCodeResponse
-**config.ts**（`src/lib/api/config.ts`，78 行）：
-```typescript
-// src/lib/api/config.ts:4
-export type AppType = "claude" | "codex" | "gemini" | "omo" | "omo_slim";
-// src/lib/api/config.ts:32
-export async function getCommonConfigSnippet(appType: AppType): Promise<string | null> {
-    return invoke<string | null>("get_common_config_snippet", { appType });
-}
-// src/lib/api/config.ts:43
-export async function setCommonConfigSnippet(appType: AppType, snippet: string): Promise<void> {
-    return invoke("set_common_config_snippet", { appType, snippet });
-}
-```
-- `AppType` 类型：`"claude" | "codex" | "gemini" | "omo" | "omo_slim"`
-- `getCommonConfigSnippet()`（`config.ts:32`）— 获取通用配置片段（统一接口）
-- `setCommonConfigSnippet()`（`config.ts:43`）— 设置通用配置片段（统一接口）
-- `getClaudeCommonConfigSnippet()`（`config.ts:11`）— 已废弃，使用 `getCommonConfigSnippet('claude')` 替代
-- `setClaudeCommonConfigSnippet()`（`config.ts:21`）— 已废弃，使用 `setCommonConfigSnippet('claude', snippet)` 替代
-- Claude/Gemini 验证 JSON 格式，Codex 暂不验证
-**model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
-```typescript
-// src/lib/api/model-fetch.ts:5
-export interface FetchedModel {
-    id: string;
-    ownedBy: string | null;
-}
-// src/lib/api/model-fetch.ts:16
-export async function fetchModelsForConfig(
-    baseUrl: string, apiKey: string, isFullUrl?: boolean, modelsUrl?: string,
-): Promise<FetchedModel[]> {
-    return invoke("fetch_models_for_config", { baseUrl, apiKey, isFullUrl, modelsUrl });
-}
-// src/lib/api/model-fetch.ts:35
-export async function fetchCodexOauthModels(accountId?: string | null): Promise<FetchedModel[]> {
-    return invoke("get_codex_oauth_models", { accountId: accountId || null });
-}
-```
-- `FetchedModel`（`model-fetch.ts:5`）— 获取到的模型信息（id、ownedBy）
-- `fetchModelsForConfig()`（`model-fetch.ts:16`）— 从供应商获取可用模型列表（使用 OpenAI 兼容的 `GET /v1/models` 端点）
-  - 优先用 `modelsUrl` 精确覆写
-  - 否则后端会对 baseURL 生成候选列表并按序尝试（含"剥离 /anthropic 等兼容子路径"兜底）
-- `fetchCodexOauthModels()`（`model-fetch.ts:35`）— 获取 Codex OAuth 可用模型列表（使用 ChatGPT 的 backend-api/codex 端点，不兼容普通 /v1/models）
-**auth.ts**（`src/lib/api/auth.ts`，107 行）：
-```typescript
-// src/lib/api/auth.ts:3
-export type ManagedAuthProvider = "github_copilot" | "codex_oauth";
-// src/lib/api/auth.ts:5
-export interface ManagedAuthAccount {
-    id: string;
-    provider: ManagedAuthProvider;
-    login: string;
-    avatar_url: string | null;
-    authenticated_at: number;
-    is_default: boolean;
-    github_domain: string;
-}
-// src/lib/api/auth.ts:15
-export interface ManagedAuthStatus {
-    provider: ManagedAuthProvider;
-    authenticated: boolean;
-    default_account_id: string | null;
-    migration_error?: string | null;
-    accounts: ManagedAuthAccount[];
-}
-// src/lib/api/auth.ts:23
-export interface ManagedAuthDeviceCodeResponse {
-    provider: ManagedAuthProvider;
-    device_code: string;
-    user_code: string;
-    verification_uri: string;
-    expires_in: number;
-    interval: number;
-}
-export async function authStartLogin(authProvider: ManagedAuthProvider, githubDomain?: string): Promise<ManagedAuthDeviceCodeResponse>;
-export async function authPollForAccount(authProvider: ManagedAuthProvider, deviceCode: string): Promise<ManagedAuthAccount>;
-export async function authLogout(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
-export async function authSetDefault(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
-export async function authGetStatus(authProvider: ManagedAuthProvider): Promise<ManagedAuthStatus>;
-```
-- 统一的托管认证 API（支持 GitHub Copilot 和 Codex OAuth）
-- `ManagedAuthProvider` 类型：`"github_copilot"` 或 `"codex_oauth"`
-- `ManagedAuthAccount` — 托管认证账号（id、provider、login、avatar_url、authenticated_at、is_default、github_domain）
-- `ManagedAuthStatus` — 认证状态（authenticated、default_account_id、accounts）
-- `ManagedAuthDeviceCodeResponse` — 设备码流程响应
-- `authStartLogin()` — 启动登录流程
-- `authPollForAccount()` — 轮询账号
-- `authLogout()` — 登出
-- `authSetDefault()` — 设置默认账号
-- `authGetStatus()` — 获取认证状态
-**failoverApi**（`src/lib/api/failover.ts`，100 行）：
-```typescript
-// src/lib/api/failover.ts:23
-export const failoverApi = {
-    // 熔断器 API
-    async getProviderHealth(providerId: string, appType: string): Promise<ProviderHealth> {
-        return invoke("get_provider_health", { providerId, appType });
-    },
-    async resetCircuitBreaker(providerId: string, appType: string): Promise<void> {
-        return invoke("reset_circuit_breaker", { providerId, appType });
-    },
-    async getCircuitBreakerConfig(): Promise<CircuitBreakerConfig> {
-        return invoke("get_circuit_breaker_config");
-    },
-    async updateCircuitBreakerConfig(config: CircuitBreakerConfig): Promise<void> {
-        return invoke("update_circuit_breaker_config", { config });
-    },
-    async getCircuitBreakerStats(providerId: string, appType: string): Promise<CircuitBreakerStats> {
-        return invoke("get_circuit_breaker_stats", { providerId, appType });
-    },
-    // 故障转移队列 API
-    async getFailoverQueue(appType: string): Promise<FailoverQueueItem[]> {
-        return invoke("get_failover_queue", { appType });
-    },
-    async updateFailoverQueue(appType: string, queue: FailoverQueueItem[]): Promise<void> {
-        return invoke("update_failover_queue", { appType, queue });
-    },
-};
-```
-- 3 个 API 分组：熔断器、故障转移队列、熔断器配置
-- `getProviderHealth()` — 获取供应商健康状态
-- `resetCircuitBreaker()` — 重置熔断器
-- `getCircuitBreakerConfig()` / `updateCircuitBreakerConfig()` — 获取/更新熔断器配置
-- `getCircuitBreakerStats()` — 获取熔断器统计
-- `getFailoverQueue()` / `updateFailoverQueue()` — 获取/更新故障转移队列
-- `ProviderHealth`、`CircuitBreakerConfig`、`CircuitBreakerStats`、`FailoverQueueItem` 类型定义在 `types/proxy.ts`
-**sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
-```typescript
-// src/lib/api/sessions.ts:4
-export interface DeleteSessionOptions {
-    providerId: string;
-    sessionId: string;
-    sourcePath: string;
-}
-export interface DeleteSessionResult extends DeleteSessionOptions {
-    success: boolean;
-    error?: string;
-}
-// src/lib/api/sessions.ts:15
-export const sessionsApi = {
-    async list(): Promise<SessionMeta[]> { return await invoke("list_sessions"); },
-    async getMessages(providerId: string, sourcePath: string): Promise<SessionMessage[]> {
-        return await invoke("get_session_messages", { providerId, sourcePath });
-    },
-    async delete(options: DeleteSessionOptions): Promise<boolean> {
-        return await invoke("delete_session", { providerId, sessionId, sourcePath });
-    },
-    async deleteMany(items: DeleteSessionOptions[]): Promise<DeleteSessionResult[]> {
-        return await invoke("delete_sessions", { items });
-    },
-    async launchTerminal(options: { command: string; cwd: string }): Promise<void> {
-        return await invoke("launch_terminal", options);
-    },
-};
-```
-- `DeleteSessionOptions`（`sessions.ts:4`）— 删除会话选项（providerId、sessionId、sourcePath）
-- `DeleteSessionResult`（`sessions.ts:10`）— 删除结果（继承 DeleteSessionOptions + success + error）
-- `list()` — 获取会话列表
-- `getMessages()` — 获取会话消息
-- `delete()` — 删除单个会话
-- `deleteMany()` — 批量删除会话
-- `launchTerminal()` — 启动终端
-**authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
-```typescript
-// src/lib/authBinding.ts:3
-export function resolveManagedAccountId(
-    meta: ProviderMeta | undefined,
-    authProvider: string,
-): string | null {
-    const binding = meta?.authBinding;
-    if (binding?.source === "managed_account" && binding.authProvider === authProvider) {
-        return binding.accountId ?? null;
-    }
-    if (authProvider === "github_copilot") {
-        return meta?.githubAccountId ?? null;
-    }
-    return null;
-}
-```
-- 解析托管账号 ID（用于 OAuth 认证绑定）
-- 支持两种绑定来源：`managed_account`（通过 `authBinding` 字段）和 `github_copilot`（通过 `githubAccountId` 字段）
-- `ProviderMeta.authBinding` 包含 `source`、`authProvider`、`accountId` 字段
-**usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
-```typescript
-// src/lib/usageRange.ts:3
-const DAY_SECONDS = 24 * 60 * 60;
-const DAY_MS = DAY_SECONDS * 1000;
-// src/lib/usageRange.ts:6
-export interface ResolvedUsageRange {
-    startDate: number;
-    endDate: number;
-}
-// src/lib/usageRange.ts:26
-export function resolveUsageRange(selection: UsageRangeSelection, nowMs: number = Date.now()): ResolvedUsageRange {
-    switch (selection.preset) {
-        case "today": { /* 今天 00:00 至今 */ }
-        case "1d": { /* 最近 24 小时 */ }
-        case "7d": { /* 最近 7 天 */ }
-        case "14d": { /* 最近 14 天 */ }
-        case "30d": { /* 最近 30 天 */ }
-        case "custom": { /* 自定义日期范围 */ }
-    }
-}
-```
-- 用量查询的时间范围解析工具
-- `ResolvedUsageRange` 包含 `startDate` 和 `endDate`（Unix 秒）
-- `resolveUsageRange()` 将预设（today/1d/7d/14d/30d/custom）转换为实际的日期范围
-- `getStartOfLocalDayDate()` 获取本地日期的开始时间
-- `getPresetLookbackStart()` 计算预设的回溯起始时间
-- 使用 Unix 秒（非毫秒）与后端数据库一致
-**omo.ts**（`src/lib/query/omo.ts`，77 行）：
-```typescript
-// src/lib/query/omo.ts:6
-function createOmoQueryKeys(prefix: string) {
-    return {
-        all: [prefix] as const,
-        currentProviderId: () => [prefix, "current-provider-id"] as const,
-    };
-}
-function createOmoQueryHooks(variant: "omo" | "omo-slim", api: typeof omoApi | typeof omoSlimApi) {
-    const keys = createOmoQueryKeys(variant);
-    function invalidateAll(queryClient) {
-        queryClient.invalidateQueries({ queryKey: ["providers"] });
-        queryClient.invalidateQueries({ queryKey: keys.currentProviderId() });
-    }
-    function useCurrentProviderId(enabled = true) { /* ... */ }
-    function useReadLocalFile() { /* ... */ }
-    function useDisableCurrent() { /* ... */ }
-    return { invalidateAll, useCurrentProviderId, useReadLocalFile, useDisableCurrent };
-}
-export const omo = createOmoQueryHooks("omo", omoApi);
-export const omoSlim = createOmoQueryHooks("omo-slim", omoSlimApi);
-```
-- 工厂模式：`createOmoQueryKeys()` 和 `createOmoQueryHooks()` 为 OMO 和 OMO-Slim 两个变体生成查询钩子
-- `useCurrentProviderId()` — 获取当前 provider ID
-- `useReadLocalFile()` — 读取本地配置文件
-- `useDisableCurrent()` — 禁用当前 provider
-- `invalidateAll()` — 刷新所有相关查询
-**subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
-```typescript
-// src/lib/query/subscription.ts:8
-const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
-// src/lib/query/subscription.ts:10
-export const subscriptionKeys = {
-    all: ["subscription"] as const,
-    quota: (appId: AppId) => [...subscriptionKeys.all, "quota", appId] as const,
-};
-// src/lib/query/subscription.ts:15
-export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery = false) {
-    return useQuery({
-        queryKey: subscriptionKeys.quota(appId),
-        queryFn: () => subscriptionApi.getQuota(appId),
-        enabled: enabled && ["claude", "codex", "gemini"].includes(appId),
-        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
-        staleTime: REFETCH_INTERVAL,
-        retry: 1,
-    });
-}
-```
-- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
-- `subscriptionKeys` 定义查询键（`all` 和 `quota`）
-- `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
-- `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
-- 支持自动轮询（5 分钟）与窗口 focus 重取
-**RequestForwarder**（`proxy/forwarder.rs:89`）：
-```rust
-// proxy/forwarder.rs:61
-pub(crate) struct ActiveConnectionGuard {
-    status: Arc<RwLock<ProxyStatus>>,
-}
-impl ActiveConnectionGuard {
-    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
-        let mut s = status.write().await;
-        s.active_connections = s.active_connections.saturating_add(1);
-        Self { status }
-    }
-}
-impl Drop for ActiveConnectionGuard {
-    fn drop(&mut self) {
-        // Drop 不能 await：把减量操作调度到 tokio runtime
-        let status = self.status.clone();
-        if let Ok(handle) = tokio::runtime::Handle::try_current() {
-            handle.spawn(async move {
-                let mut s = status.write().await;
-                s.active_connections = s.active_connections.saturating_sub(1);
-            });
-        }
-    }
-}
-// proxy/forwarder.rs:89
-pub struct RequestForwarder {
-    router: Arc<ProviderRouter>,
-    status: Arc<RwLock<ProxyStatus>>,
-    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
-    gemini_shadow: Arc<GeminiShadowStore>,
-    codex_chat_history: Arc<CodexChatHistoryStore>,
-    failover_manager: Arc<FailoverSwitchManager>,
-    app_handle: Option<tauri::AppHandle>,
-    current_provider_id_at_start: String,
-    session_id: String,
-}
-```
-- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
-  - `acquire()` 增加计数，`Drop` 减少计数
-  - Drop 不能 await，所以把减量操作调度到 tokio runtime
-  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
-- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
-  - 持有 `ProviderRouter`（熔断器状态）
-  - 持有 `FailoverSwitchManager`（故障转移切换）
-  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
-  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
-  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
-  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
-**ProxyServer**（`proxy/server.rs:54`）：
-```rust
-// proxy/server.rs:54
-pub struct ProxyServer {
-    config: ProxyConfig,
-    state: ProxyState,
-    shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>,
-    server_handle: Arc<RwLock<Option<JoinHandle<()>>>>,
-}
-impl ProxyServer {
-    pub fn new(config: ProxyConfig, db: Arc<Database>, app_handle: Option<tauri::AppHandle>) -> Self {
-        let provider_router = Arc::new(ProviderRouter::new(db.clone()));
-        let failover_manager = Arc::new(FailoverSwitchManager::new(db.clone()));
-        let state = ProxyState {
-            db, config: Arc::new(RwLock::new(config.clone())),
-            status: Arc::new(RwLock::new(ProxyStatus::default())),
-            start_time: Arc::new(RwLock::new(None)),
-            current_providers: Arc::new(RwLock::new(HashMap::new())),
-            provider_router, gemini_shadow: Arc::new(GeminiShadowStore::default()),
-            codex_chat_history: Arc::new(CodexChatHistoryStore::default()),
-            app_handle, failover_manager,
-        };
-        Self { config, state, shutdown_tx: Arc::new(RwLock::new(None)), server_handle: Arc::new(RwLock::new(None)) }
-    }
-}
-```
-- `ProxyServer`（`server.rs:54`）— 代理 HTTP 服务器
-- `shutdown_tx`（`server.rs:57`）— 关闭信号发送器（`oneshot::Sender`）
-- `server_handle`（`server.rs:59`）— 服务器任务句柄（`JoinHandle`），用于等待服务器实际关闭
-- `new()` 创建时初始化 `ProviderRouter`（熔断器状态跨所有请求保持）和 `FailoverSwitchManager`
-- 使用 `Arc<RwLock<>>` 包装所有共享状态
-- 使用 `hyper_util::rt::TokioIo` 处理 HTTP/1.1 连接
-- 使用 `preserve_header_case(true)` 保持原始 header-name casing
-**ProxyState**（`proxy/server.rs:34`）：
-```rust
-pub struct ProxyState {  // proxy/server.rs:34
-    pub db: Arc<Database>,
-    pub config: Arc<RwLock<ProxyConfig>>,
-    pub status: Arc<RwLock<ProxyStatus>>,
-    pub start_time: Arc<RwLock<Option<std::time::Instant>>>,
-    pub current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
-    pub provider_router: Arc<ProviderRouter>,
-    pub gemini_shadow: Arc<GeminiShadowStore>,
-    pub codex_chat_history: Arc<CodexChatHistoryStore>,
-    pub app_handle: Option<tauri::AppHandle>,
-    pub failover_manager: Arc<FailoverSwitchManager>,
-}
-```
-**RequestForwarder**（`proxy/forwarder.rs:89`）：
-```rust
-// proxy/forwarder.rs:61
-pub(crate) struct ActiveConnectionGuard {
-    status: Arc<RwLock<ProxyStatus>>,
-}
-impl ActiveConnectionGuard {
-    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
-        let mut s = status.write().await;
-        s.active_connections = s.active_connections.saturating_add(1);
-        Self { status }
-    }
-}
-impl Drop for ActiveConnectionGuard {
-    fn drop(&mut self) {
-        // Drop 不能 await：把减量操作调度到 tokio runtime
-        let status = self.status.clone();
-        if let Ok(handle) = tokio::runtime::Handle::try_current() {
-            handle.spawn(async move {
-                let mut s = status.write().await;
-                s.active_connections = s.active_connections.saturating_sub(1);
-            });
-        }
-    }
-}
-// proxy/forwarder.rs:89
-pub struct RequestForwarder {
-    router: Arc<ProviderRouter>,
-    status: Arc<RwLock<ProxyStatus>>,
-    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
-    gemini_shadow: Arc<GeminiShadowStore>,
-    codex_chat_history: Arc<CodexChatHistoryStore>,
-    failover_manager: Arc<FailoverSwitchManager>,
-    app_handle: Option<tauri::AppHandle>,
-    current_provider_id_at_start: String,
-    session_id: String,
-}
 ```
 - `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
   - `acquire()` 增加计数，`Drop` 减少计数
@@ -2534,23 +1192,18 @@ pub struct WebDavSyncSettings {  // settings.rs:107
 |------|------|---------|---------|
 | Claude Code | services/provider/mod.rs | 105.5KB | `~/.claude/settings.json` |
 | Claude Desktop | claude_desktop_config.rs | 61.4KB | 平台相关 |
-| Codex CLI | codex_config.rs | 66.4KB | `~/.codex/config.json` |
-| Gemini CLI | gemini_config.rs | 20.4KB | `~/.gemini/settings.json` |
-| OpenCode | opencode_config.rs | 6.9KB | `~/.opencode/config.json` |
-| OpenClaw | openclaw_config.rs | 34.9KB | `~/.openclaw/config.json` |
-| Hermes | hermes_config.rs | 69.0KB | `~/.hermes/config.yaml` |
+|Codex CLI | codex_config.rs | 66.5KB | `~/.codex/config.toml` |
+|Gemini CLI | gemini_config.rs | 20.4KB | `~/.gemini/settings.json` |
+|OpenCode | opencode_config.rs | 6.9KB | `~/.config/opencode/opencode.json` |
+|OpenClaw | openclaw_config.rs | 35.0KB | `~/.openclaw/openclaw.json` |
+|Hermes | hermes_config.rs | 69.0KB | `~/.hermes/config.yaml` |
 
 **注意**：Claude Code 没有独立的 `claude_config.rs` 文件！它的配置管理在 `services/provider/mod.rs`（105.5KB）中。
 
-**共同模式（每个模块都有）**：
-1. `read_xxx_config()` — 读取工具的配置文件
-2. `write_xxx_config()` — 写入工具的配置文件
-3. `build_live_config()` — 构建当前生效的配置
-4. `switch_provider()` — 切换 provider 的核心逻辑
-5. `import_from_live()` — 从工具的 live 配置导入 provider
+**注意**：`switch_provider()` 和 `import_from_live()` 逻辑集中在 `services/provider/mod.rs`，不在各 config 模块中。各 config 模块提供的是路径解析、读写原始配置文件、以及构建特定工具 live config 的辅助函数。
 
 **AI Slop 特征**：
-- 每个模块的 `switch_provider()` 逻辑高度相似，但没有抽取公共函数
+- 各 config 模块的读写逻辑相似，但没有抽取公共函数
 - `codex_config.rs`（66.4KB）和 `hermes_config.rs`（69.0KB）明显过大
 - 没有统一的 config trait 或接口
 
@@ -2632,14 +1285,18 @@ CREATE TABLE IF NOT EXISTS proxy_config (
     auto_failover_enabled INTEGER NOT NULL DEFAULT 0,
     max_retries INTEGER NOT NULL DEFAULT 3,
     streaming_first_byte_timeout INTEGER NOT NULL DEFAULT 60,
+    streaming_idle_timeout INTEGER NOT NULL DEFAULT 120,
     non_streaming_timeout INTEGER NOT NULL DEFAULT 600,
+    enable_logging INTEGER NOT NULL DEFAULT 1,
     circuit_failure_threshold INTEGER NOT NULL DEFAULT 4,
     circuit_success_threshold INTEGER NOT NULL DEFAULT 2,
     circuit_timeout_seconds INTEGER NOT NULL DEFAULT 60,
     circuit_error_rate_threshold REAL NOT NULL DEFAULT 0.6,
     circuit_min_requests INTEGER NOT NULL DEFAULT 10,
     default_cost_multiplier TEXT NOT NULL DEFAULT '1',
-    pricing_model_source TEXT NOT NULL DEFAULT 'response'
+    pricing_model_source TEXT NOT NULL DEFAULT 'response',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
 ```
 - 三行结构：claude、codex、gemini 各一行
@@ -2686,7 +1343,8 @@ CREATE TABLE IF NOT EXISTS usage_daily_rollups (
 CREATE TABLE IF NOT EXISTS session_log_sync (
     file_path TEXT PRIMARY KEY,
     last_modified INTEGER NOT NULL,
-    last_line_offset INTEGER NOT NULL DEFAULT 0
+    last_line_offset INTEGER NOT NULL DEFAULT 0,
+    last_synced_at INTEGER NOT NULL
 )
 ```
 - 记录会话日志文件的同步状态
@@ -2723,6 +1381,8 @@ CREATE TABLE IF NOT EXISTS proxy_request_logs (
     cache_creation_tokens INTEGER NOT NULL DEFAULT 0,
     input_cost_usd TEXT NOT NULL DEFAULT '0',
     output_cost_usd TEXT NOT NULL DEFAULT '0',
+    cache_read_cost_usd TEXT NOT NULL DEFAULT '0',
+    cache_creation_cost_usd TEXT NOT NULL DEFAULT '0',
     total_cost_usd TEXT NOT NULL DEFAULT '0',
     latency_ms INTEGER NOT NULL,
     first_token_ms INTEGER,
@@ -2836,10 +1496,26 @@ pub fn init() -> Result<Self, AppError> {  // database/mod.rs:95
     register_db_change_hook(&conn);  // 注册数据库变更钩子
     let db = Self { conn: Mutex::new(conn) };
     db.create_tables()?;
+    // Pre-migration backup: only when upgrading from an existing database
+    let conn = lock_conn!(db.conn);
+    let version = Self::get_user_version(&conn)?;
+    drop(conn);
+    if version > 0 && version < SCHEMA_VERSION {
+        if let Err(e) = db.backup_database_file() {
+            log::warn!("Pre-migration backup failed, continuing migration: {e}");
+        }
+    }
     db.apply_schema_migrations()?;
+    if let Err(e) = db.ensure_incremental_auto_vacuum() {
+        log::warn!("Failed to ensure incremental auto-vacuum: {e}");
+    }
     db.ensure_model_pricing_seeded()?;
-    db.cleanup_old_stream_check_logs(7)?;  // 清理 7 天前的日志
-    db.rollup_and_prune(30)?;  // 滚动合并 30 天前的数据
+    if let Err(e) = db.cleanup_old_stream_check_logs(7) {
+        log::warn!("Startup stream_check_logs cleanup failed: {e}");
+    }
+    if let Err(e) = db.rollup_and_prune(30) {
+        log::warn!("Startup rollup_and_prune failed: {e}");
+    }
     Ok(db)
 }
 ```
@@ -2858,23 +1534,23 @@ pub fn init() -> Result<Self, AppError> {  // database/mod.rs:95
 12. 滚动合并旧数据（30 天）
 13. 回收磁盘空间（`PRAGMA incremental_vacuum`）
 **模块结构**：
-- `mod.rs`（1.1KB）— Database 结构体 + 初始化
-- `schema.rs`（11.7KB）— 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`mod.rs:52`）
+- `mod.rs`（8.9KB）— Database 结构体 + 初始化
+- `schema.rs`（77.8KB）— 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`mod.rs:52`）
 - `backup.rs`（31.7KB）— SQL 导入导出 + 快照备份
-- `migration.rs`（28.3KB）— JSON → SQLite 数据迁移
+- `migration.rs`（9.2KB）— JSON → SQLite 数据迁移
 - `dao/` — 数据访问对象（12 个文件）：
   - `providers.rs`（786 行）— Provider CRUD
-  - `proxy.rs`（247 行）— 代理配置
+  - `proxy.rs`（952 行）— 代理配置和请求日志
   - `usage_rollup.rs`（377 行）— 用量统计
-  - `settings.rs`（876 行）— 通用设置
+  - `settings.rs`（327 行）— 通用设置
   - `skills.rs`（263 行）— Skills 管理
-  - `failover.rs`（182 行）— 故障转移队列
-  - `mcp.rs`（643 行）— MCP 服务器配置
+  - `failover.rs`（149 行）— 故障转移队列
+  - `mcp.rs`（106 行）— MCP 服务器配置
   - `prompts.rs`（88 行）— Prompt 管理
   - `providers_seed.rs`（94 行）— 官方预设种子数据
-  - `stream_check.rs`（364 行）— 流式检查配置
+  - `stream_check.rs`（74 行）— 流式检查配置
   - `universal_providers.rs`（74 行）— 通用 Provider
-  - `mod.rs`（66 行）— 模块声明
+  - `mod.rs`（19 行）— 模块声明
 
 **关键设计**：
 - `lock_conn!` 宏（`mod.rs:61`）安全获取 Mutex 锁，避免 unwrap panic
@@ -2978,572 +1654,6 @@ mod workspace;
 pub use auth::*;    pub use balance::*; pub use codex_oauth::*;
 pub use coding_plan::*; pub use config::*; pub use copilot::*;
 // ... 所有模块通过 pub use * 重新导出
-```
-- 33 个子模块声明（commands/mod.rs:3-34）
-- 所有子模块通过 `pub use *` 重新导出（commands/mod.rs:36-67）
-- `#![allow(non_snake_case)]` — 允许非蛇形命名（Tauri 命令使用驼峰命名）
-- `pub mod skill` — skill 模块是公开的（其他模块都是私有的）
-**database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
-| 文件 | 大小 | 职责 |
-|------|------|------|
-| schema.rs | 77.8KB | 数据库 schema 定义（15 张表的 SQL） |
-| backup.rs | 31.7KB | 数据库备份和恢复 |
-| tests.rs | 22.7KB | 数据库测试 |
-| mod.rs | 8.9KB | Database 结构体和初始化 |
-| migration.rs | 9.2KB | 数据库迁移 |
-| dao/ | — | 数据访问对象（12 个模块） |
-- `Database` 结构体（`database/mod.rs:76`）— 数据库连接和操作
-- `SCHEMA_VERSION = 10`（`database/mod.rs:52`）— 当前 schema 版本
-- `lock_conn!` 宏（`database/mod.rs:61`）— 获取数据库连接
-- `init()`（`database/mod.rs:95`）— 初始化数据库
-- `dao/` 子目录包含 12 个 DAO 模块：providers、settings、mcp_servers、prompts、skills、proxy_config、proxy_request_logs、session_usage、subscription、usage_cache、universal_providers、stream_check
-**commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
-| 文件 | 大小 | 职责 |
-|------|------|------|
-| misc.rs | 176.0KB | 杂项命令（最大的命令文件） |
-| provider.rs | 32.3KB | Provider CRUD 和切换命令 |
-| config.rs | 12.6KB | 配置导入导出命令 |
-| proxy.rs | 13.6KB | 代理服务器控制命令 |
-| settings.rs | 12.1KB | 设置管理命令 |
-| webdav_sync.rs | 12.3KB | WebDAV 同步命令 |
-| stream_check.rs | 10.9KB | 流式检查命令 |
-| workspace.rs | 10.5KB | 工作区命令 |
-| auth.rs | 10.6KB | 认证命令 |
-| skill.rs | 9.5KB | Skills 管理命令 |
-| usage.rs | 8.9KB | 用量查询命令 |
-| global_proxy.rs | 7.5KB | 全局代理命令 |
-| copilot.rs | 6.7KB | Copilot OAuth 命令 |
-| mcp.rs | 6.5KB | MCP 管理命令 |
-| hermes.rs | 5.6KB | Hermes 命令 |
-| failover.rs | 5.5KB | 故障转移命令 |
-| import_export.rs | 5.6KB | 导入导出命令 |
-| openclaw.rs | 4.8KB | OpenClaw 命令 |
-| codex_oauth.rs | 3.2KB | Codex OAuth 命令 |
-| deeplink.rs | 3.1KB | 深度链接命令 |
-| sync_support.rs | 2.9KB | 同步支持命令 |
-| session_manager.rs | 2.6KB | 会话管理命令 |
-| omo.rs | 2.3KB | OMO 命令 |
-| prompt.rs | 1.9KB | Prompt 命令 |
-| subscription.rs | 1.8KB | 订阅命令 |
-| plugin.rs | 1.7KB | 插件命令 |
-| mod.rs | 1.1KB | 模块导出 |
-| env.rs | 739B | 环境变量命令 |
-| model_fetch.rs | 811B | 模型获取命令 |
-| lightweight.rs | 405B | 轻量级命令 |
-| coding_plan.rs | 278B | Coding Plan 命令 |
-| balance.rs | 217B | 余额查询命令 |
-- `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
-- `provider.rs`（40.6KB）包含 Provider CRUD 和切换命令
-- 所有命令通过 `#[tauri::command]` 宏注册
-- 命令参数从 JavaScript 通过 Tauri IPC 传递
-**lib.rs 模块列表**（`src-tauri/src/lib.rs`， 1825 行）：
-```rust
-// src-tauri/src/lib.rs:1-36
-mod app_config;        mod app_store;         mod auto_launch;
-mod claude_desktop_config; mod claude_mcp;    mod claude_plugin;
-mod codex_config;      mod codex_history_migration; mod commands;
-mod config;            mod database;          mod deeplink;
-mod error;             mod gemini_config;     mod gemini_mcp;
-pub mod hermes_config; mod init_status;       mod lightweight;
-mod linux_fix;         mod mcp;               mod openclaw_config;
-mod opencode_config;   mod panic_hook;        mod prompt;
-mod prompt_files;      mod provider;          mod provider_defaults;
-mod proxy;             mod services;          mod session_manager;
-mod settings;          mod store;             mod tray;
-mod usage_script;
-```
-- 34 个模块声明（lib.rs:1-36）
-- 公开导出：`AppType`、`InstalledSkill`、`McpApps`、`McpServer`、`MultiAppConfig`、`SkillApps`（lib.rs:38）
-- `run()` 函数（lib.rs:203）— 应用入口点，初始化插件、注册命令、创建窗口
-- `.invoke_handler()`（lib.rs:1072）— 注册约 271 个 Tauri 命令
-- `cleanup_before_exit()`（lib.rs:1513）— 退出前清理
-- 9 个插件注册：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
-**base64.ts**（`src/lib/utils/base64.ts`，44 行）：
-```typescript
-// src/lib/utils/base64.ts:13
-export function decodeBase64Utf8(str: string): string {
-    let cleaned = str.trim().replace(/ /g, "+");  // URL 解析可能将 + 转为空格
-    try {
-        const binString = atob(cleaned);
-        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
-        return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-    } catch (e1) {
-        // 尝试修复缺失的 padding
-        // ...
-    }
-}
-```
-- Base64 解码工具（处理 URL 传递中的边缘情况）
-- 处理空格（URL 解析可能将 `+` 转为空格）
-- 处理缺失的 padding（`=` 字符）
-- 处理不同的 Base64 变体
-- 使用 `TextDecoder("utf-8", { fatal: false })` 解码 UTF-8
-**clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
-```typescript
-// src/lib/clipboard.ts:3
-export async function copyText(text: string): Promise<void> {
-    try {
-        await invoke("copy_text_to_clipboard", { text });
-        return;
-    } catch (nativeError) {
-        try {
-            await navigator.clipboard.writeText(text);
-            return;
-        } catch (webError) {
-            throw webError instanceof Error ? webError
-                : nativeError instanceof Error ? nativeError
-                : new Error(String(webError || nativeError));
-        }
-    }
-}
-```
-- 剪贴板操作工具（双层回退策略）
-- 优先使用 Tauri 原生命令 `copy_text_to_clipboard`
-- 原生失败时回退到 Web API `navigator.clipboard.writeText`
-- 错误处理：优先抛出 webError，其次 nativeError
-**updater.ts**（`src/lib/updater.ts`，127 行）：
-```typescript
-// src/lib/updater.ts:8
-export type UpdateChannel = "stable" | "beta";
-// src/lib/updater.ts:10
-export type UpdaterPhase = "idle" | "checking" | "available" | "downloading" | "installing" | "restarting" | "upToDate" | "error";
-// src/lib/updater.ts:20
-export interface UpdateInfo {
-    currentVersion: string;
-    availableVersion: string;
-    notes?: string;
-    pubDate?: string;
-}
-// src/lib/updater.ts:27
-export interface UpdateProgressEvent {
-    event: "Started" | "Progress" | "Finished";
-    total?: number;
-    downloaded?: number;
-}
-// src/lib/updater.ts:33
-export interface UpdateHandle {
-    version: string;
-    notes?: string;
-    date?: string;
-    downloadAndInstall: (onProgress?: (e: UpdateProgressEvent) => void) => Promise<void>;
-    download?: () => Promise<void>;
-    install?: () => Promise<void>;
-}
-```
-- `UpdateChannel`（`updater.ts:8`）— 更新通道：`"stable"` 或 `"beta"`
-- `UpdaterPhase`（`updater.ts:10`）— 更新器阶段：idle → checking → available → downloading → installing → restarting
-- `UpdateInfo`（`updater.ts:20`）— 更新信息（currentVersion、availableVersion、notes、pubDate）
-- `UpdateProgressEvent`（`updater.ts:27`）— 下载进度事件（Started、Progress、Finished）
-- `UpdateHandle`（`updater.ts:33`）— 更新句柄（version、notes、date、downloadAndInstall）
-- 使用 `@tauri-apps/plugin-updater` 插件
-- 可选导入：在未注册插件或非 Tauri 环境下，调用时会抛错，外层需做兜底
-**platform.ts**（`src/lib/platform.ts`，49 行）：
-```typescript
-// src/lib/platform.ts:2
-export const isMac = (): boolean => {
-    try {
-        const ua = navigator.userAgent || "";
-        const plat = (navigator.platform || "").toLowerCase();
-        return /mac/i.test(ua) || plat.includes("mac");
-    } catch { return false; }
-};
-export const isWindows = (): boolean => { /* /windows|win32|win64/i */ };
-export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
-```
-- 轻量平台检测，避免在 SSR 或无 navigator 的环境报错
-- `isMac()`、`isWindows()`、`isLinux()` — 检测当前操作系统
-- Linux 上禁用所有 drag region，规避 Wayland 下 `gtk_window_begin_move_drag` 问题
-- 使用 try-catch 包裹，避免 navigator 不存在时崩溃
-**Query Layer Index**（`src/lib/query/index.ts`，6 行）：
-- Query 层统一导出入口
-- 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
-- `queryClient.ts`（264B）— QueryClient 配置
-- `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
-- `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
-- `proxy.ts`（3.2KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
-- `subscription.ts`（0.6KB）— 订阅查询钩子（useSubscriptionQuota）
-- `copilot.ts`（5.9KB）— Copilot 查询钩子（useCopilotQuota）
-- `failover.ts`（2.7KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
-- `omo.ts`（12.1KB）— OMO 查询钩子（工厂模式）
-- `usage.ts`（6.0KB）— 用量查询钩子
-**copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
-```typescript
-// src/lib/query/copilot.ts:5
-const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
-// src/lib/query/copilot.ts:7
-export interface CopilotQuota {
-    success: boolean;
-    plan: string | null;
-    resetDate: string | null;
-    tiers: QuotaTier[];
-    error: string | null;
-    queriedAt: number | null;
-}
-// src/lib/query/copilot.ts:22
-export function useCopilotQuota(accountId: string | null, options: UseCopilotQuotaOptions = {}) {
-    const { enabled = true, autoQuery = false } = options;
-    return useQuery<CopilotQuota>({
-        queryKey: ["copilot", "quota", accountId ?? "default"],
-        queryFn: async (): Promise<CopilotQuota> => {
-            const usage = accountId
-                ? await copilotGetUsageForAccount(accountId)
-                : await copilotGetUsage();
-            // ...
-        },
-        enabled,
-        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
-        staleTime: REFETCH_INTERVAL,
-        retry: 1,
-    });
-}
-```
-- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
-- `CopilotQuota` — Copilot 配额信息（success、plan、resetDate、tiers、error、queriedAt）
-- `useCopilotQuota()` — 获取 Copilot 配额（支持指定 accountId 或使用默认账号）
-- 支持自动轮询（5 分钟）与窗口 focus 重取
-- `copilotGetUsage()` — 获取默认账号的使用量
-- `copilotGetUsageForAccount()` — 获取指定账号的使用量
-**index.ts**（`src/lib/api/index.ts`，31 行）：
-- API 层统一导出入口
-- 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
-- 导出类型：AppId、ProviderSwitchEvent、Prompt、CopilotDeviceCodeResponse、CopilotAuthStatus、GitHubAccount、ManagedAuthProvider、ManagedAuthAccount、ManagedAuthStatus、ManagedAuthDeviceCodeResponse
-**config.ts**（`src/lib/api/config.ts`，78 行）：
-```typescript
-// src/lib/api/config.ts:4
-export type AppType = "claude" | "codex" | "gemini" | "omo" | "omo_slim";
-// src/lib/api/config.ts:32
-export async function getCommonConfigSnippet(appType: AppType): Promise<string | null> {
-    return invoke<string | null>("get_common_config_snippet", { appType });
-}
-// src/lib/api/config.ts:43
-export async function setCommonConfigSnippet(appType: AppType, snippet: string): Promise<void> {
-    return invoke("set_common_config_snippet", { appType, snippet });
-}
-```
-- `AppType` 类型：`"claude" | "codex" | "gemini" | "omo" | "omo_slim"`
-- `getCommonConfigSnippet()`（`config.ts:32`）— 获取通用配置片段（统一接口）
-- `setCommonConfigSnippet()`（`config.ts:43`）— 设置通用配置片段（统一接口）
-- `getClaudeCommonConfigSnippet()`（`config.ts:11`）— 已废弃，使用 `getCommonConfigSnippet('claude')` 替代
-- `setClaudeCommonConfigSnippet()`（`config.ts:21`）— 已废弃，使用 `setCommonConfigSnippet('claude', snippet)` 替代
-- Claude/Gemini 验证 JSON 格式，Codex 暂不验证
-**model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
-```typescript
-// src/lib/api/model-fetch.ts:5
-export interface FetchedModel {
-    id: string;
-    ownedBy: string | null;
-}
-// src/lib/api/model-fetch.ts:16
-export async function fetchModelsForConfig(
-    baseUrl: string, apiKey: string, isFullUrl?: boolean, modelsUrl?: string,
-): Promise<FetchedModel[]> {
-    return invoke("fetch_models_for_config", { baseUrl, apiKey, isFullUrl, modelsUrl });
-}
-// src/lib/api/model-fetch.ts:35
-export async function fetchCodexOauthModels(accountId?: string | null): Promise<FetchedModel[]> {
-    return invoke("get_codex_oauth_models", { accountId: accountId || null });
-}
-```
-- `FetchedModel`（`model-fetch.ts:5`）— 获取到的模型信息（id、ownedBy）
-- `fetchModelsForConfig()`（`model-fetch.ts:16`）— 从供应商获取可用模型列表（使用 OpenAI 兼容的 `GET /v1/models` 端点）
-  - 优先用 `modelsUrl` 精确覆写
-  - 否则后端会对 baseURL 生成候选列表并按序尝试（含"剥离 /anthropic 等兼容子路径"兜底）
-- `fetchCodexOauthModels()`（`model-fetch.ts:35`）— 获取 Codex OAuth 可用模型列表（使用 ChatGPT 的 backend-api/codex 端点，不兼容普通 /v1/models）
-**auth.ts**（`src/lib/api/auth.ts`，107 行）：
-```typescript
-// src/lib/api/auth.ts:3
-export type ManagedAuthProvider = "github_copilot" | "codex_oauth";
-// src/lib/api/auth.ts:5
-export interface ManagedAuthAccount {
-    id: string;
-    provider: ManagedAuthProvider;
-    login: string;
-    avatar_url: string | null;
-    authenticated_at: number;
-    is_default: boolean;
-    github_domain: string;
-}
-// src/lib/api/auth.ts:15
-export interface ManagedAuthStatus {
-    provider: ManagedAuthProvider;
-    authenticated: boolean;
-    default_account_id: string | null;
-    migration_error?: string | null;
-    accounts: ManagedAuthAccount[];
-}
-// src/lib/api/auth.ts:23
-export interface ManagedAuthDeviceCodeResponse {
-    provider: ManagedAuthProvider;
-    device_code: string;
-    user_code: string;
-    verification_uri: string;
-    expires_in: number;
-    interval: number;
-}
-export async function authStartLogin(authProvider: ManagedAuthProvider, githubDomain?: string): Promise<ManagedAuthDeviceCodeResponse>;
-export async function authPollForAccount(authProvider: ManagedAuthProvider, deviceCode: string): Promise<ManagedAuthAccount>;
-export async function authLogout(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
-export async function authSetDefault(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
-export async function authGetStatus(authProvider: ManagedAuthProvider): Promise<ManagedAuthStatus>;
-```
-- 统一的托管认证 API（支持 GitHub Copilot 和 Codex OAuth）
-- `ManagedAuthProvider` 类型：`"github_copilot"` 或 `"codex_oauth"`
-- `ManagedAuthAccount` — 托管认证账号（id、provider、login、avatar_url、authenticated_at、is_default、github_domain）
-- `ManagedAuthStatus` — 认证状态（authenticated、default_account_id、accounts）
-- `ManagedAuthDeviceCodeResponse` — 设备码流程响应
-- `authStartLogin()` — 启动登录流程
-- `authPollForAccount()` — 轮询账号
-- `authLogout()` — 登出
-- `authSetDefault()` — 设置默认账号
-- `authGetStatus()` — 获取认证状态
-**failoverApi**（`src/lib/api/failover.ts`，100 行）：
-```typescript
-// src/lib/api/failover.ts:23
-export const failoverApi = {
-    // 熔断器 API
-    async getProviderHealth(providerId: string, appType: string): Promise<ProviderHealth> {
-        return invoke("get_provider_health", { providerId, appType });
-    },
-    async resetCircuitBreaker(providerId: string, appType: string): Promise<void> {
-        return invoke("reset_circuit_breaker", { providerId, appType });
-    },
-    async getCircuitBreakerConfig(): Promise<CircuitBreakerConfig> {
-        return invoke("get_circuit_breaker_config");
-    },
-    async updateCircuitBreakerConfig(config: CircuitBreakerConfig): Promise<void> {
-        return invoke("update_circuit_breaker_config", { config });
-    },
-    async getCircuitBreakerStats(providerId: string, appType: string): Promise<CircuitBreakerStats> {
-        return invoke("get_circuit_breaker_stats", { providerId, appType });
-    },
-    // 故障转移队列 API
-    async getFailoverQueue(appType: string): Promise<FailoverQueueItem[]> {
-        return invoke("get_failover_queue", { appType });
-    },
-    async updateFailoverQueue(appType: string, queue: FailoverQueueItem[]): Promise<void> {
-        return invoke("update_failover_queue", { appType, queue });
-    },
-};
-```
-- 3 个 API 分组：熔断器、故障转移队列、熔断器配置
-- `getProviderHealth()` — 获取供应商健康状态
-- `resetCircuitBreaker()` — 重置熔断器
-- `getCircuitBreakerConfig()` / `updateCircuitBreakerConfig()` — 获取/更新熔断器配置
-- `getCircuitBreakerStats()` — 获取熔断器统计
-- `getFailoverQueue()` / `updateFailoverQueue()` — 获取/更新故障转移队列
-- `ProviderHealth`、`CircuitBreakerConfig`、`CircuitBreakerStats`、`FailoverQueueItem` 类型定义在 `types/proxy.ts`
-**sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
-```typescript
-// src/lib/api/sessions.ts:4
-export interface DeleteSessionOptions {
-    providerId: string;
-    sessionId: string;
-    sourcePath: string;
-}
-export interface DeleteSessionResult extends DeleteSessionOptions {
-    success: boolean;
-    error?: string;
-}
-// src/lib/api/sessions.ts:15
-export const sessionsApi = {
-    async list(): Promise<SessionMeta[]> { return await invoke("list_sessions"); },
-    async getMessages(providerId: string, sourcePath: string): Promise<SessionMessage[]> {
-        return await invoke("get_session_messages", { providerId, sourcePath });
-    },
-    async delete(options: DeleteSessionOptions): Promise<boolean> {
-        return await invoke("delete_session", { providerId, sessionId, sourcePath });
-    },
-    async deleteMany(items: DeleteSessionOptions[]): Promise<DeleteSessionResult[]> {
-        return await invoke("delete_sessions", { items });
-    },
-    async launchTerminal(options: { command: string; cwd: string }): Promise<void> {
-        return await invoke("launch_terminal", options);
-    },
-};
-```
-- `DeleteSessionOptions`（`sessions.ts:4`）— 删除会话选项（providerId、sessionId、sourcePath）
-- `DeleteSessionResult`（`sessions.ts:10`）— 删除结果（继承 DeleteSessionOptions + success + error）
-- `list()` — 获取会话列表
-- `getMessages()` — 获取会话消息
-- `delete()` — 删除单个会话
-- `deleteMany()` — 批量删除会话
-- `launchTerminal()` — 启动终端
-**authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
-```typescript
-// src/lib/authBinding.ts:3
-export function resolveManagedAccountId(
-    meta: ProviderMeta | undefined,
-    authProvider: string,
-): string | null {
-    const binding = meta?.authBinding;
-    if (binding?.source === "managed_account" && binding.authProvider === authProvider) {
-        return binding.accountId ?? null;
-    }
-    if (authProvider === "github_copilot") {
-        return meta?.githubAccountId ?? null;
-    }
-    return null;
-}
-```
-- 解析托管账号 ID（用于 OAuth 认证绑定）
-- 支持两种绑定来源：`managed_account`（通过 `authBinding` 字段）和 `github_copilot`（通过 `githubAccountId` 字段）
-- `ProviderMeta.authBinding` 包含 `source`、`authProvider`、`accountId` 字段
-**usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
-```typescript
-// src/lib/usageRange.ts:3
-const DAY_SECONDS = 24 * 60 * 60;
-const DAY_MS = DAY_SECONDS * 1000;
-// src/lib/usageRange.ts:6
-export interface ResolvedUsageRange {
-    startDate: number;
-    endDate: number;
-}
-// src/lib/usageRange.ts:26
-export function resolveUsageRange(selection: UsageRangeSelection, nowMs: number = Date.now()): ResolvedUsageRange {
-    switch (selection.preset) {
-        case "today": { /* 今天 00:00 至今 */ }
-        case "1d": { /* 最近 24 小时 */ }
-        case "7d": { /* 最近 7 天 */ }
-        case "14d": { /* 最近 14 天 */ }
-        case "30d": { /* 最近 30 天 */ }
-        case "custom": { /* 自定义日期范围 */ }
-    }
-}
-```
-- 用量查询的时间范围解析工具
-- `ResolvedUsageRange` 包含 `startDate` 和 `endDate`（Unix 秒）
-- `resolveUsageRange()` 将预设（today/1d/7d/14d/30d/custom）转换为实际的日期范围
-- `getStartOfLocalDayDate()` 获取本地日期的开始时间
-- `getPresetLookbackStart()` 计算预设的回溯起始时间
-- 使用 Unix 秒（非毫秒）与后端数据库一致
-**omo.ts**（`src/lib/query/omo.ts`，77 行）：
-```typescript
-// src/lib/query/omo.ts:6
-function createOmoQueryKeys(prefix: string) {
-    return {
-        all: [prefix] as const,
-        currentProviderId: () => [prefix, "current-provider-id"] as const,
-    };
-}
-function createOmoQueryHooks(variant: "omo" | "omo-slim", api: typeof omoApi | typeof omoSlimApi) {
-    const keys = createOmoQueryKeys(variant);
-    function invalidateAll(queryClient) {
-        queryClient.invalidateQueries({ queryKey: ["providers"] });
-        queryClient.invalidateQueries({ queryKey: keys.currentProviderId() });
-    }
-    function useCurrentProviderId(enabled = true) { /* ... */ }
-    function useReadLocalFile() { /* ... */ }
-    function useDisableCurrent() { /* ... */ }
-    return { invalidateAll, useCurrentProviderId, useReadLocalFile, useDisableCurrent };
-}
-export const omo = createOmoQueryHooks("omo", omoApi);
-export const omoSlim = createOmoQueryHooks("omo-slim", omoSlimApi);
-```
-- 工厂模式：`createOmoQueryKeys()` 和 `createOmoQueryHooks()` 为 OMO 和 OMO-Slim 两个变体生成查询钩子
-- `useCurrentProviderId()` — 获取当前 provider ID
-- `useReadLocalFile()` — 读取本地配置文件
-- `useDisableCurrent()` — 禁用当前 provider
-- `invalidateAll()` — 刷新所有相关查询
-**subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
-```typescript
-// src/lib/query/subscription.ts:8
-const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
-// src/lib/query/subscription.ts:10
-export const subscriptionKeys = {
-    all: ["subscription"] as const,
-    quota: (appId: AppId) => [...subscriptionKeys.all, "quota", appId] as const,
-};
-// src/lib/query/subscription.ts:15
-export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery = false) {
-    return useQuery({
-        queryKey: subscriptionKeys.quota(appId),
-        queryFn: () => subscriptionApi.getQuota(appId),
-        enabled: enabled && ["claude", "codex", "gemini"].includes(appId),
-        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
-        staleTime: REFETCH_INTERVAL,
-        retry: 1,
-    });
-}
-```
-- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
-- `subscriptionKeys` 定义查询键（`all` 和 `quota`）
-- `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
-- `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
-- 支持自动轮询（5 分钟）与窗口 focus 重取
-**RequestForwarder**（`proxy/forwarder.rs:89`）：
-```rust
-// proxy/forwarder.rs:61
-pub(crate) struct ActiveConnectionGuard {
-    status: Arc<RwLock<ProxyStatus>>,
-}
-impl ActiveConnectionGuard {
-    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
-        let mut s = status.write().await;
-        s.active_connections = s.active_connections.saturating_add(1);
-        Self { status }
-    }
-}
-impl Drop for ActiveConnectionGuard {
-    fn drop(&mut self) {
-        // Drop 不能 await：把减量操作调度到 tokio runtime
-        let status = self.status.clone();
-        if let Ok(handle) = tokio::runtime::Handle::try_current() {
-            handle.spawn(async move {
-                let mut s = status.write().await;
-                s.active_connections = s.active_connections.saturating_sub(1);
-            });
-        }
-    }
-}
-// proxy/forwarder.rs:89
-pub struct RequestForwarder {
-    router: Arc<ProviderRouter>,
-    status: Arc<RwLock<ProxyStatus>>,
-    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
-    gemini_shadow: Arc<GeminiShadowStore>,
-    codex_chat_history: Arc<CodexChatHistoryStore>,
-    failover_manager: Arc<FailoverSwitchManager>,
-    app_handle: Option<tauri::AppHandle>,
-    current_provider_id_at_start: String,
-    session_id: String,
-}
-```
-- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
-  - `acquire()` 增加计数，`Drop` 减少计数
-  - Drop 不能 await，所以把减量操作调度到 tokio runtime
-  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
-- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
-  - 持有 `ProviderRouter`（熔断器状态）
-  - 持有 `FailoverSwitchManager`（故障转移切换）
-  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
-  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
-  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
-  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
-**ProxyServer**（`proxy/server.rs:54`）：
-```rust
-// proxy/server.rs:54
-pub struct ProxyServer {
-    config: ProxyConfig,
-    state: ProxyState,
-    shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>,
-    server_handle: Arc<RwLock<Option<JoinHandle<()>>>>,
-}
-impl ProxyServer {
-    pub fn new(config: ProxyConfig, db: Arc<Database>, app_handle: Option<tauri::AppHandle>) -> Self {
-        let provider_router = Arc::new(ProviderRouter::new(db.clone()));
-        let failover_manager = Arc::new(FailoverSwitchManager::new(db.clone()));
-        let state = ProxyState {
-            db, config: Arc::new(RwLock::new(config.clone())),
-            status: Arc::new(RwLock::new(ProxyStatus::default())),
-            start_time: Arc::new(RwLock::new(None)),
-            current_providers: Arc::new(RwLock::new(HashMap::new())),
-            provider_router, gemini_shadow: Arc::new(GeminiShadowStore::default()),
-            codex_chat_history: Arc::new(CodexChatHistoryStore::default()),
-            app_handle, failover_manager,
-        };
-        Self { config, state, shutdown_tx: Arc::new(RwLock::new(None)), server_handle: Arc::new(RwLock::new(None)) }
-    }
-}
 ```
 - `ProxyServer`（`server.rs:54`）— 代理 HTTP 服务器
 - `shutdown_tx`（`server.rs:57`）— 关闭信号发送器（`oneshot::Sender`）
@@ -3670,7 +1780,7 @@ src-tauri/src/proxy/
 ├── provider_router.rs  # 523 行，多 provider 路由
 ├── failover_switch.rs  # 故障转移切换
 ├── switch_lock.rs      # 切换锁（防止并发切换）
-├── handlers/           # 请求处理器
+├── handlers.rs         # 请求处理器（各 API 端点的 HTTP handler）
 ├── providers/          # 格式转换器
 │   ├── claude.rs       # Anthropic API 格式
 │   ├── codex_chat_history.rs
@@ -3828,9 +1938,12 @@ pub async fn forward_with_retry(
    - 记录成功/失败结果到熔断器
 5. 所有供应商都失败时返回最后一个错误
 
-**错误分类**（`forwarder.rs:223`）：
-- Provider 错误（`Timeout`、`ForwardFailed`、`UpstreamError >= 500`）→ 继续故障转移
-- 客户端错误（`UpstreamError < 500`）→ 直接返回，没有 provider 能修复
+**错误分类**（`forwarder.rs:1888`，`categorize_proxy_error()`）：
+主转发循环使用 `ErrorCategory` 三态分类（Retryable / NonRetryable / ClientAbort）：
+- `Timeout`、`ForwardFailed`、`ProviderUnhealthy` → Retryable
+- `UpstreamError` 按状态码细分：401/403/404/408/409/429/451 + 所有 5xx（除 501）→ Retryable；400/405/406/413/414/415/422/501 → NonRetryable
+- `AuthError`、`ConfigError`、`TransformError`、`StreamIdleTimeout` → Retryable
+- `NoAvailableProvider`、`DatabaseError`、`Internal` 等 → NonRetryable
 
 ### 4.1.3 ProxyServer 生命周期（`proxy/server.rs:94`）
 
@@ -3846,10 +1959,10 @@ pub async fn forward_with_retry(
    - 使用 `preserve_header_case(true)` 保持原始 header casing
    - 每个连接独立 `tokio::spawn` 处理
 
-**停止流程**（`stop()`）：
-1. 发送关闭信号（`shutdown_tx.send(())`）
-2. 等待服务器任务完成（`server_handle.await`）
-3. 更新状态（`running = false`）
+**停止流程**（`stop()`，`server.rs:221`）：
+1. 发送关闭信号（`shutdown_tx.send(())`），无 channel 则返回 `NotRunning`
+2. 带 5 秒超时等待服务器任务结束（`tokio::time::timeout(5s, handle)`）
+3. 状态 `running = false` 由服务器任务退出时自动设置
 
 ### 4.2 ProxyConfig 配置（`proxy/types.rs:5`）
 
@@ -3889,7 +2002,18 @@ pub enum ProxyError {           // proxy/error.rs:10
     AllProvidersCircuitOpen,    // 所有供应商已熔断
     NoProvidersConfigured,      // 未配置供应商
     ProviderUnhealthy(String),  // Provider不健康
-**proxy/ 目录统计**：34 个模块文件 + 24 个 providers/ 文件 = 58 个 Rust 文件
+    UpstreamError { status: u16, body: Option<String> },  // 上游 HTTP 错误
+    MaxRetriesExceeded,         // 超过最大重试次数
+    DatabaseError(String),      // 数据库错误
+    ConfigError(String),        // 配置错误
+    TransformError(String),     // 格式转换错误
+    InvalidRequest(String),     // 无效请求
+    Timeout(String),            // 超时
+    StreamIdleTimeout(u64),     // 流式响应空闲超时
+    AuthError(String),          // 认证失败
+    Internal(String),           // 内部错误
+}
+```
 **handlers 模块端点**（`proxy/handlers.rs`）：
 - `health_check()`（`handlers.rs:49`）— 健康检查端点
 - `get_status()`（`handlers.rs:60`）— 获取服务状态
@@ -3923,9 +2047,13 @@ pub struct RequestContext {          // proxy/handler_context.rs:35
     pub current_provider_id: String,       // 当前供应商 ID
     pub request_model: String,             // 请求中的模型名称
     pub tag: &'static str,                 // 日志标签
+    pub app_type_str: &'static str,        // 应用类型字符串
+    pub app_type: AppType,                 // 应用类型枚举
     pub session_id: String,                // Session ID
+    pub session_client_provided: bool,     // Session ID 是否由客户端提供
     pub rectifier_config: RectifierConfig, // 整流器配置
     pub optimizer_config: OptimizerConfig, // 优化器配置
+    pub copilot_optimizer_config: CopilotOptimizerConfig, // Copilot 优化器配置
 }
 ```
 **StreamingTimeoutConfig**（`proxy/handler_context.rs:19`）：
@@ -3942,26 +2070,7 @@ pub struct StreamingTimeoutConfig {  // proxy/handler_context.rs:19
 **response_processor 模块**（`proxy/response_processor.rs`）：
 - `process_response()` — 处理非流式响应
 - `create_logged_passthrough_stream()` — 创建带日志的透传流
-**ClientFormat 枚举**（`proxy/session.rs:19`）：
-```rust
-pub enum ClientFormat {            // proxy/session.rs:19
-    Claude,                        // Claude Messages API (/v1/messages)
-    Codex,                         // Codex Response API (/v1/responses)
-    OpenAI,                        // OpenAI Chat Completions API
-    Gemini,                        // Gemini API (/v1beta/models/*)
-    GeminiCli,                     // Gemini CLI API (/v1internal/)
-    Unknown,                       // 未知格式
-}
-```
-- `ClientFormat::from_path()`（`session.rs:37`）— 从请求路径检测格式
-- `ClientFormat::from_body()`（`session.rs:61`）— 从请求体内容检测格式（回退方案）
-**session 模块**（`proxy/session.rs`，627 行）：
-- 为每个代理请求创建会话上下文
-- 支持从客户端请求中提取 Session ID
-- Claude: 从 `metadata.user_id` 或 `metadata.session_id` 提取
-- Codex: 从 headers 中的 `session_id` / `x-session-id` 提取
-- 其他: 生成新的 UUID
-### 4.3 认证和路由
+### 4.4 认证和路由
 
 **ProviderRouter**（`proxy/provider_router.rs`，524 行）：
 ```rust
@@ -3986,7 +2095,7 @@ pub struct ProviderRouter {       // proxy/provider_router.rs:16
   └─ 转发到 provider 的 base URL
 ```
 
-### 4.4 故障转移和熔断
+### 4.5 故障转移和熔断
 
 **CircuitBreaker**（`proxy/circuit_breaker.rs:76`）：
 
@@ -4055,7 +2164,7 @@ HalfOpen（半开）
   │ 任何失败 → Open
 ```
 
-### 4.5 代理接管（Takeover）机制
+### 4.6 代理接管（Takeover）机制
 
 **接管流程**（`services/proxy.rs`）：
 
@@ -4111,9 +2220,14 @@ type View =
 **视图切换实现**：
 
 ```typescript
-const [currentView, setCurrentView] = useState(
-  localStorage.getItem("currentView") || "providers"
-);
+const VIEW_STORAGE_KEY = "cc-switch-last-view";
+// ...
+const getInitialView = (): View => {
+    const saved = localStorage.getItem(VIEW_STORAGE_KEY) as View | null;
+    if (saved && VALID_VIEWS.includes(saved)) return saved;
+    return "providers";
+};
+const [currentView, setCurrentView] = useState<View>(getInitialView);
 ```
 
 所有视图都在一个 switch 语句里，没有使用 React Router。
@@ -4206,6 +2320,7 @@ export const hermesKeys = {  // useHermes.ts:26
     liveProviderIds: ["hermes", "liveProviderIds"] as const,
     modelConfig: ["hermes", "modelConfig"] as const,
     memory: (kind: HermesMemoryKind) => ["hermes", "memory", kind] as const,
+    memoryLimits: ["hermes", "memoryLimits"] as const,
 };
 ```
 - `invalidateHermesProviderCaches()`（`useHermes.ts:39`）— 并行失效所有 Hermes 缓存
@@ -4220,8 +2335,10 @@ export interface UseImportExportResult {  // useImportExport.ts:18
     backupId: string | null;
     isImporting: boolean;
     selectImportFile: () => Promise<void>;
+    clearSelection: () => void;
     importConfig: () => Promise<void>;
     exportConfig: () => Promise<void>;
+    resetStatus: () => void;
 }
 ```
 - 状态机：idle → importing → success/partial-success/error
@@ -4265,7 +2382,15 @@ export interface UseSettingsResult {  // useSettings.ts:21
     requiresRestart: boolean;
     updateSettings: (updates: Partial<SettingsFormState>) => void;
     updateDirectory: (app: DirectoryAppId, value?: string) => void;
+    updateAppConfigDir: (value?: string) => void;
     browseDirectory: (app: DirectoryAppId) => Promise<void>;
+    browseAppConfigDir: () => Promise<void>;
+    resetDirectory: (app: DirectoryAppId) => Promise<void>;
+    resetAppConfigDir: () => Promise<void>;
+    saveSettings: (overrides?, options?) => Promise<SaveResult | null>;
+    autoSaveSettings: (updates) => Promise<SaveResult | null>;
+    resetSettings: () => void;
+    acknowledgeRestart: () => void;
 }
 ```
 - 组合了 `useSettingsForm`、`useDirectorySettings`、`useSettingsMetadata` 三个子 hook
@@ -4383,7 +2508,7 @@ pub struct OptimizerConfig {  // proxy/types.rs:242
 ```rust
 pub struct CopilotOptimizerConfig {  // proxy/types.rs:278
     pub enabled: bool,              // 总开关（默认开启）
-    pub x_initiator: bool,          // x-initiator 请求分类（默认开启）
+    pub request_classification: bool,  // 请求分类（默认开启）
     // ... 更多字段
 }
 ```
@@ -4695,14 +2820,14 @@ export const proxyApi = {  // proxy.ts:11
     async getProxyConfigForApp(appType: string): Promise<AppProxyConfig> {
         return invoke("get_proxy_config_for_app", { appType });
     },
-    async updateProxyConfigForApp(appType: string, config: AppProxyConfig): Promise<void> {
-        return invoke("update_proxy_config_for_app", { appType, config });
+    async updateProxyConfigForApp(config: AppProxyConfig): Promise<void> {
+        return invoke("update_proxy_config_for_app", { config });
     },
 };
 ```
-- 4 个 API 分组：代理服务器控制、接管状态、全局代理配置、每应用代理配置
+- 6 个 API 分组：代理服务器控制、接管状态、Legacy 代理配置（v2 兼容）、v3+ 全局/应用级配置、计费默认配置、计费模式来源
 - 所有方法都通过 `invoke()` 调用 Tauri 命令
-**mutations.ts**（`src/lib/query/mutations.ts`，357 行）：
+**mutations.ts**（`src/lib/query/mutations.ts`，356 行）：
 ```typescript
 // src/lib/query/mutations.ts:13
 export const useAddProviderMutation = (appId: AppId) => {
@@ -4730,12 +2855,12 @@ export const useAddProviderMutation = (appId: AppId) => {
 **前端 Query 层**（`src/lib/query/`，10 个文件）：
 - `queries.ts`（4.2KB）— 查询 hooks（useProvidersQuery, useSettingsQuery, useUsageQuery, useSessionsQuery）
 - `mutations.ts`（10.2KB）— 变更 hooks（useAddProviderMutation, useUpdateProviderMutation, useDeleteProviderMutation, useSwitchProviderMutation）
-- `proxy.ts`（3.2KB）— 代理相关查询
-- `usage.ts`（6.0KB）— 用量相关查询
-- `failover.ts`（2.7KB）— 故障转移相关查询
-- `subscription.ts`（0.6KB）— 订阅相关查询
-- `copilot.ts`（5.9KB）— Copilot 相关查询
-- `omo.ts`（12.1KB）— OMO 相关查询
+- `proxy.ts`（6.5KB）— 代理相关查询
+- `usage.ts`（8.5KB）— 用量相关查询
+- `failover.ts`（7.9KB）— 故障转移相关查询
+- `subscription.ts`（2.1KB）— 订阅相关查询
+- `copilot.ts`（1.7KB）— Copilot 相关查询
+- `omo.ts`（2.6KB）— OMO 相关查询
 - `queryClient.ts`（264B）— QueryClient 配置
 - `index.ts`（144B）— 模块导出
 **前端工具函数**（`src/utils/`）：
@@ -4988,17 +3113,17 @@ export const providersApi = {  // providers.ts:49
     async getCurrent(appId: AppId): Promise<string> {
         return await invoke("get_current_provider", { app: appId });
     },
-    async add(appId: AppId, provider: Omit<Provider, "id">): Promise<Provider> {
-        return await invoke("add_provider", { app: appId, ...provider });
+    async add(provider: Provider, appId: AppId, addToLive?: boolean): Promise<boolean> {
+        return await invoke("add_provider", { provider, app: appId, addToLive });
     },
-    async update(provider: Provider): Promise<void> {
-        return await invoke("update_provider", { provider });
+    async update(provider: Provider, appId: AppId, originalId?: string): Promise<boolean> {
+        return await invoke("update_provider", { provider, app: appId, originalId });
     },
-    async remove(providerId: string): Promise<void> {
-        return await invoke("delete_provider", { providerId });
+    async delete(id: string, appId: AppId): Promise<boolean> {
+        return await invoke("delete_provider", { id, app: appId });
     },
-    async switch(appType: AppId, providerId: string): Promise<SwitchResult> {
-        return await invoke("switch_provider", { appType, providerId });
+    async switch(id: string, appId: AppId): Promise<SwitchResult> {
+        return await invoke("switch_provider", { id, app: appId });
     },
     // ... 更多方法
 };
@@ -5113,7 +3238,7 @@ useTauriEvent("provider-changed", (event) => {
 **复制粘贴的 config 模块**：
 - 7 个工具的 config 模块结构几乎一样
 - 每个都自己实现了一遍 `read → parse → modify → write` 流程
-- 没有公共的 config trait 或接口
+- 没有公共的 config trait，但共用 `config.rs`（425 行）提供的 `read_json_file`/`write_json_file`/`atomic_write` 等工具函数
 
 **冗余的 match 分支**：
 - `AppType` 的 match 在 `McpApps`（`app_config.rs:24`）、`VisibleApps`（`settings.rs:66`）、`CommonConfigSnippets`（`app_config.rs:439`）里重复出现
@@ -5123,11 +3248,11 @@ useTauriEvent("provider-changed", (event) => {
 
 **动态类型滥用**：
 - `Provider.settings_config: Value`（`provider.rs:14`）是 `serde_json::Value`，不是强类型
-- 运行时才知道配置是否合法，编译器帮不上忙
+- 虽然有 `validate_provider_settings()`（`services/provider/mod.rs:2250`）在保存时校验，但校验逻辑散落在各 config 模块中，且 `Value` 类型无法在编译期阻止非法构造
 
 **过度的 Option 包装**：
 - `Provider` 结构体里很多字段都是 `Option<T>`（`provider.rs:15-38`）
-- 有些字段（如 `icon`、`icon_color`）实际上总是有值的
+- 部分字段（如 `sort_index`、`notes`）在多数 Provider 中为 `None`，Option 包装合理
 
 ### 6.3 命名和组织问题
 
@@ -5149,12 +3274,12 @@ useTauriEvent("provider-changed", (event) => {
 
 | 文件 | 问题 | 建议 |
 |------|------|------|
-| `lib.rs:1-36` | 34 个 `mod` 声明 | 按功能分组 |
+|`lib.rs:1-36` | 34 个 `mod` 声明 | 按功能分组 |
 | `lib.rs:284-1070` | `.setup()` 闭包 786 行 | 拆分成 `init_database()`, `init_plugins()`, `seed_data()` |
-| `lib.rs:1072-1377` | 271 个命令注册 | 按模块分组 |
+| `lib.rs:1072-1377` | ~266 个命令注册 | 按模块分组 |
 | `services/proxy.rs:55` | ProxyService 3909 行 | 拆分成 `takeover.rs`, `hot_switch.rs`, `config.rs` |
 | 7 个 config 模块 | 重复的读写逻辑 | 抽取 `ToolConfig` trait |
-| 8 个 preset 文件 | 237KB TypeScript 数据 | 移到 JSON 文件 |
+| 9 个 preset 文件 | 237KB TypeScript 数据 | 移到 JSON 文件 |
 | `provider.rs:14` | `settings_config: Value` 动态类型 | 考虑用强类型 enum |
 | `error.rs:8` | `Config(String)` 太宽泛 | 拆分成更具体的变体 |
 | `settings.rs:519` | `OnceLock<RwLock<>>` + `unwrap_or_else` | 用 `parking_lot::RwLock` 避免 poisoned panic |
@@ -5169,7 +3294,7 @@ useTauriEvent("provider-changed", (event) => {
 - `schema.rs`（2050 行，77.8KB）— 所有表定义 + 索引 + 迁移逻辑全在一个文件
 - `backup.rs`（860 行，31.7KB）— SQL 导入导出 + 快照备份全在一起
 - 12 个 DAO 模块各自实现 `lock_conn!` + SQL 查询，没有统一的查询构建器
-- `proxy_request_logs` 表（`schema.rs:184`）有 15 列，查询时需要手写 SQL 拼接
+- `proxy_request_logs` 表（`schema.rs:184`）有 25 列，查询时需要手写 SQL 拼接
 
 **服务层 AI Slop 特征**：
 - `services/proxy.rs`（3909 行，141.3KB）— ProxyService 所有方法全在一个文件，包括接管、热切换、配置管理、启动恢复
@@ -5186,8 +3311,8 @@ useTauriEvent("provider-changed", (event) => {
 
 **前端 AI Slop 特征**：
 - `App.tsx`（1604 行）— 14 个视图 + 事件处理 + 状态管理全在一个文件
-- `useProviderActions.ts`（385 行）— Claude 插件同步逻辑应该抽到独立 hook
-- 8 个 preset 文件（237KB）— 结构几乎一样但没有抽取公共模板
+- `useProviderActions.ts`（385 行）— 包含 7 个工具的增删改切逻辑，可按工具拆分
+- 9 个 preset 文件（237KB）— 结构几乎一样但没有抽取公共模板
 ---
 
 ## 第 7 章：重构路线图
@@ -5197,7 +3322,7 @@ useTauriEvent("provider-changed", (event) => {
 **删除死代码**：
 - 搜索 `#[allow(dead_code)]` 和未使用的函数
 - 删除注释掉的代码块
-- 删除 `lib.rs:38` 里重复的 `pub use` 导出
+- 删除 `lib.rs:40` 里重复的 `pub use` 导出（`open_provider_terminal` 已被 `commands::*` 覆盖）
 
 **统一命名**：
 - `get_xxx` / `read_xxx` / `fetch_xxx` 统一为 `read_xxx`
@@ -5205,7 +3330,7 @@ useTauriEvent("provider-changed", (event) => {
 
 **提取重复模式**：
 - 7 个 config 模块的 `read → parse → modify → write` 骨架抽取为公共函数
-- 8 个 preset 文件的结构抽取为公共模板
+- 9 个 preset 文件的结构抽取为公共模板
 - `AppType` 的 match 分支抽取为 trait 方法
 
 ### 7.2 中等重构（3-5 天）
@@ -5226,9 +3351,9 @@ useTauriEvent("provider-changed", (event) => {
 - `App.tsx`（1604 行）→ 每个视图一个文件 + `AppRouter.tsx`
 - `codex_config.rs`（66.4KB）→ `codex/` 目录
 - `hermes_config.rs`（69.0KB）→ `hermes/` 目录
-- `claude_desktop_config.rs`（14.0KB）→ `claude_desktop/` 目录
+- `claude_desktop_config.rs`（61.5KB）→ `claude_desktop/` 目录
 
-**统一 config 模块的结构**：
+**统一 config 模块的结构**（建议的重构模式，当前代码中不存在此 trait）：
 
 ```rust
 // 定义统一的 config trait
@@ -5359,1357 +3484,6 @@ pub fn map_proxy_error_to_status(error: &ProxyError) -> u16 {
         ProxyError::DatabaseError(_) => 500,
         _ => 500,
     }
-}
-```
-- 将 ProxyError 映射到 HTTP 状态码
-- 上游错误：直接使用上游返回的状态码
-- 超时：504 Gateway Timeout
-- 连接失败：502 Bad Gateway
-- 无可用 Provider / 熔断 / 重试耗尽：503 Service Unavailable
-- 其他错误：500 Internal Server Error
-**ProxyError**（`proxy/error.rs`，206 行，6.9KB）：
-```rust
-// proxy/error.rs:10
-#[derive(Debug, Error)]
-pub enum ProxyError {
-    #[error("服务器已在运行")] AlreadyRunning,
-    #[error("服务器未运行")] NotRunning,
-    #[error("地址绑定失败: {0}")] BindFailed(String),
-    #[error("停止超时")] StopTimeout,
-    #[error("停止失败: {0}")] StopFailed(String),
-    #[error("请求转发失败: {0}")] ForwardFailed(String),
-    #[error("无可用的Provider")] NoAvailableProvider,
-    #[error("所有供应商已熔断，无可用渠道")] AllProvidersCircuitOpen,
-    #[error("未配置供应商")] NoProvidersConfigured,
-    #[error("Provider不健康: {0}")] ProviderUnhealthy(String),
-    #[error("上游错误 (状态码 {status}): {body:?}")] UpstreamError { status: u16, body: Option<String> },
-    #[error("超过最大重试次数")] MaxRetriesExceeded,
-    #[error("数据库错误: {0}")] DatabaseError(String),
-    #[error("配置错误: {0}")] ConfigError(String),
-    // ... 更多变体
-}
-```
-- 使用 `thiserror::Error` derive macro 定义错误类型
-- 实现 `IntoResponse` trait，可直接作为 Axum 响应返回
-- 14+ 个错误变体，覆盖代理服务器的所有错误场景
-- `UpstreamError` 包含上游错误的状态码和响应体
-**adapter.rs**（`proxy/providers/adapter.rs`，70 行，2.5KB）：
-```rust
-// proxy/providers/adapter.rs:16
-pub trait ProviderAdapter: Send + Sync {
-    fn name(&self) -> &'static str;
-    fn extract_base_url(&self, provider: &Provider) -> Result<String, ProxyError>;
-    fn extract_auth(&self, provider: &Provider) -> Option<AuthInfo>;
-    fn build_url(&self, base_url: &str, endpoint: &str) -> String;
-    fn auth_headers(&self, auth: &AuthInfo) -> Vec<(String, String)>;
-}
-```
-- `ProviderAdapter` trait — 供应商适配器的统一接口
-- 所有供应商适配器都需要实现此 trait
-- 提供统一的接口来处理：URL 构建、认证信息提取和头部注入、请求/响应格式转换（可选）
-- `auth_headers()` 返回 `(name, value)` 对，forwarder 在原始 auth header 位置插入以保持 header 顺序
-**providers/mod.rs**（`proxy/providers/mod.rs`，518 行，18.3KB）：
-```rust
-// proxy/providers/mod.rs:1
-//! Provider Adapters Module
-//! 供应商适配器模块，提供统一的接口抽象不同上游供应商的处理逻辑
-```
-- 子模块：`adapter`、`auth`、`claude`、`codex`、`gemini`、`models`、`transform`
-- `ProviderAdapter` trait — 统一的供应商适配器接口
-- `ClaudeAdapter` — Claude (Anthropic) 适配器
-- `CodexAdapter` — Codex (OpenAI) 适配器
-- `GeminiAdapter` — Gemini (Google) 适配器
-- `AuthInfo`、`AuthStrategy` — 认证类型和策略
-- 格式转换：`transform`（Claude）、`transform_codex_chat`（Codex Chat）、`transform_gemini`（Gemini）、`transform_responses`（Responses API）
-- 流式处理：`streaming`（Claude）、`streaming_codex_chat`（Codex Chat）、`streaming_gemini`（Gemini）、`streaming_responses`（Responses API）
-- `copilot_auth.rs`（70.4KB）— Copilot 认证
-- `copilot_model_map.rs`（12.1KB）— Copilot 模型映射
-- `codex_oauth_auth.rs`（36.6KB）— Codex OAuth 认证
-- `codex_chat_history.rs`（24.6KB）— Codex 聊天历史
-- `gemini_schema.rs`（11.7KB）— Gemini schema 定义
-- `gemini_shadow.rs`（12.8KB）— Gemini shadow 处理
-**database/dao/ 目录**（`src-tauri/src/database/dao/`，12 个文件）：
-| 文件 | 大小 | 职责 |
-|------|------|------|
-| proxy.rs | 33.9KB | 代理配置和请求日志 DAO |
-| providers.rs | 29.5KB | Provider CRUD DAO |
-| usage_rollup.rs | 15.3KB | 用量聚合 DAO |
-| settings.rs | 11.9KB | 设置 DAO |
-| skills.rs | 9.7KB | Skills DAO |
-| failover.rs | 4.8KB | 故障转移 DAO |
-| mcp.rs | 4.1KB | MCP 服务器 DAO |
-| providers_seed.rs | 3.3KB | Provider 种子数据 |
-| prompts.rs | 2.9KB | Prompt DAO |
-| stream_check.rs | 2.7KB | 流式检查 DAO |
-| universal_providers.rs | 2.5KB | 通用 Provider DAO |
-| mod.rs | 448B | 模块导出 |
-- `proxy.rs`（7.5KB）是最大的 DAO 文件，包含代理配置和请求日志操作
-- `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
-- `usage_rollup.rs`（15.3KB）包含用量聚合查询
-- `settings.rs`（28.9KB）包含设置的读写操作
-- `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
-- `failover.rs`（5.5KB）包含故障转移队列操作
-- `mcp.rs`（19.6KB）包含 MCP 服务器的 CRUD 操作
-- `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
-- `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
-- `stream_check.rs`（10.9KB）包含流式检查记录操作
-- `universal_providers.rs`（2.5KB）包含通用 Provider 操作
-**commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
-```rust
-// src-tauri/src/commands/mod.rs:1
-#![allow(non_snake_case)]
-// src-tauri/src/commands/mod.rs:3-34
-mod auth;           mod balance;        mod codex_oauth;
-mod coding_plan;    mod config;         mod copilot;
-mod deeplink;       mod env;            mod failover;
-mod global_proxy;   mod hermes;         mod import_export;
-mod mcp;            mod misc;           mod model_fetch;
-mod omo;            mod openclaw;       mod plugin;
-mod prompt;         mod provider;       mod proxy;
-mod session_manager; mod settings;      pub mod skill;
-mod stream_check;   mod subscription;   mod sync_support;
-mod lightweight;    mod usage;          mod webdav_sync;
-mod workspace;
-// src-tauri/src/commands/mod.rs:36-67
-pub use auth::*;    pub use balance::*; pub use codex_oauth::*;
-pub use coding_plan::*; pub use config::*; pub use copilot::*;
-// ... 所有模块通过 pub use * 重新导出
-```
-- 33 个子模块声明（commands/mod.rs:3-34）
-- 所有子模块通过 `pub use *` 重新导出（commands/mod.rs:36-67）
-- `#![allow(non_snake_case)]` — 允许非蛇形命名（Tauri 命令使用驼峰命名）
-- `pub mod skill` — skill 模块是公开的（其他模块都是私有的）
-**database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
-| 文件 | 大小 | 职责 |
-|------|------|------|
-| schema.rs | 77.8KB | 数据库 schema 定义（15 张表的 SQL） |
-| backup.rs | 31.7KB | 数据库备份和恢复 |
-| tests.rs | 22.7KB | 数据库测试 |
-| mod.rs | 8.9KB | Database 结构体和初始化 |
-| migration.rs | 9.2KB | 数据库迁移 |
-| dao/ | — | 数据访问对象（12 个模块） |
-- `Database` 结构体（`database/mod.rs:76`）— 数据库连接和操作
-- `SCHEMA_VERSION = 10`（`database/mod.rs:52`）— 当前 schema 版本
-- `lock_conn!` 宏（`database/mod.rs:61`）— 获取数据库连接
-- `init()`（`database/mod.rs:95`）— 初始化数据库
-- `dao/` 子目录包含 12 个 DAO 模块：providers、settings、mcp_servers、prompts、skills、proxy_config、proxy_request_logs、session_usage、subscription、usage_cache、universal_providers、stream_check
-**commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
-| 文件 | 大小 | 职责 |
-|------|------|------|
-| misc.rs | 176.0KB | 杂项命令（最大的命令文件） |
-| provider.rs | 32.3KB | Provider CRUD 和切换命令 |
-| config.rs | 12.6KB | 配置导入导出命令 |
-| proxy.rs | 13.6KB | 代理服务器控制命令 |
-| settings.rs | 12.1KB | 设置管理命令 |
-| webdav_sync.rs | 12.3KB | WebDAV 同步命令 |
-| stream_check.rs | 10.9KB | 流式检查命令 |
-| workspace.rs | 10.5KB | 工作区命令 |
-| auth.rs | 10.6KB | 认证命令 |
-| skill.rs | 9.5KB | Skills 管理命令 |
-| usage.rs | 8.9KB | 用量查询命令 |
-| global_proxy.rs | 7.5KB | 全局代理命令 |
-| copilot.rs | 6.7KB | Copilot OAuth 命令 |
-| mcp.rs | 6.5KB | MCP 管理命令 |
-| hermes.rs | 5.6KB | Hermes 命令 |
-| failover.rs | 5.5KB | 故障转移命令 |
-| import_export.rs | 5.6KB | 导入导出命令 |
-| openclaw.rs | 4.8KB | OpenClaw 命令 |
-| codex_oauth.rs | 3.2KB | Codex OAuth 命令 |
-| deeplink.rs | 3.1KB | 深度链接命令 |
-| sync_support.rs | 2.9KB | 同步支持命令 |
-| session_manager.rs | 2.6KB | 会话管理命令 |
-| omo.rs | 2.3KB | OMO 命令 |
-| prompt.rs | 1.9KB | Prompt 命令 |
-| subscription.rs | 1.8KB | 订阅命令 |
-| plugin.rs | 1.7KB | 插件命令 |
-| mod.rs | 1.1KB | 模块导出 |
-| env.rs | 739B | 环境变量命令 |
-| model_fetch.rs | 811B | 模型获取命令 |
-| lightweight.rs | 405B | 轻量级命令 |
-| coding_plan.rs | 278B | Coding Plan 命令 |
-| balance.rs | 217B | 余额查询命令 |
-- `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
-- `provider.rs`（40.6KB）包含 Provider CRUD 和切换命令
-- 所有命令通过 `#[tauri::command]` 宏注册
-- 命令参数从 JavaScript 通过 Tauri IPC 传递
-**lib.rs 模块列表**（`src-tauri/src/lib.rs`， 1825 行）：
-```rust
-// src-tauri/src/lib.rs:1-36
-mod app_config;        mod app_store;         mod auto_launch;
-mod claude_desktop_config; mod claude_mcp;    mod claude_plugin;
-mod codex_config;      mod codex_history_migration; mod commands;
-mod config;            mod database;          mod deeplink;
-mod error;             mod gemini_config;     mod gemini_mcp;
-pub mod hermes_config; mod init_status;       mod lightweight;
-mod linux_fix;         mod mcp;               mod openclaw_config;
-mod opencode_config;   mod panic_hook;        mod prompt;
-mod prompt_files;      mod provider;          mod provider_defaults;
-mod proxy;             mod services;          mod session_manager;
-mod settings;          mod store;             mod tray;
-mod usage_script;
-```
-- 34 个模块声明（lib.rs:1-36）
-- 公开导出：`AppType`、`InstalledSkill`、`McpApps`、`McpServer`、`MultiAppConfig`、`SkillApps`（lib.rs:38）
-- `run()` 函数（lib.rs:203）— 应用入口点，初始化插件、注册命令、创建窗口
-- `.invoke_handler()`（lib.rs:1072）— 注册约 271 个 Tauri 命令
-- `cleanup_before_exit()`（lib.rs:1513）— 退出前清理
-- 9 个插件注册：single_instance、deep_link、process、dialog、opener、store、window_state、updater、log
-**base64.ts**（`src/lib/utils/base64.ts`，44 行）：
-```typescript
-// src/lib/utils/base64.ts:13
-export function decodeBase64Utf8(str: string): string {
-    let cleaned = str.trim().replace(/ /g, "+");  // URL 解析可能将 + 转为空格
-    try {
-        const binString = atob(cleaned);
-        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
-        return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-    } catch (e1) {
-        // 尝试修复缺失的 padding
-        // ...
-    }
-}
-```
-- Base64 解码工具（处理 URL 传递中的边缘情况）
-- 处理空格（URL 解析可能将 `+` 转为空格）
-- 处理缺失的 padding（`=` 字符）
-- 处理不同的 Base64 变体
-- 使用 `TextDecoder("utf-8", { fatal: false })` 解码 UTF-8
-**clipboard.ts**（`src/lib/clipboard.ts`，20 行）：
-```typescript
-// src/lib/clipboard.ts:3
-export async function copyText(text: string): Promise<void> {
-    try {
-        await invoke("copy_text_to_clipboard", { text });
-        return;
-    } catch (nativeError) {
-        try {
-            await navigator.clipboard.writeText(text);
-            return;
-        } catch (webError) {
-            throw webError instanceof Error ? webError
-                : nativeError instanceof Error ? nativeError
-                : new Error(String(webError || nativeError));
-        }
-    }
-}
-```
-- 剪贴板操作工具（双层回退策略）
-- 优先使用 Tauri 原生命令 `copy_text_to_clipboard`
-- 原生失败时回退到 Web API `navigator.clipboard.writeText`
-- 错误处理：优先抛出 webError，其次 nativeError
-**updater.ts**（`src/lib/updater.ts`，127 行）：
-```typescript
-// src/lib/updater.ts:8
-export type UpdateChannel = "stable" | "beta";
-// src/lib/updater.ts:10
-export type UpdaterPhase = "idle" | "checking" | "available" | "downloading" | "installing" | "restarting" | "upToDate" | "error";
-// src/lib/updater.ts:20
-export interface UpdateInfo {
-    currentVersion: string;
-    availableVersion: string;
-    notes?: string;
-    pubDate?: string;
-}
-// src/lib/updater.ts:27
-export interface UpdateProgressEvent {
-    event: "Started" | "Progress" | "Finished";
-    total?: number;
-    downloaded?: number;
-}
-// src/lib/updater.ts:33
-export interface UpdateHandle {
-    version: string;
-    notes?: string;
-    date?: string;
-    downloadAndInstall: (onProgress?: (e: UpdateProgressEvent) => void) => Promise<void>;
-    download?: () => Promise<void>;
-    install?: () => Promise<void>;
-}
-```
-- `UpdateChannel`（`updater.ts:8`）— 更新通道：`"stable"` 或 `"beta"`
-- `UpdaterPhase`（`updater.ts:10`）— 更新器阶段：idle → checking → available → downloading → installing → restarting
-- `UpdateInfo`（`updater.ts:20`）— 更新信息（currentVersion、availableVersion、notes、pubDate）
-- `UpdateProgressEvent`（`updater.ts:27`）— 下载进度事件（Started、Progress、Finished）
-- `UpdateHandle`（`updater.ts:33`）— 更新句柄（version、notes、date、downloadAndInstall）
-- 使用 `@tauri-apps/plugin-updater` 插件
-- 可选导入：在未注册插件或非 Tauri 环境下，调用时会抛错，外层需做兜底
-**platform.ts**（`src/lib/platform.ts`，49 行）：
-```typescript
-// src/lib/platform.ts:2
-export const isMac = (): boolean => {
-    try {
-        const ua = navigator.userAgent || "";
-        const plat = (navigator.platform || "").toLowerCase();
-        return /mac/i.test(ua) || plat.includes("mac");
-    } catch { return false; }
-};
-export const isWindows = (): boolean => { /* /windows|win32|win64/i */ };
-export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
-```
-- 轻量平台检测，避免在 SSR 或无 navigator 的环境报错
-- `isMac()`、`isWindows()`、`isLinux()` — 检测当前操作系统
-- Linux 上禁用所有 drag region，规避 Wayland 下 `gtk_window_begin_move_drag` 问题
-- 使用 try-catch 包裹，避免 navigator 不存在时崩溃
-**Query Layer Index**（`src/lib/query/index.ts`，6 行）：
-- Query 层统一导出入口
-- 导出所有查询模块：queryClient、queries、mutations、proxy、subscription
-- `queryClient.ts`（264B）— QueryClient 配置
-- `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
-- `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
-- `proxy.ts`（3.2KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
-- `subscription.ts`（0.6KB）— 订阅查询钩子（useSubscriptionQuota）
-- `copilot.ts`（5.9KB）— Copilot 查询钩子（useCopilotQuota）
-- `failover.ts`（2.7KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
-- `omo.ts`（12.1KB）— OMO 查询钩子（工厂模式）
-- `usage.ts`（6.0KB）— 用量查询钩子
-**copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
-```typescript
-// src/lib/query/copilot.ts:5
-const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
-// src/lib/query/copilot.ts:7
-export interface CopilotQuota {
-    success: boolean;
-    plan: string | null;
-    resetDate: string | null;
-    tiers: QuotaTier[];
-    error: string | null;
-    queriedAt: number | null;
-}
-// src/lib/query/copilot.ts:22
-export function useCopilotQuota(accountId: string | null, options: UseCopilotQuotaOptions = {}) {
-    const { enabled = true, autoQuery = false } = options;
-    return useQuery<CopilotQuota>({
-        queryKey: ["copilot", "quota", accountId ?? "default"],
-        queryFn: async (): Promise<CopilotQuota> => {
-            const usage = accountId
-                ? await copilotGetUsageForAccount(accountId)
-                : await copilotGetUsage();
-            // ...
-        },
-        enabled,
-        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
-        staleTime: REFETCH_INTERVAL,
-        retry: 1,
-    });
-}
-```
-- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
-- `CopilotQuota` — Copilot 配额信息（success、plan、resetDate、tiers、error、queriedAt）
-- `useCopilotQuota()` — 获取 Copilot 配额（支持指定 accountId 或使用默认账号）
-- 支持自动轮询（5 分钟）与窗口 focus 重取
-- `copilotGetUsage()` — 获取默认账号的使用量
-- `copilotGetUsageForAccount()` — 获取指定账号的使用量
-**index.ts**（`src/lib/api/index.ts`，31 行）：
-- API 层统一导出入口
-- 导出所有 API 模块：providersApi、settingsApi、mcpApi、promptsApi、skillsApi、usageApi、subscriptionApi、vscodeApi、proxyApi、openclawApi、sessionsApi、workspaceApi、configApi、authApi、copilotApi
-- 导出类型：AppId、ProviderSwitchEvent、Prompt、CopilotDeviceCodeResponse、CopilotAuthStatus、GitHubAccount、ManagedAuthProvider、ManagedAuthAccount、ManagedAuthStatus、ManagedAuthDeviceCodeResponse
-**config.ts**（`src/lib/api/config.ts`，78 行）：
-```typescript
-// src/lib/api/config.ts:4
-export type AppType = "claude" | "codex" | "gemini" | "omo" | "omo_slim";
-// src/lib/api/config.ts:32
-export async function getCommonConfigSnippet(appType: AppType): Promise<string | null> {
-    return invoke<string | null>("get_common_config_snippet", { appType });
-}
-// src/lib/api/config.ts:43
-export async function setCommonConfigSnippet(appType: AppType, snippet: string): Promise<void> {
-    return invoke("set_common_config_snippet", { appType, snippet });
-}
-```
-- `AppType` 类型：`"claude" | "codex" | "gemini" | "omo" | "omo_slim"`
-- `getCommonConfigSnippet()`（`config.ts:32`）— 获取通用配置片段（统一接口）
-- `setCommonConfigSnippet()`（`config.ts:43`）— 设置通用配置片段（统一接口）
-- `getClaudeCommonConfigSnippet()`（`config.ts:11`）— 已废弃，使用 `getCommonConfigSnippet('claude')` 替代
-- `setClaudeCommonConfigSnippet()`（`config.ts:21`）— 已废弃，使用 `setCommonConfigSnippet('claude', snippet)` 替代
-- Claude/Gemini 验证 JSON 格式，Codex 暂不验证
-**model-fetch.ts**（`src/lib/api/model-fetch.ts`，93 行）：
-```typescript
-// src/lib/api/model-fetch.ts:5
-export interface FetchedModel {
-    id: string;
-    ownedBy: string | null;
-}
-// src/lib/api/model-fetch.ts:16
-export async function fetchModelsForConfig(
-    baseUrl: string, apiKey: string, isFullUrl?: boolean, modelsUrl?: string,
-): Promise<FetchedModel[]> {
-    return invoke("fetch_models_for_config", { baseUrl, apiKey, isFullUrl, modelsUrl });
-}
-// src/lib/api/model-fetch.ts:35
-export async function fetchCodexOauthModels(accountId?: string | null): Promise<FetchedModel[]> {
-    return invoke("get_codex_oauth_models", { accountId: accountId || null });
-}
-```
-- `FetchedModel`（`model-fetch.ts:5`）— 获取到的模型信息（id、ownedBy）
-- `fetchModelsForConfig()`（`model-fetch.ts:16`）— 从供应商获取可用模型列表（使用 OpenAI 兼容的 `GET /v1/models` 端点）
-  - 优先用 `modelsUrl` 精确覆写
-  - 否则后端会对 baseURL 生成候选列表并按序尝试（含"剥离 /anthropic 等兼容子路径"兜底）
-- `fetchCodexOauthModels()`（`model-fetch.ts:35`）— 获取 Codex OAuth 可用模型列表（使用 ChatGPT 的 backend-api/codex 端点，不兼容普通 /v1/models）
-**auth.ts**（`src/lib/api/auth.ts`，107 行）：
-```typescript
-// src/lib/api/auth.ts:3
-export type ManagedAuthProvider = "github_copilot" | "codex_oauth";
-// src/lib/api/auth.ts:5
-export interface ManagedAuthAccount {
-    id: string;
-    provider: ManagedAuthProvider;
-    login: string;
-    avatar_url: string | null;
-    authenticated_at: number;
-    is_default: boolean;
-    github_domain: string;
-}
-// src/lib/api/auth.ts:15
-export interface ManagedAuthStatus {
-    provider: ManagedAuthProvider;
-    authenticated: boolean;
-    default_account_id: string | null;
-    migration_error?: string | null;
-    accounts: ManagedAuthAccount[];
-}
-// src/lib/api/auth.ts:23
-export interface ManagedAuthDeviceCodeResponse {
-    provider: ManagedAuthProvider;
-    device_code: string;
-    user_code: string;
-    verification_uri: string;
-    expires_in: number;
-    interval: number;
-}
-export async function authStartLogin(authProvider: ManagedAuthProvider, githubDomain?: string): Promise<ManagedAuthDeviceCodeResponse>;
-export async function authPollForAccount(authProvider: ManagedAuthProvider, deviceCode: string): Promise<ManagedAuthAccount>;
-export async function authLogout(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
-export async function authSetDefault(authProvider: ManagedAuthProvider, accountId: string): Promise<void>;
-export async function authGetStatus(authProvider: ManagedAuthProvider): Promise<ManagedAuthStatus>;
-```
-- 统一的托管认证 API（支持 GitHub Copilot 和 Codex OAuth）
-- `ManagedAuthProvider` 类型：`"github_copilot"` 或 `"codex_oauth"`
-- `ManagedAuthAccount` — 托管认证账号（id、provider、login、avatar_url、authenticated_at、is_default、github_domain）
-- `ManagedAuthStatus` — 认证状态（authenticated、default_account_id、accounts）
-- `ManagedAuthDeviceCodeResponse` — 设备码流程响应
-- `authStartLogin()` — 启动登录流程
-- `authPollForAccount()` — 轮询账号
-- `authLogout()` — 登出
-- `authSetDefault()` — 设置默认账号
-- `authGetStatus()` — 获取认证状态
-**failoverApi**（`src/lib/api/failover.ts`，100 行）：
-```typescript
-// src/lib/api/failover.ts:23
-export const failoverApi = {
-    // 熔断器 API
-    async getProviderHealth(providerId: string, appType: string): Promise<ProviderHealth> {
-        return invoke("get_provider_health", { providerId, appType });
-    },
-    async resetCircuitBreaker(providerId: string, appType: string): Promise<void> {
-        return invoke("reset_circuit_breaker", { providerId, appType });
-    },
-    async getCircuitBreakerConfig(): Promise<CircuitBreakerConfig> {
-        return invoke("get_circuit_breaker_config");
-    },
-    async updateCircuitBreakerConfig(config: CircuitBreakerConfig): Promise<void> {
-        return invoke("update_circuit_breaker_config", { config });
-    },
-    async getCircuitBreakerStats(providerId: string, appType: string): Promise<CircuitBreakerStats> {
-        return invoke("get_circuit_breaker_stats", { providerId, appType });
-    },
-    // 故障转移队列 API
-    async getFailoverQueue(appType: string): Promise<FailoverQueueItem[]> {
-        return invoke("get_failover_queue", { appType });
-    },
-    async updateFailoverQueue(appType: string, queue: FailoverQueueItem[]): Promise<void> {
-        return invoke("update_failover_queue", { appType, queue });
-    },
-};
-```
-- 3 个 API 分组：熔断器、故障转移队列、熔断器配置
-- `getProviderHealth()` — 获取供应商健康状态
-- `resetCircuitBreaker()` — 重置熔断器
-- `getCircuitBreakerConfig()` / `updateCircuitBreakerConfig()` — 获取/更新熔断器配置
-- `getCircuitBreakerStats()` — 获取熔断器统计
-- `getFailoverQueue()` / `updateFailoverQueue()` — 获取/更新故障转移队列
-- `ProviderHealth`、`CircuitBreakerConfig`、`CircuitBreakerStats`、`FailoverQueueItem` 类型定义在 `types/proxy.ts`
-**sessionsApi**（`src/lib/api/sessions.ts`，55 行）：
-```typescript
-// src/lib/api/sessions.ts:4
-export interface DeleteSessionOptions {
-    providerId: string;
-    sessionId: string;
-    sourcePath: string;
-}
-export interface DeleteSessionResult extends DeleteSessionOptions {
-    success: boolean;
-    error?: string;
-}
-// src/lib/api/sessions.ts:15
-export const sessionsApi = {
-    async list(): Promise<SessionMeta[]> { return await invoke("list_sessions"); },
-    async getMessages(providerId: string, sourcePath: string): Promise<SessionMessage[]> {
-        return await invoke("get_session_messages", { providerId, sourcePath });
-    },
-    async delete(options: DeleteSessionOptions): Promise<boolean> {
-        return await invoke("delete_session", { providerId, sessionId, sourcePath });
-    },
-    async deleteMany(items: DeleteSessionOptions[]): Promise<DeleteSessionResult[]> {
-        return await invoke("delete_sessions", { items });
-    },
-    async launchTerminal(options: { command: string; cwd: string }): Promise<void> {
-        return await invoke("launch_terminal", options);
-    },
-};
-```
-- `DeleteSessionOptions`（`sessions.ts:4`）— 删除会话选项（providerId、sessionId、sourcePath）
-- `DeleteSessionResult`（`sessions.ts:10`）— 删除结果（继承 DeleteSessionOptions + success + error）
-- `list()` — 获取会话列表
-- `getMessages()` — 获取会话消息
-- `delete()` — 删除单个会话
-- `deleteMany()` — 批量删除会话
-- `launchTerminal()` — 启动终端
-**authBinding.ts**（`src/lib/authBinding.ts`，22 行）：
-```typescript
-// src/lib/authBinding.ts:3
-export function resolveManagedAccountId(
-    meta: ProviderMeta | undefined,
-    authProvider: string,
-): string | null {
-    const binding = meta?.authBinding;
-    if (binding?.source === "managed_account" && binding.authProvider === authProvider) {
-        return binding.accountId ?? null;
-    }
-    if (authProvider === "github_copilot") {
-        return meta?.githubAccountId ?? null;
-    }
-    return null;
-}
-```
-- 解析托管账号 ID（用于 OAuth 认证绑定）
-- 支持两种绑定来源：`managed_account`（通过 `authBinding` 字段）和 `github_copilot`（通过 `githubAccountId` 字段）
-- `ProviderMeta.authBinding` 包含 `source`、`authProvider`、`accountId` 字段
-**usageRange.ts**（`src/lib/usageRange.ts`，80 行）：
-```typescript
-// src/lib/usageRange.ts:3
-const DAY_SECONDS = 24 * 60 * 60;
-const DAY_MS = DAY_SECONDS * 1000;
-// src/lib/usageRange.ts:6
-export interface ResolvedUsageRange {
-    startDate: number;
-    endDate: number;
-}
-// src/lib/usageRange.ts:26
-export function resolveUsageRange(selection: UsageRangeSelection, nowMs: number = Date.now()): ResolvedUsageRange {
-    switch (selection.preset) {
-        case "today": { /* 今天 00:00 至今 */ }
-        case "1d": { /* 最近 24 小时 */ }
-        case "7d": { /* 最近 7 天 */ }
-        case "14d": { /* 最近 14 天 */ }
-        case "30d": { /* 最近 30 天 */ }
-        case "custom": { /* 自定义日期范围 */ }
-    }
-}
-```
-- 用量查询的时间范围解析工具
-- `ResolvedUsageRange` 包含 `startDate` 和 `endDate`（Unix 秒）
-- `resolveUsageRange()` 将预设（today/1d/7d/14d/30d/custom）转换为实际的日期范围
-- `getStartOfLocalDayDate()` 获取本地日期的开始时间
-- `getPresetLookbackStart()` 计算预设的回溯起始时间
-- 使用 Unix 秒（非毫秒）与后端数据库一致
-**omo.ts**（`src/lib/query/omo.ts`，77 行）：
-```typescript
-// src/lib/query/omo.ts:6
-function createOmoQueryKeys(prefix: string) {
-    return {
-        all: [prefix] as const,
-        currentProviderId: () => [prefix, "current-provider-id"] as const,
-    };
-}
-function createOmoQueryHooks(variant: "omo" | "omo-slim", api: typeof omoApi | typeof omoSlimApi) {
-    const keys = createOmoQueryKeys(variant);
-    function invalidateAll(queryClient) {
-        queryClient.invalidateQueries({ queryKey: ["providers"] });
-        queryClient.invalidateQueries({ queryKey: keys.currentProviderId() });
-    }
-    function useCurrentProviderId(enabled = true) { /* ... */ }
-    function useReadLocalFile() { /* ... */ }
-    function useDisableCurrent() { /* ... */ }
-    return { invalidateAll, useCurrentProviderId, useReadLocalFile, useDisableCurrent };
-}
-export const omo = createOmoQueryHooks("omo", omoApi);
-export const omoSlim = createOmoQueryHooks("omo-slim", omoSlimApi);
-```
-- 工厂模式：`createOmoQueryKeys()` 和 `createOmoQueryHooks()` 为 OMO 和 OMO-Slim 两个变体生成查询钩子
-- `useCurrentProviderId()` — 获取当前 provider ID
-- `useReadLocalFile()` — 读取本地配置文件
-- `useDisableCurrent()` — 禁用当前 provider
-- `invalidateAll()` — 刷新所有相关查询
-**subscription.ts**（`src/lib/query/subscription.ts`，64 行）：
-```typescript
-// src/lib/query/subscription.ts:8
-const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
-// src/lib/query/subscription.ts:10
-export const subscriptionKeys = {
-    all: ["subscription"] as const,
-    quota: (appId: AppId) => [...subscriptionKeys.all, "quota", appId] as const,
-};
-// src/lib/query/subscription.ts:15
-export function useSubscriptionQuota(appId: AppId, enabled: boolean, autoQuery = false) {
-    return useQuery({
-        queryKey: subscriptionKeys.quota(appId),
-        queryFn: () => subscriptionApi.getQuota(appId),
-        enabled: enabled && ["claude", "codex", "gemini"].includes(appId),
-        refetchInterval: autoQuery ? REFETCH_INTERVAL : false,
-        staleTime: REFETCH_INTERVAL,
-        retry: 1,
-    });
-}
-```
-- `REFETCH_INTERVAL = 5 * 60 * 1000`（5 分钟）
-- `subscriptionKeys` 定义查询键（`all` 和 `quota`）
-- `useSubscriptionQuota()` — 获取订阅额度（仅支持 claude、codex、gemini）
-- `useCodexOauthQuota()` — Codex OAuth 订阅额度查询（使用 cc-switch 自管的 OAuth token）
-- 支持自动轮询（5 分钟）与窗口 focus 重取
-**RequestForwarder**（`proxy/forwarder.rs:89`）：
-```rust
-// proxy/forwarder.rs:61
-pub(crate) struct ActiveConnectionGuard {
-    status: Arc<RwLock<ProxyStatus>>,
-}
-impl ActiveConnectionGuard {
-    pub(crate) async fn acquire(status: Arc<RwLock<ProxyStatus>>) -> Self {
-        let mut s = status.write().await;
-        s.active_connections = s.active_connections.saturating_add(1);
-        Self { status }
-    }
-}
-impl Drop for ActiveConnectionGuard {
-    fn drop(&mut self) {
-        // Drop 不能 await：把减量操作调度到 tokio runtime
-        let status = self.status.clone();
-        if let Ok(handle) = tokio::runtime::Handle::try_current() {
-            handle.spawn(async move {
-                let mut s = status.write().await;
-                s.active_connections = s.active_connections.saturating_sub(1);
-            });
-        }
-    }
-}
-// proxy/forwarder.rs:89
-pub struct RequestForwarder {
-    router: Arc<ProviderRouter>,
-    status: Arc<RwLock<ProxyStatus>>,
-    current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
-    gemini_shadow: Arc<GeminiShadowStore>,
-    codex_chat_history: Arc<CodexChatHistoryStore>,
-    failover_manager: Arc<FailoverSwitchManager>,
-    app_handle: Option<tauri::AppHandle>,
-    current_provider_id_at_start: String,
-    session_id: String,
-}
-```
-- `ActiveConnectionGuard`（`forwarder.rs:61`）— RAII 守卫，自动管理活跃连接计数
-  - `acquire()` 增加计数，`Drop` 减少计数
-  - Drop 不能 await，所以把减量操作调度到 tokio runtime
-  - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
-- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
-  - 持有 `ProviderRouter`（熔断器状态）
-  - 持有 `FailoverSwitchManager`（故障转移切换）
-  - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
-  - 持有 `CodexChatHistoryStore`（Codex Chat bridge history）
-  - `current_provider_id_at_start` — 请求开始时的供应商 ID（用于判断是否需要同步 UI/托盘）
-  - `session_id` — 代理会话 ID（用于 Gemini Native shadow replay）
-**ProxyServer**（`proxy/server.rs:54`）：
-```rust
-// proxy/server.rs:54
-pub struct ProxyServer {
-    config: ProxyConfig,
-    state: ProxyState,
-    shutdown_tx: Arc<RwLock<Option<oneshot::Sender<()>>>>,
-    server_handle: Arc<RwLock<Option<JoinHandle<()>>>>,
-}
-impl ProxyServer {
-    pub fn new(config: ProxyConfig, db: Arc<Database>, app_handle: Option<tauri::AppHandle>) -> Self {
-        let provider_router = Arc::new(ProviderRouter::new(db.clone()));
-        let failover_manager = Arc::new(FailoverSwitchManager::new(db.clone()));
-        let state = ProxyState {
-            db, config: Arc::new(RwLock::new(config.clone())),
-            status: Arc::new(RwLock::new(ProxyStatus::default())),
-            start_time: Arc::new(RwLock::new(None)),
-            current_providers: Arc::new(RwLock::new(HashMap::new())),
-            provider_router, gemini_shadow: Arc::new(GeminiShadowStore::default()),
-            codex_chat_history: Arc::new(CodexChatHistoryStore::default()),
-            app_handle, failover_manager,
-        };
-        Self { config, state, shutdown_tx: Arc::new(RwLock::new(None)), server_handle: Arc::new(RwLock::new(None)) }
-    }
-}
-```
-- `ProxyServer`（`server.rs:54`）— 代理 HTTP 服务器
-- `shutdown_tx`（`server.rs:57`）— 关闭信号发送器（`oneshot::Sender`）
-- `server_handle`（`server.rs:59`）— 服务器任务句柄（`JoinHandle`），用于等待服务器实际关闭
-- `new()` 创建时初始化 `ProviderRouter`（熔断器状态跨所有请求保持）和 `FailoverSwitchManager`
-- 使用 `Arc<RwLock<>>` 包装所有共享状态
-- 使用 `hyper_util::rt::TokioIo` 处理 HTTP/1.1 连接
-- 使用 `preserve_header_case(true)` 保持原始 header-name casing
-**ProxyState**（`proxy/server.rs:34`）：
-```rust
-// proxy/server.rs:34
-#[derive(Clone)]
-pub struct ProxyState {
-    pub db: Arc<Database>,
-    pub config: Arc<RwLock<ProxyConfig>>,
-    pub status: Arc<RwLock<ProxyStatus>>,
-    pub start_time: Arc<RwLock<Option<std::time::Instant>>>,
-    pub current_providers: Arc<RwLock<HashMap<String, (String, String)>>>,
-    pub provider_router: Arc<ProviderRouter>,
-    pub gemini_shadow: Arc<GeminiShadowStore>,
-    pub codex_chat_history: Arc<CodexChatHistoryStore>,
-    pub app_handle: Option<tauri::AppHandle>,
-}
-```
-- `ProxyState` 是代理服务器的共享状态（所有 handler 通过 `State<ProxyState>` 访问）
-- `provider_router`（`server.rs:42`）— 共享的 ProviderRouter（持有熔断器状态，跨请求保持）
-- `gemini_shadow`（`server.rs:44`）— Gemini Native shadow state，用于 thoughtSignature / tool call 回放
-- `codex_chat_history`（`server.rs:46`）— Codex Chat bridge history，用于恢复 previous_response_id 指向的 tool call
-- `current_providers`（`server.rs:40`）— 每个应用类型当前使用的 provider (app_type -> (provider_id, provider_name))
-- 使用 `HeaderCaseMap` 保持原始 header-name casing（`preserve_header_case(true)`）
-- 基于 Axum 的 HTTP 服务器，使用手动 hyper HTTP/1.1 accept loop
-**usage/ 目录**（`proxy/usage/`，4 个文件）：
-- `calculator.rs`（9.0KB）— 费用计算器（`CostCalculator`、`ModelPricing`）
-- `parser.rs`（33.5KB）— 使用量解析器（`TokenUsage`）
-- `mod.rs`（446B）— 模块导出
-**parser.rs**（`proxy/usage/parser.rs`，937 行，33.5KB）：
-```rust
-// proxy/usage/parser.rs:13
-pub const SESSION_REQUEST_ID_PREFIX: &str = "session:";
-// proxy/usage/parser.rs:17
-pub struct TokenUsage {
-    pub input_tokens: u32,
-    pub output_tokens: u32,
-    pub cache_read_tokens: u32,
-    pub cache_creation_tokens: u32,
-    pub model: Option<String>,
-    #[serde(skip)]
-    pub message_id: Option<String>,
-}
-impl TokenUsage {
-    pub fn dedup_request_id(&self) -> String {
-        self.message_id
-            .as_ref()
-            .map(|mid| format!("{SESSION_REQUEST_ID_PREFIX}{mid}"))
-            .unwrap_or_else(|| uuid::Uuid::new_v4().to_string())
-    }
-}
-// proxy/usage/parser.rs:45
-pub enum ApiType { Claude, OpenRouter, Codex, Gemini }
-```
-- Response Parser — 从 API 响应中提取 token 使用量
-- 支持多种 API 格式：Claude API（非流式和流式）、OpenRouter（OpenAI 格式）、Codex API（非流式和流式）、Gemini API（非流式和流式）
-- `TokenUsage` 存储 token 使用量统计（input、output、cache_read、cache_creation）
-- `dedup_request_id()` 生成与 session 日志共享的 request_id，用于跨源去重
-  - 有 `message_id` 时返回 `session:{id}`
-  - 否则回退到随机 UUID
-- `SESSION_REQUEST_ID_PREFIX = "session:"`（`parser.rs:13`）— 与 session_usage.rs 中的格式保持一致
-- `ApiType` 枚举：Claude、OpenRouter、Codex、Gemini
-**CostCalculator**（`proxy/usage/calculator.rs`，271 行，9.0KB）：
-```rust
-// proxy/usage/calculator.rs:11
-pub struct CostBreakdown {
-    pub input_cost: Decimal,
-    pub output_cost: Decimal,
-    pub cache_read_cost: Decimal,
-    pub cache_creation_cost: Decimal,
-    pub total_cost: Decimal,
-}
-// proxy/usage/calculator.rs:21
-pub struct ModelPricing {
-    pub input_cost_per_million: Decimal,
-    pub output_cost_per_million: Decimal,
-    pub cache_read_cost_per_million: Decimal,
-    pub cache_creation_cost_per_million: Decimal,
-}
-pub struct CostCalculator;  // calculator.rs:29
-impl CostCalculator {
-    pub fn calculate(usage: &TokenUsage, pricing: &ModelPricing, cost_multiplier: Decimal) -> CostBreakdown;
-}
-```
-- 使用高精度 `Decimal` 类型避免浮点数精度问题
-- 计算逻辑：`input_cost: input_tokens × 输入价格`、`cache_read_cost: cache_read_tokens × 缓存读取价格`
-- Claude/Anthropic 的 `input_tokens` 已经不包含 `cache_read_tokens`
-- `total_cost: 各项成本之和 × 倍率`（倍率只作用于最终总价）
-- `ModelPricing` 存储每百万 token 的价格（input、output、cache_read、cache_creation）
-- `CostBreakdown` 存储计算后的成本明细
-**UsageLogger**（`proxy/usage/logger.rs`，431 行，13.7KB）：
-```rust
-// proxy/usage/logger.rs:13
-pub struct RequestLog {
-    pub request_id: String,
-    pub provider_id: String,
-    pub app_type: String,
-    pub model: String,
-    pub request_model: String,
-    pub usage: TokenUsage,
-    pub cost: Option<CostBreakdown>,
-    pub latency_ms: u64,
-    pub first_token_ms: Option<u64>,
-    pub status_code: u16,
-    pub error_message: Option<String>,
-    pub session_id: Option<String>,
-    pub provider_type: Option<String>,  // claude, claude_auth, codex, gemini, gemini_cli, openrouter
-    pub is_streaming: bool,
-    pub cost_multiplier: String,
-}
-pub struct UsageLogger<'a> {  // logger.rs:35
-    db: &'a Database,
-}
-```
-- `RequestLog` 记录每个 API 请求的完整使用情况
-- `UsageLogger` 使用 `CostCalculator` 计算费用并写入数据库
-- 支持 `PRICING_SOURCE_REQUEST` 和 `PRICING_SOURCE_RESPONSE` 两种定价来源
-- `is_placeholder_pricing_model()` 检查是否为占位符定价模型
-**response_handler.rs**（`proxy/response_handler.rs`，232 行，7.2KB）：
-- 响应处理器模块
-- 处理代理响应的后处理逻辑
-**health.rs**（`proxy/health.rs`，7 行，175B）：
-- 健康检查模块（最小实现）
-**provider_router.rs**（`proxy/provider_router.rs`，523 行，18.8KB）：
-```rust
-// proxy/provider_router.rs:16
-pub struct ProviderRouter {
-    db: Arc<Database>,
-    circuit_breakers: Arc<RwLock<HashMap<String, Arc<CircuitBreaker>>>>,
-}
-impl ProviderRouter {
-    pub fn new(db: Arc<Database>) -> Self;
-    pub async fn select_providers(&self, app_type: &str) -> Result<Vec<Provider>, AppError>;
-}
-```
-- 供应商路由器（选择和管理代理目标供应商，实现智能故障转移）
-- `circuit_breakers`（`provider_router.rs:20`）— 熔断器管理器，key 格式：`"app_type:provider_id"`
-- `select_providers()`（`provider_router.rs:37`）— 选择可用的供应商（支持故障转移）
-  - 故障转移关闭时：仅返回当前供应商
-  - 故障转移开启时：仅使用故障转移队列，按队列顺序依次尝试（P1 → P2 → ...）
-- 检查该应用的自动故障转移开关是否开启（从 `proxy_config` 表读取）
-**circuit_breaker.rs**（`proxy/circuit_breaker.rs`，495 行，17.4KB）：
-- 熔断器实现
-- `CircuitBreaker`（`circuit_breaker.rs:76`）— 熔断器结构体
-- `CircuitBreakerConfig`（`circuit_breaker.rs:38`）— 熔断器配置
-- `AllowResult` 枚举：允许请求、拒绝请求（熔断器打开）
-- 三态：Closed（正常）、Open（熔断）、HalfOpen（半开）
-**failover_switch.rs**（`proxy/failover_switch.rs`，135 行，4.4KB）：
-- 故障转移开关管理
-- `FailoverSwitchManager`（`failover_switch.rs:19`）— 故障转移开关管理器
-**switch_lock.rs**（`proxy/switch_lock.rs`，42 行，1.3KB）：
-- 切换锁管理
-- `SwitchLockManager`（`switch_lock.rs:14`）— 切换锁管理器
-**http_client.rs**（`proxy/http_client.rs`，449 行，14.6KB）：
-```rust
-// proxy/http_client.rs:14
-static GLOBAL_CLIENT: OnceCell<RwLock<Client>> = OnceCell::new();
-static CURRENT_PROXY_URL: OnceCell<RwLock<Option<String>>> = OnceCell::new();
-static CC_SWITCH_PROXY_PORT: OnceCell<RwLock<u16>> = OnceCell::new();
-```
-- 全局 HTTP 客户端模块（支持全局代理配置）
-- `GLOBAL_CLIENT`（`http_client.rs:14`）— 全局 HTTP 客户端实例（`OnceCell<RwLock<Client>>`）
-- `CURRENT_PROXY_URL`（`http_client.rs:17`）— 当前代理 URL（用于日志和状态查询）
-- `CC_SWITCH_PROXY_PORT`（`http_client.rs:20`）— CC Switch 代理服务器当前监听的端口
-- `set_proxy_port()`（`http_client.rs:25`）— 设置 CC Switch 代理服务器的监听端口
-- 所有需要发送 HTTP 请求的模块都应使用此模块提供的客户端
-- 使用 `once_cell::sync::OnceCell` 保证单例初始化
-**hyper_client.rs**（`proxy/hyper_client.rs`，739 行，27.2KB）：
-- 基于 Hyper 的底层 HTTP 客户端
-- 处理 HTTP/1.1 和 HTTP/2 协议
-- `ProxyResponse` 结构体封装代理响应
-**json_canonical.rs**（`proxy/json_canonical.rs`，190 行，6.3KB）：
-- JSON 规范化模块
-- 将 JSON 值规范化为标准格式（用于缓存键生成）
-**handler_config.rs**（`proxy/handler_config.rs`，220 行，7.5KB）：
-- 处理器配置模块
-- `UsageParserConfig` — 使用量解析器配置
-- `StreamUsageEventFilter` — 流式使用量事件过滤器
-- `CLAUDE_PARSER_CONFIG`、`CODEX_PARSER_CONFIG`、`GEMINI_PARSER_CONFIG`、`OPENAI_PARSER_CONFIG`
-**gemini_url.rs**（`proxy/gemini_url.rs`，704 行，25.8KB）：
-```rust
-// proxy/gemini_url.rs:17
-pub fn normalize_gemini_model_id(model: &str) -> &str {
-    let trimmed = model.strip_prefix('/').unwrap_or(model);
-    trimmed.strip_prefix("models/").unwrap_or(trimmed)
-}
-pub fn resolve_gemini_native_url(base_url: &str, endpoint: &str, is_full_url: bool) -> String;
-```
-- Gemini Native URL 辅助模块
-- 将 legacy Gemini/OpenAI-compatible base URL 规范化为 Gemini Native `models/*:generateContent` 端点
-- `normalize_gemini_model_id()` — 规范化 Gemini 模型标识符（剥离 `models/` 前缀）
-- `resolve_gemini_native_url()` — 解析 Gemini Native URL
-- 处理 URL 合并和查询参数合并
-**model_mapper.rs**（`proxy/model_mapper.rs`，312 行，10.4KB）：
-- 模型映射器
-- 将请求中的模型名称映射到实际的模型标识符
-**body_filter.rs**（`proxy/body_filter.rs`，339 行，10.5KB）：
-- 请求体过滤器
-- 过滤和修改请求体中的字段
-**cache_injector.rs**（`proxy/cache_injector.rs`，377 行，12.0KB）：
-- 缓存注入器
-- 向请求中注入缓存控制头
-**thinking_rectifier.rs**（`proxy/thinking_rectifier.rs`，716 行，23.1KB）：
-```rust
-// proxy/thinking_rectifier.rs:11
-pub struct RectifyResult {
-    pub applied: bool,
-    pub removed_thinking_blocks: usize,
-    pub removed_redacted_thinking_blocks: usize,
-    pub removed_signature_fields: usize,
-}
-// proxy/thinking_rectifier.rs:26
-pub fn should_rectify_thinking_signature(error_message: Option<&str>, config: &RectifierConfig) -> bool {
-    if !config.enabled { return false; }
-    if !config.request_thinking_signature { return false; }
-    // 检测错误类型...
-}
-```
-- Thinking Signature 整流器（自动修复 Anthropic API 签名校验失败）
-- 当上游 API 返回签名相关错误时，自动移除有问题的签名字段并重试请求
-- `RectifyResult` 记录整流结果（移除的 thinking block、redacted_thinking block、signature 字段数量）
-- `should_rectify_thinking_signature()` 检测是否需要触发整流器
-- 使用 `RectifierConfig`（`proxy/types.rs:178`）控制行为
-**thinking_optimizer.rs**（`proxy/thinking_optimizer.rs`，271 行，8.2KB）：
-- Thinking 模式优化器
-- 优化 thinking 模式的请求参数
-**thinking_budget_rectifier.rs**（`proxy/thinking_budget_rectifier.rs`，359 行，11.1KB）：
-- Thinking Budget 整流器
-- 修复 thinking budget 相关的请求错误
-**copilot_optimizer.rs**（`proxy/copilot_optimizer.rs`，1539 行，57.9KB）：
-```rust
-// proxy/copilot_optimizer.rs:19
-pub struct CopilotClassification {
-    pub initiator: &'static str,  // "user" 或 "agent"
-    pub is_warmup: bool,          // 是否为 warmup/探针请求
-    pub is_compact: bool,         // 是否为上下文压缩请求
-    pub is_subagent: bool,        // 是否为 Claude Code 子代理请求
-}
-```
-- 解决 GitHub Copilot 代理消耗量异常问题（Issue #1813）
-- Copilot 使用 `x-initiator` 请求头区分「用户发起」和「agent 续写」：
-  - `user`：计为一次 premium interaction（扣额度）
-  - `agent`：视为上一次交互的延续（不额外扣费）
-- 分类算法（只检查最后一条消息，与参考实现 caozhiyuan/copilot-api 对齐）：
-  1. 无消息 → "user"（安全默认，首次请求）
-  2. 最后消息 role=user：content 中存在非 tool_result 类型 block → "user"
-  3. 最后消息 role=user：content 全部是 tool_result → "agent"
-  4. 最后消息 role 非 user → "user"（安全默认）
-- Warmup 检测：请求头中有 `anthropic-beta` + 无 tools + 非 compact → warmup
-- 子代理请求应设置 `x-interaction-type=conversation-subagent`，不计 premium interaction
-- 参考实现：https://github.com/caozhiyuan/copilot-api
-**response_processor.rs**（`proxy/response_processor.rs`，1107 行，37.4KB）：
-```rust
-// proxy/response_processor.rs:38
-fn decompress_body(content_encoding: &str, body: &[u8]) -> Result<Vec<u8>, std::io::Error> {
-    match content_encoding {
-        "gzip" | "x-gzip" => { /* GzDecoder */ }
-        "deflate" => { /* DeflateDecoder */ }
-        "br" => { /* BrotliDecoder */ }
-        _ => Ok(body.to_vec()),
-    }
-}
-```
-- 响应处理器模块（统一处理流式和非流式 API 响应）
-- `decompress_body()`（`response_processor.rs:38`）— 根据 content-encoding 解压响应体
-- 支持 gzip、deflate、br 三种压缩格式
-- reqwest 自动解压已禁用（为了透传 accept-encoding），需要手动解压
-- 使用 `StreamUsageEventCollector` 收集流式使用量事件
-- `strip_hop_by_hop_response_headers()` — 剥离 hop-by-hop 响应头
-- `strip_entity_headers_for_rebuilt_body()` — 剥离实体头
-- `create_logged_passthrough_stream()` — 创建带日志的透传流
-**session.rs**（`proxy/session.rs`，626 行，19.2KB）：
-- 会话管理模块
-- `ClientFormat` 枚举：Claude、OpenAI、Gemini、Codex、Copilot、Unknown
-- 会话跟踪和使用量记录
-**sse.rs**（`proxy/sse.rs`，345 行，11.7KB）：
-- SSE（Server-Sent Events）处理模块
-- `strip_sse_field()` — 从 SSE 事件中剥离字段
-- `take_sse_block()` — 提取 SSE 块
-**handlers.rs**（`proxy/handlers.rs`，1266 行，43.6KB）：
-```rust
-// proxy/handlers.rs:1
-//! 请求处理器
-//! 处理各种API端点的HTTP请求
-//! 重构后的结构：
-//! - 通用逻辑提取到 handler_context 和 response_processor 模块
-//! - 各 handler 只保留独特的业务逻辑
-//! - Claude 的格式转换逻辑保留在此文件（用于 OpenRouter 旧接口回退）
-```
-- 处理器配置：`CLAUDE_PARSER_CONFIG`、`CODEX_PARSER_CONFIG`、`GEMINI_PARSER_CONFIG`、`OPENAI_PARSER_CONFIG`
-- 格式转换：`transform()`、`transform_codex_chat()`、`transform_gemini()`、`transform_responses()`
-- 流式处理：`create_anthropic_sse_stream()`、`create_responses_sse_stream_from_chat()`
-- `RequestContext`（`handler_context.rs:371`）— 请求上下文
-- `process_response()`（`response_processor.rs`）— 处理响应
-- `SseUsageCollector`（`response_processor.rs`）— SSE 使用量收集器
-- `ActiveConnectionGuard`（`forwarder.rs:61`）— 活跃连接守卫
-**webdav.rs**（`services/webdav.rs`，554 行，18.0KB）：
-```rust
-// services/webdav.rs:13
-const DEFAULT_TIMEOUT_SECS: u64 = 30;
-const TRANSFER_TIMEOUT_SECS: u64 = 300;  // 大文件传输超时（db.sql, skills.zip）
-pub type WebDavAuth = Option<(String, Option<String>)>;  // webdav.rs:18
-```
-- WebDAV HTTP 传输层（底层 HTTP 原语）
-- 支持的 WebDAV 方法：PUT、GET、HEAD、MKCOL、PROPFIND
-- `parse_base_url()`（`webdav.rs:33`）— 解析并验证 WebDAV 基础 URL（必须是 http 或 https）
-- `method_propfind()`（`webdav.rs:22`）— 创建 PROPFIND 方法
-- `method_mkcol()`（`webdav.rs:26`）— 创建 MKCOL 方法
-- 使用 `reqwest` 进行 HTTP 请求
-- 大文件传输使用 300 秒超时（`TRANSFER_TIMEOUT_SECS`）
-- 常规操作使用 30 秒超时（`DEFAULT_TIMEOUT_SECS`）
-**webdav_auto_sync.rs**（`services/webdav_auto_sync.rs`，274 行，8.0KB）：
-```rust
-// services/webdav_auto_sync.rs:15
-const AUTO_SYNC_DEBOUNCE_MS: u64 = 1000;
-pub(crate) const MAX_AUTO_SYNC_WAIT_MS: u64 = 10_000;
-static DB_CHANGE_TX: OnceLock<Sender<String>> = OnceLock::new();
-static AUTO_SYNC_SUPPRESS_DEPTH: AtomicUsize = AtomicUsize::new(0);
-pub(crate) struct AutoSyncSuppressionGuard;
-impl AutoSyncSuppressionGuard {
-    pub fn new() -> Self {
-        AUTO_SYNC_SUPPRESS_DEPTH.fetch_add(1, Ordering::SeqCst);
-        Self
-    }
-}
-impl Drop for AutoSyncSuppressionGuard {
-    fn drop(&mut self) {
-        AUTO_SYNC_SUPPRESS_DEPTH.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| {
-            Some(value.saturating_sub(1))
-        });
-    }
-}
-pub(crate) fn is_auto_sync_suppressed() -> bool {
-    AUTO_SYNC_SUPPRESS_DEPTH.load(Ordering::SeqCst) > 0
-}
-```
-- WebDAV 自动同步服务
-- `AUTO_SYNC_DEBOUNCE_MS = 1000`（`webdav_auto_sync.rs:15`）— 防抖延迟 1 秒
-- `MAX_AUTO_SYNC_WAIT_MS = 10_000`（`webdav_auto_sync.rs:16`）— 最大等待时间 10 秒
-- `DB_CHANGE_TX`（`webdav_auto_sync.rs:18`）— 使用 `tokio::sync::mpsc` channel 发送数据库变更通知
-- `AutoSyncSuppressionGuard`（`webdav_auto_sync.rs:21`）— RAII 守卫，抑制自动同步（用于同步操作期间避免循环触发）
-- `AUTO_SYNC_SUPPRESS_DEPTH`（`webdav_auto_sync.rs:19`）— 原子计数器，支持嵌套抑制
-- `is_auto_sync_suppressed()`（`webdav_auto_sync.rs:39`）— 检查是否处于抑制状态
-- `should_trigger_for_table()`（`webdav_auto_sync.rs:43`）— 判断指定表的变更是否应触发自动同步
-- 使用 `OnceLock` 保证 channel 单例初始化
-- 使用 `AtomicUsize` 和 `Ordering::SeqCst` 保证线程安全
-**SpeedtestService**（`services/speedtest.rs`，187 行，5.9KB）：
-```rust
-// services/speedtest.rs:8
-const DEFAULT_TIMEOUT_SECS: u64 = 8;
-const MAX_TIMEOUT_SECS: u64 = 30;
-const MIN_TIMEOUT_SECS: u64 = 2;
-// services/speedtest.rs:14
-pub struct EndpointLatency {
-    pub url: String,
-    pub latency: Option<u128>,
-    pub status: Option<u16>,
-    pub error: Option<String>,
-}
-// services/speedtest.rs:22
-pub struct SpeedtestService;
-impl SpeedtestService {
-    pub async fn test_endpoints(urls: Vec<String>, timeout_secs: Option<u64>) -> Result<Vec<EndpointLatency>, AppError>;
-}
-```
-- 测试一组端点的响应延迟
-- 并发请求所有端点（使用 `join_all`）
-- 超时范围：2-30 秒（默认 8 秒）
-- `EndpointLatency` 记录每个端点的延迟、状态码和错误信息
-**sql_helpers.rs**（`services/sql_helpers.rs`，134 行，5.3KB）：
-- SQL 查询辅助函数
-- `fresh_input_sql()` — 生成排除 cache tokens 的 SQL 表达式
-**codex_oauth_models.rs**（`services/codex_oauth_models.rs`，192 行，5.6KB）：
-- Codex OAuth 数据模型
-- 定义 Codex OAuth 相关的结构体
-**proxy.ts Query Hooks**（`src/lib/query/proxy.ts`，244 行）：
-```typescript
-// src/lib/query/proxy.ts:12
-export function useProxyStatus() {
-    return useQuery({
-        queryKey: ["proxyStatus"],
-        queryFn: () => proxyApi.getProxyStatus(),
-        refetchInterval: 5000, // 每 5 秒刷新一次
-    });
-}
-// src/lib/query/proxy.ts:23
-export function useIsProxyRunning() {
-    return useQuery({
-        queryKey: ["proxyRunning"],
-        queryFn: () => proxyApi.isProxyRunning(),
-        refetchInterval: 2000,
-    });
-}
-// src/lib/query/proxy.ts:34
-export function useIsLiveTakeoverActive() {
-    return useQuery({
-        queryKey: ["liveTakeoverActive"],
-        queryFn: () => proxyApi.isLiveTakeoverActive(),
-        refetchInterval: 2000,
-    });
-}
-// src/lib/query/proxy.ts:45
-export function useProxyTakeoverStatus() {
-    return useQuery({
-        queryKey: ["proxyTakeoverStatus"],
-        queryFn: () => proxyApi.getProxyTakeoverStatus(),
-        refetchInterval: 2000,
-    });
-}
-```
-- `useProxyStatus()`（`proxy.ts:12`）— 获取代理状态（每 5 秒刷新）
-- `useIsProxyRunning()`（`proxy.ts:23`）— 检查代理是否运行（每 2 秒刷新）
-- `useIsLiveTakeoverActive()`（`proxy.ts:34`）— 检查是否处于接管模式（每 2 秒刷新）
-- `useProxyTakeoverStatus()`（`proxy.ts:45`）— 获取各应用接管状态（每 2 秒刷新）
-- `useGlobalProxyConfig()`（`proxy.ts`）— 获取全局代理配置
-- `useUpdateGlobalProxyConfig()`（`proxy.ts`）— 更新全局代理配置（mutation）
-- `useSetProxyTakeoverForApp()`（`proxy.ts`）— 设置应用接管状态（mutation）
-- 所有 query hooks 使用 2-5 秒的 `refetchInterval` 实现实时状态同步
-**env_checker.rs**（`services/env_checker.rs`，168 行，5.9KB）：
-```rust
-// services/env_checker.rs:7
-pub struct EnvConflict {
-    pub var_name: String,
-    pub var_value: String,
-    pub source_type: String,  // "system" | "file"
-    pub source_path: String,  // Registry path or file path
-}
-// services/env_checker.rs:20
-pub fn check_env_conflicts(app: &str) -> Result<Vec<EnvConflict>, String> {
-    let keywords = get_keywords_for_app(app);
-    let mut conflicts = Vec::new();
-    conflicts.extend(check_system_env(&keywords)?);
-    #[cfg(not(target_os = "windows"))]
-    conflicts.extend(check_shell_configs(&keywords)?);
-    Ok(conflicts)
-}
-fn get_keywords_for_app(app: &str) -> Vec<&str> {
-    match app.to_lowercase().as_str() {
-        "claude" => vec!["ANTHROPIC"],
-        "codex" => vec!["OPENAI"],
-        "gemini" => vec!["GEMINI", "GOOGLE_GEMINI"],
-        _ => vec![],
-    }
-}
-```
-- 检测环境变量冲突（系统环境变量 vs shell 配置文件）
-- Windows：检查注册表 `HKEY_CURRENT_USER\Environment`
-- Unix：检查 shell 配置文件（`.bashrc`、`.zshrc` 等）
-- 每个工具对应不同的关键词：Claude → `ANTHROPIC`，Codex → `OPENAI`，Gemini → `GEMINI`/`GOOGLE_GEMINI`
-**env_manager.rs**（`services/env_manager.rs`，240 行，8.5KB）：
-- 环境变量管理服务
-- 支持设置和删除环境变量
-- Windows：通过注册表操作
-- Unix：通过 shell 配置文件操作
-**webdav_sync.rs**（`services/webdav_sync.rs`，884 行，29.0KB）：
-```rust
-// services/webdav_sync.rs:32
-const PROTOCOL_FORMAT: &str = "cc-switch-webdav-sync";
-const PROTOCOL_VERSION: u32 = 2;
-const DB_COMPAT_VERSION: u32 = 6;
-const LEGACY_DB_COMPAT_VERSION: u32 = 5;
-const REMOTE_DB_SQL: &str = "db.sql";
-const REMOTE_SKILLS_ZIP: &str = "skills.zip";
-const REMOTE_MANIFEST: &str = "manifest.json";
-const MAX_DEVICE_NAME_LEN: usize = 64;
-const MAX_MANIFEST_BYTES: usize = 1024 * 1024;  // 1MB
-pub(super) const MAX_SYNC_ARTIFACT_BYTES: u64 = 512 * 1024 * 1024;  // 512MB
-```
-- WebDAV v2 同步协议层（基于 manifest 的同步）
-- Artifact 集合：`db.sql` + `skills.zip`
-- `sync_mutex()`（`webdav_sync.rs:43`）— 使用 `OnceLock<tokio::sync::Mutex<()>>` 保证同步互斥
-- `run_with_sync_lock()`（`webdav_sync.rs:48`）— 带锁的异步操作执行器
-- 子模块 `archive` 管理 skills 的备份和恢复
-- `PROTOCOL_VERSION = 2`（`webdav_sync.rs:33`）— 当前协议版本
-- `DB_COMPAT_VERSION = 6`（`webdav_sync.rs:34`）— 数据库兼容版本
-**session_usage.rs**（`services/session_usage.rs`，682 行，22.6KB）：
-```rust
-// services/session_usage.rs:28
-pub struct SessionSyncResult {
-    pub imported: u32,
-    pub skipped: u32,
-    pub files_scanned: u32,
-    pub errors: Vec<String>,
-}
-// services/session_usage.rs:40
-pub struct DataSourceSummary {
-    pub data_source: String,
-    pub request_count: u32,
-    pub total_cost_usd: String,
-}
-```
-- Claude Code 会话日志使用追踪
-- 数据流：`~/.claude/projects/*/*.jsonl` → 增量解析 → 去重 → 费用计算 → `proxy_request_logs` 表
-- 从 JSONL 文件中解析 assistant 消息的 token 使用数据
-- 使用 `CostCalculator` 计算费用
-- `session_usage_codex.rs`（787 行）— Codex 会话日志使用追踪
-- `session_usage_gemini.rs`（494 行）— Gemini 会话日志使用追踪
-- 三个文件分别对应三个工具的会话日志解析
-**coding_plan.rs**（`services/coding_plan.rs`，607 行，21.9KB）：
-```rust
-// services/coding_plan.rs:13
-enum CodingPlanProvider {
-    Kimi,
-    ZhipuCn,
-    ZhipuEn,
-    MiniMaxCn,
-    MiniMaxEn,
-}
-fn detect_provider(base_url: &str) -> Option<CodingPlanProvider> {
-    let url = base_url.to_lowercase();
-    if url.contains("api.kimi.com/coding") { Some(CodingPlanProvider::Kimi) }
-    else if url.contains("open.bigmodel.cn") || url.contains("bigmodel.cn") { Some(CodingPlanProvider::ZhipuCn) }
-    else if url.contains("api.z.ai") { Some(CodingPlanProvider::ZhipuEn) }
-    else if url.contains("api.minimaxi.com") { Some(CodingPlanProvider::MiniMaxCn) }
-    else if url.contains("api.minimax.io") { Some(CodingPlanProvider::MiniMaxEn) }
-    else { None }
-}
-```
-- 国产 Token Plan 额度查询服务（Kimi、智谱 GLM、MiniMax）
-- 复用 subscription 模块的 `SubscriptionQuota` / `QuotaTier` 类型
-- 通过 `base_url` 自动检测供应商类型
-- `millis_to_iso8601()`（`coding_plan.rs:45`）— 毫秒时间戳转 ISO 8601
-- 从 JSON 值提取重置时间，兼容字符串和数字格式
-**ConfigService**（`services/config.rs`，262 行，9.7KB）：
-```rust
-// services/config.rs:10
-const MAX_BACKUPS: usize = 10;
-// services/config.rs:13
-pub struct ConfigService;
-impl ConfigService {
-    pub fn create_backup(config_path: &Path) -> Result<String, AppError> {
-        let timestamp = Utc::now().format("%Y%m%d_%H%M%S");
-        let backup_id = format!("backup_{timestamp}");
-        let backup_dir = config_path.parent().unwrap().join("backups");
-        fs::create_dir_all(&backup_dir)?;
-        let backup_path = backup_dir.join(format!("{backup_id}.json"));
-        fs::write(&backup_path, fs::read(config_path)?)?;
-        Self::cleanup_old_backups(&backup_dir, MAX_BACKUPS)?;
-        Ok(backup_id)
-    }
-    fn cleanup_old_backups(backup_dir: &Path, retain: usize) -> Result<(), AppError>;
-    pub fn export_providers(state: &AppState, app: AppType) -> Result<Vec<Provider>, AppError>;
-    pub fn import_providers(state: &AppState, app: AppType, providers: Vec<Provider>) -> Result<usize, AppError>;
-}
-```
-- `create_backup()`（`config.rs:17`）— 为 config.json 创建带时间戳的备份
-- `MAX_BACKUPS = 10`（`config.rs:10`）— 最多保留 10 个备份
-- `cleanup_old_backups()`（`config.rs:41`）— 清理旧备份，按时间排序保留最新的
-- `export_providers()` — 导出 providers 列表
-- `import_providers()` — 导入 providers 列表
-- 备份存储在 `backups/` 目录下，文件名格式 `backup_YYYYMMDD_HHMMSS.json`
-**omo.rs**（`services/omo.rs`，560 行，19.1KB）：
-```rust
-// services/omo.rs:12
-pub struct OmoLocalFileData {
-    pub agents: Option<Value>,
-    pub categories: Option<Value>,
-    pub other_fields: Option<Value>,
-    pub file_path: String,
-    pub last_modified: Option<String>,
-}
-// services/omo.rs:24
-pub struct OmoVariant {
-    pub preferred_filename: &'static str,
-    pub config_candidates: &'static [&'static str],
-    pub category: &'static str,
-    pub provider_prefix: &'static str,
-    pub plugin_name: &'static str,
-    pub plugin_prefixes: &'static [&'static str],
-    pub has_categories: bool,
-    pub label: &'static str,
-    pub import_label: &'static str,
-}
-pub const STANDARD: OmoVariant = OmoVariant {  // omo.rs:36
-    preferred_filename: "oh-my-openagent.jsonc",
-    config_candidates: &["oh-my-openagent.jsonc", "oh-my-openagent.json", "oh-my-opencode.jsonc", "oh-my-opencode.json"],
-    category: "omo",
-    provider_prefix: "omo-",
-    plugin_name: "oh-my-openagent@latest",
-    plugin_prefixes: &["oh-my-openagent", "oh-my-opencode"],
-    has_categories: true,
-    label: "OMO",
-    import_label: "Imported",
-};
-pub const SLIM: OmoVariant = OmoVariant { /* ... */ };
-```
-- `OmoVariant` 定义了 OMO 的两个变体：`STANDARD` 和 `SLIM`
-- `STANDARD` 对应 `oh-my-openagent.jsonc`（`omo.rs:36`）
-- `SLIM` 对应精简版配置
-- `OmoLocalFileData` 表示本地文件数据（agents、categories、other_fields）
-- 使用 `serde_json::Value` 动态类型处理不确定的 JSON 结构
-**PromptService**（`services/prompt.rs`，242 行，8.6KB）：
-```rust
-// services/prompt.rs:18
-pub struct PromptService;
-impl PromptService {
-    pub fn get_prompts(state: &AppState, app: AppType) -> Result<IndexMap<String, Prompt>, AppError> {
-        state.db.get_prompts(app.as_str())
-    }
-    pub fn upsert_prompt(state: &AppState, app: AppType, _id: &str, prompt: Prompt) -> Result<(), AppError> {
-        state.db.save_prompt(app.as_str(), &prompt)?;
-        if prompt.enabled {
-            // 启用提示词：写入内容到文件
-            let target_path = prompt_file_path(&app)?;
-            write_text_file(&target_path, &prompt.content)?;
-        } else {
-            // 禁用提示词：检查是否还有其他已启用的提示词
-            let prompts = state.db.get_prompts(app.as_str())?;
-            let any_enabled = prompts.values().any(|p| p.enabled);
-            if !any_enabled {
-                // 所有提示词都已禁用，清空文件
-                write_text_file(&target_path, "")?;
-            }
-        }
-        Ok(())
-    }
-}
-```
-- `PromptService` 管理各工具的自定义提示词（存储在数据库中）
-- 启用提示词时写入文件，禁用时检查是否还有其他已启用的提示词
-- 使用 `prompt_file_path()` 获取各工具的提示词文件路径
-- `get_unix_timestamp()`（`prompt.rs:11`）— 安全地获取当前 Unix 时间戳
-**model_fetch.rs**（`services/model_fetch.rs`，414 行，13.2KB）：
-```rust
-// services/model_fetch.rs:14
-pub struct FetchedModel {
-    pub id: String,
-    pub owned_by: Option<String>,
-}
-// services/model_fetch.rs:31
-const FETCH_TIMEOUT_SECS: u64 = 15;
-const ERROR_BODY_MAX_CHARS: usize = 512;
-// services/model_fetch.rs:38
-const KNOWN_COMPAT_SUFFIXES: &[&str] = &[
-    "/api/claudecode", "/api/anthropic", "/apps/anthropic",
-    "/api/coding", "/claudecode", "/anthropic",
-    "/step_plan", "/coding", "/claude",
-];
-```
-- 通过 OpenAI 兼容的 `GET /v1/models` 端点获取供应商可用模型列表
-- 主要面向第三方聚合站（硅基流动、OpenRouter 等）
-- `KNOWN_COMPAT_SUFFIXES`（`model_fetch.rs:38`）— 已知的 Anthropic 协议兼容子路径后缀
-- `fetch_models()`（`model_fetch.rs:53`）— 按候选列表顺序尝试获取模型列表
-- 404/405 响应体截断为 512 字符，避免保留几十 KB HTML 404 页
-**balance.rs**（`services/balance.rs`，418 行，13.8KB）：
-```rust
-// services/balance.rs:11
-enum BalanceProvider {
-    DeepSeek,
-    StepFun,
-    SiliconFlow,
-    SiliconFlowEn,
-    OpenRouter,
-    NovitaAI,
-}
-fn detect_provider(base_url: &str) -> Option<BalanceProvider> {
-    let url = base_url.to_lowercase();
-    if url.contains("api.deepseek.com") { Some(BalanceProvider::DeepSeek) }
-    else if url.contains("api.stepfun.ai") || url.contains("api.stepfun.com") { Some(BalanceProvider::StepFun) }
-    else if url.contains("api.siliconflow.cn") { Some(BalanceProvider::SiliconFlow) }
-    else if url.contains("api.siliconflow.com") { Some(BalanceProvider::SiliconFlowEn) }
-    else if url.contains("openrouter.ai") { Some(BalanceProvider::OpenRouter) }
-    else if url.contains("api.novita.ai") { Some(BalanceProvider::NovitaAI) }
-    else { None }
 }
 ```
 - 支持 6 家供应商的账户余额查询
@@ -6918,7 +3692,7 @@ pub use coding_plan::*; pub use config::*; pub use copilot::*;
 **database/ 目录**（`src-tauri/src/database/`，5 个文件 + dao/ 子目录）：
 | 文件 | 大小 | 职责 |
 |------|------|------|
-| schema.rs | 77.8KB | 数据库 schema 定义（15 张表的 SQL） |
+|schema.rs | 77.8KB | 数据库 schema 定义（23 张表的 SQL） |
 | backup.rs | 31.7KB | 数据库备份和恢复 |
 | tests.rs | 22.7KB | 数据库测试 |
 | mod.rs | 8.9KB | Database 结构体和初始化 |
@@ -6928,7 +3702,7 @@ pub use coding_plan::*; pub use config::*; pub use copilot::*;
 - `SCHEMA_VERSION = 10`（`database/mod.rs:52`）— 当前 schema 版本
 - `lock_conn!` 宏（`database/mod.rs:61`）— 获取数据库连接
 - `init()`（`database/mod.rs:95`）— 初始化数据库
-- `dao/` 子目录包含 12 个 DAO 模块：providers、settings、mcp_servers、prompts、skills、proxy_config、proxy_request_logs、session_usage、subscription、usage_cache、universal_providers、stream_check
+- `dao/` 子目录包含 11 个 DAO 模块：providers、settings、mcp、prompts、skills、proxy（代理配置 + 请求日志）、failover、providers_seed、usage_rollup、stream_check、universal_providers
 **commands/ 目录**（`src-tauri/src/commands/`，32 个文件）：
 | 文件 | 大小 | 职责 |
 |------|------|------|

@@ -1,0 +1,1 @@
+I have all the evidence from my prior reads and source verifications. Writing the synthesis now.I have all the evidence from prior reads. Writing the synthesis now.I have all findings files read and key conflicts verified against source. Writing the synthesis now.

@@ -1,0 +1,285 @@
+{
+  "name": "cc-switch-notes-factcheck",
+  "status": "failed",
+  "mode": "parallel",
+  "iteration": 0,
+  "targetCount": 1,
+  "agents": {
+    "inventory": {
+      "name": "inventory",
+      "status": "failed",
+      "iteration": 0,
+      "wave": 0,
+      "startedAt": 1779961885105,
+      "completedAt": 1779963379638,
+      "error": "OpenAI completions stream stalled while waiting for the next event"
+    },
+    "ch1_architecture_source_trace": {
+      "name": "ch1_architecture_source_trace",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 1,
+      "startedAt": 1779963379672,
+      "completedAt": 1779963949703
+    },
+    "ch1_architecture_skeptic": {
+      "name": "ch1_architecture_skeptic",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 1,
+      "startedAt": 1779963379671,
+      "completedAt": 1779963852123
+    },
+    "ch1_line_ref_auditor": {
+      "name": "ch1_line_ref_auditor",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 1,
+      "startedAt": 1779963379672,
+      "completedAt": 1779963858461
+    },
+    "ch2_rust_tauri_source_trace": {
+      "name": "ch2_rust_tauri_source_trace",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 1,
+      "startedAt": 1779963379672,
+      "completedAt": 1779963753308
+    },
+    "ch2_rust_tauri_skeptic": {
+      "name": "ch2_rust_tauri_skeptic",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 2,
+      "startedAt": 1779963949776,
+      "completedAt": 1779964029763
+    },
+    "ch3_core_models_api_trace": {
+      "name": "ch3_core_models_api_trace",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 2,
+      "startedAt": 1779963949776,
+      "completedAt": 1779964211088
+    },
+    "ch3_core_models_data_skeptic": {
+      "name": "ch3_core_models_data_skeptic",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 2,
+      "startedAt": 1779963949776,
+      "completedAt": 1779964179279
+    },
+    "ch3_core_models_line_ref": {
+      "name": "ch3_core_models_line_ref",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 2,
+      "startedAt": 1779963949776,
+      "completedAt": 1779964349044
+    },
+    "ch3_database_persistence_trace": {
+      "name": "ch3_database_persistence_trace",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 3,
+      "startedAt": 1779964349089,
+      "completedAt": 1779964421317
+    },
+    "ch3_services_flow_trace": {
+      "name": "ch3_services_flow_trace",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 3,
+      "startedAt": 1779964349089,
+      "completedAt": 1779964641956
+    },
+    "ch3_db_services_skeptic": {
+      "name": "ch3_db_services_skeptic",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 3,
+      "startedAt": 1779964349089,
+      "completedAt": 1779965021898
+    },
+    "ch4_proxy_request_trace": {
+      "name": "ch4_proxy_request_trace",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 3,
+      "startedAt": 1779964349089,
+      "completedAt": 1779964612894
+    },
+    "ch4_proxy_lifecycle_trace": {
+      "name": "ch4_proxy_lifecycle_trace",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 4,
+      "startedAt": 1779965021964,
+      "completedAt": 1779965337198
+    },
+    "ch4_proxy_fault_skeptic": {
+      "name": "ch4_proxy_fault_skeptic",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 4,
+      "startedAt": 1779965021964,
+      "completedAt": 1779965309547
+    },
+    "ch5_frontend_ipc_state_trace": {
+      "name": "ch5_frontend_ipc_state_trace",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 4,
+      "startedAt": 1779965021964,
+      "completedAt": 1779965264593
+    },
+    "ch5_frontend_component_trace": {
+      "name": "ch5_frontend_component_trace",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 4,
+      "startedAt": 1779965021964,
+      "completedAt": 1779965059875
+    },
+    "ch5_frontend_skeptic": {
+      "name": "ch5_frontend_skeptic",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 5,
+      "startedAt": 1779965337248,
+      "completedAt": 1779965364404
+    },
+    "ch6_quality_evidence_trace": {
+      "name": "ch6_quality_evidence_trace",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 5,
+      "startedAt": 1779965337248,
+      "completedAt": 1779965589072
+    },
+    "ch6_quality_counterexample_skeptic": {
+      "name": "ch6_quality_counterexample_skeptic",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 5,
+      "startedAt": 1779965337248,
+      "completedAt": 1779965652537
+    },
+    "ch7_roadmap_source_support": {
+      "name": "ch7_roadmap_source_support",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 5,
+      "startedAt": 1779965337248,
+      "completedAt": 1779965517372
+    },
+    "ch7_roadmap_skeptic": {
+      "name": "ch7_roadmap_skeptic",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 6,
+      "startedAt": 1779965652597,
+      "completedAt": 1779965688620
+    },
+    "global_file_line_auditor": {
+      "name": "global_file_line_auditor",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 6,
+      "startedAt": 1779965652597,
+      "completedAt": 1779966273947
+    },
+    "global_internal_consistency_auditor": {
+      "name": "global_internal_consistency_auditor",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 6,
+      "startedAt": 1779965652597,
+      "completedAt": 1779965914599
+    },
+    "global_random_claims_auditor_a": {
+      "name": "global_random_claims_auditor_a",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 6,
+      "startedAt": 1779965652597,
+      "completedAt": 1779966100654
+    },
+    "global_random_claims_auditor_b": {
+      "name": "global_random_claims_auditor_b",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 7,
+      "startedAt": 1779966274009,
+      "completedAt": 1779966303586
+    },
+    "synthesis_referee": {
+      "name": "synthesis_referee",
+      "status": "failed",
+      "iteration": 0,
+      "wave": 8,
+      "startedAt": 1779966303652,
+      "completedAt": 1779966858679,
+      "error": "OpenAI completions stream stalled while waiting for the next event"
+    },
+    "repairer": {
+      "name": "repairer",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 9,
+      "startedAt": 1779966858732,
+      "completedAt": 1779967748337
+    },
+    "post_repair_backend_auditor": {
+      "name": "post_repair_backend_auditor",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 10,
+      "startedAt": 1779967748417,
+      "completedAt": 1779968192759
+    },
+    "post_repair_frontend_auditor": {
+      "name": "post_repair_frontend_auditor",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 10,
+      "startedAt": 1779967748417,
+      "completedAt": 1779968349393
+    },
+    "post_repair_line_ref_auditor": {
+      "name": "post_repair_line_ref_auditor",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 10,
+      "startedAt": 1779967748417,
+      "completedAt": 1779968593882
+    },
+    "post_repair_skeptic": {
+      "name": "post_repair_skeptic",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 10,
+      "startedAt": 1779967748417,
+      "completedAt": 1779968828958
+    },
+    "final_patch_integrator": {
+      "name": "final_patch_integrator",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 11,
+      "startedAt": 1779968828992,
+      "completedAt": 1779969681310
+    },
+    "final_reviewer": {
+      "name": "final_reviewer",
+      "status": "completed",
+      "iteration": 0,
+      "wave": 12,
+      "startedAt": 1779969681349,
+      "completedAt": 1779970538676
+    }
+  },
+  "startedAt": 1779961885042,
+  "completedAt": 1779970538719
+}
