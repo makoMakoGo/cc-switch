@@ -285,10 +285,16 @@ App.tsx
 | 概念 | 说明 |
 |------|------|
 | 生命周期标注 `'a` | cc-switch 里几乎不用，只在 `tauri::State<'_, AppState>` 出现 |
-| trait object (`dyn Trait`) | 用得很少 |
-| `unsafe` | 搜索了一下，项目里没有 |
+| trait object (`dyn Trait`) | 有少量关键用法：ProviderAdapter 分发（`proxy/providers/mod.rs:236`）、HTTP stream erase type（`proxy/hyper_client.rs:90`）、用量 SQL 参数（`services/usage_stats.rs:400`） |
+| `unsafe` | `src-tauri/src` 源码中无 `unsafe` 关键字 |
 | 泛型约束 (`where T: ...`) | 有但不复杂，跟着类型提示走就行 |
 | 宏 (`macro_rules!`) | 只有 `lock_conn!` 一个自定义宏（`database/mod.rs:61`） |
+
+
+读源码时可以把 Rust 机制按风险分层：
+- **必须懂**：`Arc`/`Mutex`/`RwLock`，因为数据库、代理状态、settings 缓存都靠共享状态协调。
+- **知道即可**：`dyn Trait` 主要用于“隐藏具体类型”而不是复杂继承；例如 `get_adapter()` 返回 `Box<dyn ProviderAdapter>`（`proxy/providers/mod.rs:236`），调用方只关心统一接口。
+- **优先查错误传播**：大多数业务函数返回 `Result<_, AppError>` 或 `Result<_, String>`，`?` 会提前返回；遇到看不懂的控制流，先找 `map_err` 和 `?`，再看后续逻辑。
 
 ### 2.3 Tauri 特有模式
 
