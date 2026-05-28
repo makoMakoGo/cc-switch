@@ -1464,7 +1464,7 @@ pub struct RequestForwarder {
   - `acquire()` 增加计数，`Drop` 减少计数
   - Drop 不能 await，所以把减量操作调度到 tokio runtime
   - 没有 runtime 时静默丢失计数（仅 UI 展示用，可接受最终一致性）
-- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3101 行，122.1KB）
+- `RequestForwarder`（`forwarder.rs:89`）— 请求转发器（3100 行，122.2KB）
   - 持有 `ProviderRouter`（熔断器状态）
   - 持有 `FailoverSwitchManager`（故障转移切换）
   - 持有 `GeminiShadowStore`（Gemini Native shadow replay）
@@ -3058,6 +3058,17 @@ useTauriEvent("provider-changed", (event) => {
 - `App.tsx`（1604 行）— 14 个视图 + 事件处理 + 状态管理全在一个文件
 - `useProviderActions.ts`（385 行）— 包含 7 个工具的增删改切逻辑，可按工具拆分
 - 9 个 preset 文件（237KB）— 结构几乎一样但没有抽取公共模板
+
+### 6.5 从 slop 到可执行切分的边界
+
+| Slop 现象 | 源码边界 | 首个安全切分点 | 风险 |
+|----------|----------|----------------|------|
+| `services/proxy.rs` 同时管启动、接管、恢复、热切换 | `start()`（`services/proxy.rs:389`）、`set_takeover_for_app()`（`services/proxy.rs:535`）、`stop_with_restore_keep_state()`（`services/proxy.rs:1027`）、`hot_switch_provider()`（`services/proxy.rs:1811`） | 先抽只依赖 `Database` 和 live config 的 takeover/restore helper；保持 `ProxyService` 对外方法不变 | 接管状态由 `proxy_config.enabled`、live backup、占位符三者共同决定，不能只移动 UI 开关逻辑 |
+| `forwarder.rs` 混合连接计数、重试日志、端点改写、错误摘要 | `ActiveConnectionGuard`（`forwarder.rs:61`）、`RequestForwarder` 字段（`forwarder.rs:89-121`）、错误摘要 helper（`forwarder.rs:1924-2044`）、端点改写 helper（`forwarder.rs:2046-2075`） | 先抽纯函数 helper（错误摘要、endpoint/query 改写），再抽 RAII guard；不要先拆 `forward_with_retry()` 主流程 | `ActiveConnectionGuard::drop()` 不能 await，只能 spawn；抽出时要保留没有 runtime 时静默丢失 UI 计数的现有语义 |
+| 多个 AppType match 重复表达能力矩阵 | `McpApps::is_enabled_for()`（`app_config.rs:24`）、`VisibleApps::is_visible()`（`settings.rs:66`）、`CommonConfigSnippets::get()`（`app_config.rs:441`） | 先集中“是否支持 MCP / 是否显示 / 是否支持 common snippet”的能力表，而不是直接删 match | OpenClaw 不支持 MCP，ClaudeDesktop 在 common snippets 中返回 `None`；能力表必须保留这些非对称例外 |
+| `Provider.settings_config` 动态类型承载所有工具配置 | 字段定义（`provider.rs:13-14`）、按工具校验（`services/provider/mod.rs:2250-2355`） | 先为每个 AppType 建 schema/fixture 测试，再引入 typed wrapper；数据库仍保存 JSON | 旧数据、导入 preset、live config 反向导入都可能产生并非新 enum 覆盖的合法 JSON |
+| settings 缓存把文件 I/O 和内存状态绑在一起 | `SETTINGS_STORE`（`settings.rs:519`）、`update_settings()`（`settings.rs:562`）、`mutate_settings()`（`settings.rs:574`） | 先抽 `load/save/normalize` 纯边界，保持“写文件成功后才替换缓存” | 如果先替换锁类型或改错误处理，poisoned lock 恢复路径和前端脱敏输出可能被改坏 |
+
 ---
 
 ## 第 7 章：重构路线图
