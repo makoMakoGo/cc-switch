@@ -2791,17 +2791,17 @@ pub fn init() -> Result<Self, AppError> {  // database/mod.rs:95
 - `migration.rs`（28.3KB）— JSON → SQLite 数据迁移
 - `dao/` — 数据访问对象（12 个文件）：
   - `providers.rs`（786 行）— Provider CRUD
-  - `proxy.rs`（952 行）— 代理配置
+  - `proxy.rs`（247 行）— 代理配置
   - `usage_rollup.rs`（377 行）— 用量统计
-  - `settings.rs`（327 行）— 通用设置
+  - `settings.rs`（876 行）— 通用设置
   - `skills.rs`（263 行）— Skills 管理
-  - `failover.rs`（149 行）— 故障转移队列
-  - `mcp.rs`（106 行）— MCP 服务器配置
+  - `failover.rs`（182 行）— 故障转移队列
+  - `mcp.rs`（643 行）— MCP 服务器配置
   - `prompts.rs`（88 行）— Prompt 管理
   - `providers_seed.rs`（94 行）— 官方预设种子数据
-  - `stream_check.rs`（74 行）— 流式检查配置
+  - `stream_check.rs`（364 行）— 流式检查配置
   - `universal_providers.rs`（74 行）— 通用 Provider
-  - `mod.rs`（19 行）— 模块声明
+  - `mod.rs`（66 行）— 模块声明
 
 **关键设计**：
 - `lock_conn!` 宏（`mod.rs:61`）安全获取 Mutex 锁，避免 unwrap panic
@@ -4557,7 +4557,7 @@ export const useAddProviderMutation = (appId: AppId) => {
 - `queryClient.ts`（264B）— QueryClient 配置
 - `index.ts`（144B）— 模块导出
 **前端工具函数**（`src/utils/`）：
-- `deepClone.ts`（22 行）— 深拷贝工具
+- `deepClone.ts`（21 行）— 深拷贝工具
   - 优先使用 `globalThis.structuredClone`
   - 回退方案：递归拷贝（处理 Date、Array、Object）
 - `errorUtils.ts`（3.5KB）— 错误提取工具
@@ -4979,9 +4979,9 @@ useTauriEvent("provider-changed", (event) => {
 
 **代理子系统的 AI Slop 特征**：
 - `forwarder.rs`（3100 行）— 请求转发、格式转换、错误处理全在一起
-- `transform_codex_chat.rs`（2074 行）— 单个转换函数太大
-- `streaming.rs`（1142 行）+ `streaming_codex_chat.rs`（1083 行）+ `streaming_gemini.rs`（1055 行）+ `streaming_responses.rs`（1186 行）— 4 个流式转换模块结构相似但各自实现
-- `copilot_auth.rs`（2095 行）+ `codex_oauth_auth.rs`（1134 行）— 两个 OAuth 模块结构相似
+- `transform_codex_chat.rs`（2073 行）— 单个转换函数太大
+- `streaming.rs`（1141 行）+ `streaming_codex_chat.rs`（1082 行）+ `streaming_gemini.rs`（1054 行）+ `streaming_responses.rs`（1185 行）— 4 个流式转换模块结构相似但各自实现
+- `copilot_auth.rs`（2094 行）+ `codex_oauth_auth.rs`（1133 行）— 两个 OAuth 模块结构相似
 - `PROXY_AUTH_PLACEHOLDER`（`forwarder.rs:35`）和 `PROXY_TOKEN_PLACEHOLDER`（`services/proxy.rs:22`）值都是 `"PROXY_MANAGED"` 但常量名不同
 **前端 AI Slop 特征**：
 - `App.tsx`（1604 行）— 14 个视图 + 事件处理 + 状态管理全在一个文件
