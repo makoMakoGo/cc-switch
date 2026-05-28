@@ -936,7 +936,7 @@ pub struct WebDavSyncSettings {  // settings.rs:107
 | 工具 | 文件 | 实际大小 | 配置路径 |
 |------|------|---------|---------|
 | Claude Code | services/provider/mod.rs | 105.5KB | `~/.claude/settings.json` |
-| Claude Desktop | claude_desktop_config.rs | 61.4KB | 平台相关 |
+| Claude Desktop | claude_desktop_config.rs | 61.5KB | 平台相关 |
 |Codex CLI | codex_config.rs | 66.5KB | `~/.codex/config.toml` |
 |Gemini CLI | gemini_config.rs | 20.4KB | `~/.gemini/settings.json` |
 |OpenCode | opencode_config.rs | 6.9KB | `~/.config/opencode/opencode.json` |
@@ -949,7 +949,7 @@ pub struct WebDavSyncSettings {  // settings.rs:107
 
 **AI Slop 特征**：
 - 各 config 模块的读写逻辑相似，但没有抽取公共函数
-- `codex_config.rs`（66.4KB）和 `hermes_config.rs`（69.0KB）明显过大
+- `codex_config.rs`（66.5KB）和 `hermes_config.rs`（69.0KB）明显过大
 - 没有统一的 config trait 或接口
 
 ### 3.7 database/ — 数据持久化（SQLite）
@@ -1520,7 +1520,7 @@ pub struct SwitchResult {
 ```text
 src-tauri/src/proxy/
 ├── server.rs           # 388 行，HTTP 服务器（Axum）
-├── forwarder.rs        # 3100 行，请求转发（122.1KB）
+├── forwarder.rs        # 3100 行，请求转发（122.2KB）
 ├── circuit_breaker.rs  # 495 行，熔断器
 ├── provider_router.rs  # 523 行，多 provider 路由
 ├── failover_switch.rs  # 故障转移切换
@@ -2970,14 +2970,14 @@ useTauriEvent("provider-changed", (event) => {
 |------|----------|------|
 | `lib.rs` | 1825 行 | 模块声明 + 插件注册 + 命令注册 + 初始化逻辑全混在一起 |
 | `services/proxy.rs` | 141.3KB (3909 行) | ProxyService 所有方法全在一个文件 |
-| `proxy/forwarder.rs` | 122.1KB (3100 行) | 请求转发 + 格式转换 + 错误处理全在一起 |
+| `proxy/forwarder.rs` | 122.2KB (3100 行) | 请求转发 + 格式转换 + 错误处理全在一起 |
 | `provider/mod.rs` (services) | 105.5KB (2766 行) | ProviderService 所有方法 |
 | `skill.rs` (services) | 104.7KB (3127 行) | SkillService 所有方法 |
 | `usage_stats.rs` (services) | 114.6KB (3250 行) | UsageStatsService 所有方法 |
 | `stream_check.rs` (services) | 80.9KB (2166 行) | StreamCheckService 所有方法 |
 | `hermes_config.rs` | 69.0KB | Hermes 配置读写 |
-| `codex_config.rs` | 66.4KB | Codex 配置读写 |
-| `claude_desktop_config.rs` | 61.4KB | Claude Desktop 配置读写 |
+| `codex_config.rs` | 66.5KB | Codex 配置读写 |
+| `claude_desktop_config.rs` | 61.5KB | Claude Desktop 配置读写 |
 | `App.tsx` | 1604 行 | 14 个视图 + 事件处理 + 状态管理全在一个文件 |
 
 **复制粘贴的 config 模块**：
@@ -3049,7 +3049,7 @@ useTauriEvent("provider-changed", (event) => {
 - `commands/misc.rs`（176.0KB）— 最大的命令文件，包含大量杂项命令
 
 **配置层 AI Slop 特征**：
-- 7 个 config 模块（`claude_desktop_config.rs` 61.4KB、`codex_config.rs` 66.4KB、`hermes_config.rs` 69.0KB 等）结构几乎一样但各自实现
+- 7 个 config 模块（`claude_desktop_config.rs` 61.5KB、`codex_config.rs` 66.5KB、`hermes_config.rs` 69.0KB 等）结构几乎一样但各自实现
 - `Provider.settings_config: serde_json::Value`（`provider.rs:14`）— 动态类型，运行时才知道配置是否合法
 - `AppType` 的 match 分支在 `McpApps`、`VisibleApps`、`CommonConfigSnippets` 等处重复出现（`app_config.rs:24`、`settings.rs:66`、`app_config.rs:439`）
 - 每次加新工具都要改 10+ 个 match
@@ -3105,7 +3105,7 @@ useTauriEvent("provider-changed", (event) => {
   - `restore.rs` — 启动时恢复逻辑（`stop_with_restore_keep_state()`）
 - `provider/mod.rs`（105.5KB）→ 拆分成多个子模块
 - `App.tsx`（1604 行）→ 每个视图一个文件 + `AppRouter.tsx`
-- `codex_config.rs`（66.4KB）→ `codex/` 目录
+- `codex_config.rs`（66.5KB）→ `codex/` 目录
 - `hermes_config.rs`（69.0KB）→ `hermes/` 目录
 - `claude_desktop_config.rs`（61.5KB）→ `claude_desktop/` 目录
 
@@ -3140,7 +3140,7 @@ impl ToolConfig for ClaudeConfig {
 - 切换逻辑统一处理，不再分散在各个 config 模块
 
 **代理子系统的简化**：
-- `forwarder.rs`（122.1KB，3100 行）→ 拆分建议：
+- `forwarder.rs`（122.2KB，3100 行）→ 拆分建议：
   - `forwarder.rs` — `RequestForwarder` 核心结构和 `forward_with_retry()`
   - `connection_guard.rs` — `ActiveConnectionGuard` RAII 模式
   - `retry.rs` — 重试逻辑
@@ -3151,7 +3151,7 @@ impl ToolConfig for ClaudeConfig {
 1. 抽取 `ToolConfig` trait（中等风险，高收益）— 减少 7 个 config 模块的重复代码
 2. 拆分 `lib.rs`（低风险，中等收益）— 1825 行的上帝文件需要拆分
 3. 拆分 `services/proxy.rs`（中等风险，高收益）— 141.3KB 的 ProxyService 需要拆分
-4. 拆分 `forwarder.rs`（高风险，高收益）— 122.1KB 的 RequestForwarder 需要拆分
+4. 拆分 `forwarder.rs`（高风险，高收益）— 122.2KB 的 RequestForwarder 需要拆分
 5. 统一 `AppType` match（低风险，中等收益）— 减少 10+ 处重复 match
 6. 强类型化 `Provider.settings_config`（高风险，高收益）— 用 enum 替代 `serde_json::Value`
 
@@ -3193,7 +3193,7 @@ impl ToolConfig for ClaudeConfig {
 | services/usage_stats.rs | 114.6KB | 3250 |
 | services/skill.rs | 104.7KB | 3127 |
 | services/stream_check.rs | 80.9KB | 2166 |
-| proxy/forwarder.rs | 122.1KB | 3100 |
+| proxy/forwarder.rs | 122.2KB | 3100 |
 | proxy/circuit_breaker.rs | — | 495 |
 | proxy/provider_router.rs | — | 523 |
 | proxy/server.rs | — | 388 |
@@ -3210,8 +3210,8 @@ impl ToolConfig for ClaudeConfig {
 | database/schema.rs | 77.8KB | 2050 |
 | database/backup.rs | 31.7KB | 860 |
 | database/migration.rs | 9.2KB | 245 |
-| claude_desktop_config.rs | 61.4KB | 1826 |
-| codex_config.rs | 66.4KB | 2024 |
+| claude_desktop_config.rs | 61.5KB | 1826 |
+| codex_config.rs | 66.5KB | 2024 |
 | hermes_config.rs | 69.0KB | 1947 |
 | openclaw_config.rs | 34.9KB | 1089 |
 | gemini_config.rs | 20.4KB | 654 |
