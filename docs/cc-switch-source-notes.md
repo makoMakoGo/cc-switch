@@ -197,7 +197,34 @@ static SETTINGS_STORE: OnceLock<RwLock<AppSettings>> = OnceLock::new();  // sett
 - 写流程：`mutate_settings()`（`settings.rs:574`）→ 读 → clone → 修改 → 写文件 → 更新内存缓存
 - `mutate_settings` 是私有函数（非 `pub`），参数名是 `mutator` 不是 `f`
 
-**前端状态**（React）：
+**前端状态管理层次**：
+```text
+App.tsx (1604 行)
+  ├─ localStorage("currentView")     ← 当前视图状态（14 个视图）
+  ├─ useQuery(["providers"])          ← React Query 缓存 provider 列表
+  ├─ useTauriEvent("provider-changed") ← 监听后端事件刷新 UI
+  └─ useProxyStatus()                 ← 轮询代理状态（每 5 秒）
+
+hooks/ 目录（25 个 hooks）：
+  ├─ useSettings.ts (512 行)         ← 设置管理（读写、同步）
+  ├─ useProviderActions.ts (385 行)  ← Provider CRUD 操作
+  ├─ useProxyStatus.ts (185 行)      ← 代理状态轮询
+  ├─ useDirectorySettings.ts (275 行) ← 目录配置
+  └─ useDragSort.ts (95 行)          ← 拖拽排序
+
+lib/query/ 目录（10 个文件）：
+  ├─ queries.ts (156 行)             ← 查询钩子（useProvidersQuery 等）
+  ├─ mutations.ts (357 行)           ← 变更钩子（useAddProviderMutation 等）
+  ├─ proxy.ts (244 行)               ← 代理查询钩子
+  ├─ failover.ts (289 行)            ← 故障转移查询钩子
+  ├─ usage.ts (320 行)               ← 用量查询钩子
+  └─ subscription.ts (64 行)         ← 订阅查询钩子
+```
+- React Query 管理所有服务端状态（缓存、刷新、乐观更新）
+- Tauri event listeners 管理后端→前端的实时通知
+- localStorage 管理纯前端状态（当前视图、UI 偏好）
+- hooks 层封装业务逻辑（useSettings、useProviderActions）
+- query 层封装数据获取（queries、mutations）
 
 ```text
 App.tsx
