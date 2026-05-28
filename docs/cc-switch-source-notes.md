@@ -3742,7 +3742,41 @@ pub struct RequestForwarder {
 - `optimizer_config` — Thinking 模式优化器配置
 - `copilot_optimizer_config` — Copilot 请求优化器配置（处理 x-initiator 头）
 
-### 4.1.2 ProxyServer 生命周期（`proxy/server.rs:94`）
+### 4.1.2 请求转发流程（`forwarder.rs:275`）
+
+```rust
+// forwarder.rs:275
+pub async fn forward_with_retry(
+    &self, app_type: &AppType, method: http::Method, endpoint: &str,
+    body: Value, headers: HeaderMap, extensions: Extensions, providers: Vec<Provider>,
+) -> Result<ForwardResult, ForwardError> {
+    let guard = ActiveConnectionGuard::acquire(self.status.clone()).await;
+    // 增加总请求数和最后请求时间
+    s.total_requests = s.total_requests.saturating_add(1);
+    s.last_request_at = Some(chrono::Utc::now().to_rfc3339());
+    let result = self.forward_with_retry_inner(...).await;
+    // guard 注入到 Ok 结果，随响应一起流转到 response_processor
+    result.map(|mut fr| { fr.connection_guard = Some(guard); fr })
+}
+```
+
+**转发流程**（`forward_with_retry_inner`，`forwarder.rs:315`）：
+1. 获取适配器（`get_adapter(app_type)`）
+2. 检查 providers 列表是否为空
+3. 单 Provider 场景下跳过熔断器检查（`bypass_circuit_breaker = providers.len() == 1`）
+4. 依次尝试每个供应商（最多 `max_attempts` 次）：
+   - 检查熔断器状态（`AllowResult`）
+   - 构建请求 URL 和认证头
+   - 发送请求（流式/非流式）
+   - 处理响应（整流器、优化器）
+   - 记录成功/失败结果到熔断器
+5. 所有供应商都失败时返回最后一个错误
+
+**错误分类**（`forwarder.rs:223`）：
+- Provider 错误（`Timeout`、`ForwardFailed`、`UpstreamError >= 500`）→ 继续故障转移
+- 客户端错误（`UpstreamError < 500`）→ 直接返回，没有 provider 能修复
+
+### 4.1.3 ProxyServer 生命周期（`proxy/server.rs:94`）
 
 **启动流程**（`start()`，`server.rs:94`）：
 1. 检查是否已在运行（`shutdown_tx.read().await.is_some()`）
