@@ -573,16 +573,16 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
 | stream_check.rs | 2.7KB | 流式检查 DAO |
 | universal_providers.rs | 2.5KB | 通用 Provider DAO |
 | mod.rs | 448B | 模块导出 |
-- `proxy.rs`（33.9KB）是最大的 DAO 文件，包含代理配置和请求日志操作
+- `proxy.rs`（7.5KB）是最大的 DAO 文件，包含代理配置和请求日志操作
 - `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
 - `usage_rollup.rs`（15.3KB）包含用量聚合查询
-- `settings.rs`（11.9KB）包含设置的读写操作
+- `settings.rs`（28.9KB）包含设置的读写操作
 - `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
-- `failover.rs`（4.8KB）包含故障转移队列操作
-- `mcp.rs`（4.1KB）包含 MCP 服务器的 CRUD 操作
+- `failover.rs`（5.5KB）包含故障转移队列操作
+- `mcp.rs`（19.6KB）包含 MCP 服务器的 CRUD 操作
 - `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
 - `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
-- `stream_check.rs`（2.7KB）包含流式检查记录操作
+- `stream_check.rs`（10.9KB）包含流式检查记录操作
 - `universal_providers.rs`（2.5KB）包含通用 Provider 操作
 **commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
 ```rust
@@ -659,10 +659,10 @@ pub use coding_plan::*; pub use config::*; pub use copilot::*;
 | coding_plan.rs | 278B | Coding Plan 命令 |
 | balance.rs | 217B | 余额查询命令 |
 - `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
-- `provider.rs`（32.3KB）包含 Provider CRUD 和切换命令
+- `provider.rs`（40.6KB）包含 Provider CRUD 和切换命令
 - 所有命令通过 `#[tauri::command]` 宏注册
 - 命令参数从 JavaScript 通过 Tauri IPC 传递
-**lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
+**lib.rs 模块列表**（`src-tauri/src/lib.rs`， 1825 行）：
 ```rust
 // src-tauri/src/lib.rs:1-36
 mod app_config;        mod app_store;         mod auto_launch;
@@ -786,12 +786,12 @@ export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
 - `queryClient.ts`（264B）— QueryClient 配置
 - `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
 - `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
-- `proxy.ts`（6.5KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
-- `subscription.ts`（2.1KB）— 订阅查询钩子（useSubscriptionQuota）
-- `copilot.ts`（1.7KB）— Copilot 查询钩子（useCopilotQuota）
-- `failover.ts`（7.9KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
-- `omo.ts`（2.6KB）— OMO 查询钩子（工厂模式）
-- `usage.ts`（8.5KB）— 用量查询钩子
+- `proxy.ts`（3.2KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
+- `subscription.ts`（0.6KB）— 订阅查询钩子（useSubscriptionQuota）
+- `copilot.ts`（5.9KB）— Copilot 查询钩子（useCopilotQuota）
+- `failover.ts`（2.7KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
+- `omo.ts`（12.1KB）— OMO 查询钩子（工厂模式）
+- `usage.ts`（6.0KB）— 用量查询钩子
 **copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
 ```typescript
 // src/lib/query/copilot.ts:5
@@ -1404,16 +1404,16 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
 | stream_check.rs | 2.7KB | 流式检查 DAO |
 | universal_providers.rs | 2.5KB | 通用 Provider DAO |
 | mod.rs | 448B | 模块导出 |
-- `proxy.rs`（33.9KB）是最大的 DAO 文件，包含代理配置和请求日志操作
+- `proxy.rs`（7.5KB）是最大的 DAO 文件，包含代理配置和请求日志操作
 - `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
 - `usage_rollup.rs`（15.3KB）包含用量聚合查询
-- `settings.rs`（11.9KB）包含设置的读写操作
+- `settings.rs`（28.9KB）包含设置的读写操作
 - `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
-- `failover.rs`（4.8KB）包含故障转移队列操作
-- `mcp.rs`（4.1KB）包含 MCP 服务器的 CRUD 操作
+- `failover.rs`（5.5KB）包含故障转移队列操作
+- `mcp.rs`（19.6KB）包含 MCP 服务器的 CRUD 操作
 - `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
 - `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
-- `stream_check.rs`（2.7KB）包含流式检查记录操作
+- `stream_check.rs`（10.9KB）包含流式检查记录操作
 - `universal_providers.rs`（2.5KB）包含通用 Provider 操作
 **commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
 ```rust
@@ -1490,10 +1490,10 @@ pub use coding_plan::*; pub use config::*; pub use copilot::*;
 | coding_plan.rs | 278B | Coding Plan 命令 |
 | balance.rs | 217B | 余额查询命令 |
 - `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
-- `provider.rs`（32.3KB）包含 Provider CRUD 和切换命令
+- `provider.rs`（40.6KB）包含 Provider CRUD 和切换命令
 - 所有命令通过 `#[tauri::command]` 宏注册
 - 命令参数从 JavaScript 通过 Tauri IPC 传递
-**lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
+**lib.rs 模块列表**（`src-tauri/src/lib.rs`， 1825 行）：
 ```rust
 // src-tauri/src/lib.rs:1-36
 mod app_config;        mod app_store;         mod auto_launch;
@@ -1617,12 +1617,12 @@ export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
 - `queryClient.ts`（264B）— QueryClient 配置
 - `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
 - `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
-- `proxy.ts`（6.5KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
-- `subscription.ts`（2.1KB）— 订阅查询钩子（useSubscriptionQuota）
-- `copilot.ts`（1.7KB）— Copilot 查询钩子（useCopilotQuota）
-- `failover.ts`（7.9KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
-- `omo.ts`（2.6KB）— OMO 查询钩子（工厂模式）
-- `usage.ts`（8.5KB）— 用量查询钩子
+- `proxy.ts`（3.2KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
+- `subscription.ts`（0.6KB）— 订阅查询钩子（useSubscriptionQuota）
+- `copilot.ts`（5.9KB）— Copilot 查询钩子（useCopilotQuota）
+- `failover.ts`（2.7KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
+- `omo.ts`（12.1KB）— OMO 查询钩子（工厂模式）
+- `usage.ts`（6.0KB）— 用量查询钩子
 **copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
 ```typescript
 // src/lib/query/copilot.ts:5
@@ -2523,10 +2523,10 @@ pub fn init() -> Result<Self, AppError> {  // database/mod.rs:95
 12. 滚动合并旧数据（30 天）
 13. 回收磁盘空间（`PRAGMA incremental_vacuum`）
 **模块结构**：
-- `mod.rs`（9.1KB）— Database 结构体 + 初始化
-- `schema.rs`（77.8KB）— 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`mod.rs:52`）
-- `backup.rs`（32.5KB）— SQL 导入导出 + 快照备份
-- `migration.rs`（9.5KB）— JSON → SQLite 数据迁移
+- `mod.rs`（1.1KB）— Database 结构体 + 初始化
+- `schema.rs`（11.7KB）— 表结构定义 + Schema 迁移（当前版本 `SCHEMA_VERSION = 10`，`mod.rs:52`）
+- `backup.rs`（31.7KB）— SQL 导入导出 + 快照备份
+- `migration.rs`（28.3KB）— JSON → SQLite 数据迁移
 - `dao/` — 数据访问对象（12 个文件）：
   - `providers.rs`（786 行）— Provider CRUD
   - `proxy.rs`（952 行）— 代理配置
@@ -2612,16 +2612,16 @@ pub struct HotSwitchOutcome {  // services/proxy.rs:64
 | stream_check.rs | 2.7KB | 流式检查 DAO |
 | universal_providers.rs | 2.5KB | 通用 Provider DAO |
 | mod.rs | 448B | 模块导出 |
-- `proxy.rs`（33.9KB）是最大的 DAO 文件，包含代理配置和请求日志操作
+- `proxy.rs`（7.5KB）是最大的 DAO 文件，包含代理配置和请求日志操作
 - `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
 - `usage_rollup.rs`（15.3KB）包含用量聚合查询
-- `settings.rs`（11.9KB）包含设置的读写操作
+- `settings.rs`（28.9KB）包含设置的读写操作
 - `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
-- `failover.rs`（4.8KB）包含故障转移队列操作
-- `mcp.rs`（4.1KB）包含 MCP 服务器的 CRUD 操作
+- `failover.rs`（5.5KB）包含故障转移队列操作
+- `mcp.rs`（19.6KB）包含 MCP 服务器的 CRUD 操作
 - `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
 - `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
-- `stream_check.rs`（2.7KB）包含流式检查记录操作
+- `stream_check.rs`（10.9KB）包含流式检查记录操作
 - `universal_providers.rs`（2.5KB）包含通用 Provider 操作
 **commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
 ```rust
@@ -2698,10 +2698,10 @@ pub use coding_plan::*; pub use config::*; pub use copilot::*;
 | coding_plan.rs | 278B | Coding Plan 命令 |
 | balance.rs | 217B | 余额查询命令 |
 - `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
-- `provider.rs`（32.3KB）包含 Provider CRUD 和切换命令
+- `provider.rs`（40.6KB）包含 Provider CRUD 和切换命令
 - 所有命令通过 `#[tauri::command]` 宏注册
 - 命令参数从 JavaScript 通过 Tauri IPC 传递
-**lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
+**lib.rs 模块列表**（`src-tauri/src/lib.rs`， 1825 行）：
 ```rust
 // src-tauri/src/lib.rs:1-36
 mod app_config;        mod app_store;         mod auto_launch;
@@ -2825,12 +2825,12 @@ export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
 - `queryClient.ts`（264B）— QueryClient 配置
 - `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
 - `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
-- `proxy.ts`（6.5KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
-- `subscription.ts`（2.1KB）— 订阅查询钩子（useSubscriptionQuota）
-- `copilot.ts`（1.7KB）— Copilot 查询钩子（useCopilotQuota）
-- `failover.ts`（7.9KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
-- `omo.ts`（2.6KB）— OMO 查询钩子（工厂模式）
-- `usage.ts`（8.5KB）— 用量查询钩子
+- `proxy.ts`（3.2KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
+- `subscription.ts`（0.6KB）— 订阅查询钩子（useSubscriptionQuota）
+- `copilot.ts`（5.9KB）— Copilot 查询钩子（useCopilotQuota）
+- `failover.ts`（2.7KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
+- `omo.ts`（12.1KB）— OMO 查询钩子（工厂模式）
+- `usage.ts`（6.0KB）— 用量查询钩子
 **copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
 ```typescript
 // src/lib/query/copilot.ts:5
@@ -3184,7 +3184,7 @@ pub struct SwitchResult {
 | omo.rs | 560B | OMO 集成 |
 
 **陷阱**：
-- `provider/mod.rs`（105.5KB）和 `proxy.rs`（141.3KB）太大，应该拆分
+- `provider/mod.rs`（105.5KB）和 `proxy.rs`（7.5KB）太大，应该拆分
 - 有些逻辑直接放在 `commands/` 里，没有经过 services 层
 - 没有统一的 service trait 或接口
 
@@ -4155,12 +4155,12 @@ export const useAddProviderMutation = (appId: AppId) => {
 **前端 Query 层**（`src/lib/query/`，10 个文件）：
 - `queries.ts`（4.2KB）— 查询 hooks（useProvidersQuery, useSettingsQuery, useUsageQuery, useSessionsQuery）
 - `mutations.ts`（10.2KB）— 变更 hooks（useAddProviderMutation, useUpdateProviderMutation, useDeleteProviderMutation, useSwitchProviderMutation）
-- `proxy.ts`（6.5KB）— 代理相关查询
-- `usage.ts`（8.5KB）— 用量相关查询
-- `failover.ts`（7.9KB）— 故障转移相关查询
-- `subscription.ts`（2.1KB）— 订阅相关查询
-- `copilot.ts`（1.7KB）— Copilot 相关查询
-- `omo.ts`（2.6KB）— OMO 相关查询
+- `proxy.ts`（3.2KB）— 代理相关查询
+- `usage.ts`（6.0KB）— 用量相关查询
+- `failover.ts`（2.7KB）— 故障转移相关查询
+- `subscription.ts`（0.6KB）— 订阅相关查询
+- `copilot.ts`（5.9KB）— Copilot 相关查询
+- `omo.ts`（12.1KB）— OMO 相关查询
 - `queryClient.ts`（264B）— QueryClient 配置
 - `index.ts`（144B）— 模块导出
 **前端工具函数**（`src/utils/`）：
@@ -4632,7 +4632,7 @@ useTauriEvent("provider-changed", (event) => {
 - `App.tsx`（1604 行）→ 每个视图一个文件 + `AppRouter.tsx`
 - `codex_config.rs`（66.4KB）→ `codex/` 目录
 - `hermes_config.rs`（69.0KB）→ `hermes/` 目录
-- `claude_desktop_config.rs`（61.4KB）→ `claude_desktop/` 目录
+- `claude_desktop_config.rs`（14.0KB）→ `claude_desktop/` 目录
 
 **统一 config 模块的结构**：
 
@@ -4849,16 +4849,16 @@ pub trait ProviderAdapter: Send + Sync {
 | stream_check.rs | 2.7KB | 流式检查 DAO |
 | universal_providers.rs | 2.5KB | 通用 Provider DAO |
 | mod.rs | 448B | 模块导出 |
-- `proxy.rs`（33.9KB）是最大的 DAO 文件，包含代理配置和请求日志操作
+- `proxy.rs`（7.5KB）是最大的 DAO 文件，包含代理配置和请求日志操作
 - `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
 - `usage_rollup.rs`（15.3KB）包含用量聚合查询
-- `settings.rs`（11.9KB）包含设置的读写操作
+- `settings.rs`（28.9KB）包含设置的读写操作
 - `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
-- `failover.rs`（4.8KB）包含故障转移队列操作
-- `mcp.rs`（4.1KB）包含 MCP 服务器的 CRUD 操作
+- `failover.rs`（5.5KB）包含故障转移队列操作
+- `mcp.rs`（19.6KB）包含 MCP 服务器的 CRUD 操作
 - `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
 - `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
-- `stream_check.rs`（2.7KB）包含流式检查记录操作
+- `stream_check.rs`（10.9KB）包含流式检查记录操作
 - `universal_providers.rs`（2.5KB）包含通用 Provider 操作
 **commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
 ```rust
@@ -4935,10 +4935,10 @@ pub use coding_plan::*; pub use config::*; pub use copilot::*;
 | coding_plan.rs | 278B | Coding Plan 命令 |
 | balance.rs | 217B | 余额查询命令 |
 - `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
-- `provider.rs`（32.3KB）包含 Provider CRUD 和切换命令
+- `provider.rs`（40.6KB）包含 Provider CRUD 和切换命令
 - 所有命令通过 `#[tauri::command]` 宏注册
 - 命令参数从 JavaScript 通过 Tauri IPC 传递
-**lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
+**lib.rs 模块列表**（`src-tauri/src/lib.rs`， 1825 行）：
 ```rust
 // src-tauri/src/lib.rs:1-36
 mod app_config;        mod app_store;         mod auto_launch;
@@ -5062,12 +5062,12 @@ export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
 - `queryClient.ts`（264B）— QueryClient 配置
 - `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
 - `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
-- `proxy.ts`（6.5KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
-- `subscription.ts`（2.1KB）— 订阅查询钩子（useSubscriptionQuota）
-- `copilot.ts`（1.7KB）— Copilot 查询钩子（useCopilotQuota）
-- `failover.ts`（7.9KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
-- `omo.ts`（2.6KB）— OMO 查询钩子（工厂模式）
-- `usage.ts`（8.5KB）— 用量查询钩子
+- `proxy.ts`（3.2KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
+- `subscription.ts`（0.6KB）— 订阅查询钩子（useSubscriptionQuota）
+- `copilot.ts`（5.9KB）— Copilot 查询钩子（useCopilotQuota）
+- `failover.ts`（2.7KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
+- `omo.ts`（12.1KB）— OMO 查询钩子（工厂模式）
+- `usage.ts`（6.0KB）— 用量查询钩子
 **copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
 ```typescript
 // src/lib/query/copilot.ts:5
@@ -6203,16 +6203,16 @@ pub trait ProviderAdapter: Send + Sync {
 | stream_check.rs | 2.7KB | 流式检查 DAO |
 | universal_providers.rs | 2.5KB | 通用 Provider DAO |
 | mod.rs | 448B | 模块导出 |
-- `proxy.rs`（33.9KB）是最大的 DAO 文件，包含代理配置和请求日志操作
+- `proxy.rs`（7.5KB）是最大的 DAO 文件，包含代理配置和请求日志操作
 - `providers.rs`（29.5KB）包含 Provider 的 CRUD 操作
 - `usage_rollup.rs`（15.3KB）包含用量聚合查询
-- `settings.rs`（11.9KB）包含设置的读写操作
+- `settings.rs`（28.9KB）包含设置的读写操作
 - `skills.rs`（9.7KB）包含 Skills 的 CRUD 操作
-- `failover.rs`（4.8KB）包含故障转移队列操作
-- `mcp.rs`（4.1KB）包含 MCP 服务器的 CRUD 操作
+- `failover.rs`（5.5KB）包含故障转移队列操作
+- `mcp.rs`（19.6KB）包含 MCP 服务器的 CRUD 操作
 - `providers_seed.rs`（3.3KB）包含 Provider 种子数据（默认配置）
 - `prompts.rs`（2.9KB）包含 Prompt 的 CRUD 操作
-- `stream_check.rs`（2.7KB）包含流式检查记录操作
+- `stream_check.rs`（10.9KB）包含流式检查记录操作
 - `universal_providers.rs`（2.5KB）包含通用 Provider 操作
 **commands/mod.rs**（`src-tauri/src/commands/mod.rs`，67 行）：
 ```rust
@@ -6289,10 +6289,10 @@ pub use coding_plan::*; pub use config::*; pub use copilot::*;
 | coding_plan.rs | 278B | Coding Plan 命令 |
 | balance.rs | 217B | 余额查询命令 |
 - `misc.rs`（176.0KB）是最大的命令文件，包含大量杂项命令
-- `provider.rs`（32.3KB）包含 Provider CRUD 和切换命令
+- `provider.rs`（40.6KB）包含 Provider CRUD 和切换命令
 - 所有命令通过 `#[tauri::command]` 宏注册
 - 命令参数从 JavaScript 通过 Tauri IPC 传递
-**lib.rs 模块列表**（`src-tauri/src/lib.rs`，1826 行）：
+**lib.rs 模块列表**（`src-tauri/src/lib.rs`， 1825 行）：
 ```rust
 // src-tauri/src/lib.rs:1-36
 mod app_config;        mod app_store;         mod auto_launch;
@@ -6416,12 +6416,12 @@ export const isLinux = (): boolean => { /* /linux|x11/i && !/android/i */ };
 - `queryClient.ts`（264B）— QueryClient 配置
 - `queries.ts`（4.2KB）— 查询钩子（useProvidersQuery、useSettingsQuery 等）
 - `mutations.ts`（10.2KB）— 变更钩子（useAddProviderMutation、useSwitchProviderMutation 等）
-- `proxy.ts`（6.5KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
-- `subscription.ts`（2.1KB）— 订阅查询钩子（useSubscriptionQuota）
-- `copilot.ts`（1.7KB）— Copilot 查询钩子（useCopilotQuota）
-- `failover.ts`（7.9KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
-- `omo.ts`（2.6KB）— OMO 查询钩子（工厂模式）
-- `usage.ts`（8.5KB）— 用量查询钩子
+- `proxy.ts`（3.2KB）— 代理查询钩子（useProxyStatus、useIsProxyRunning 等）
+- `subscription.ts`（0.6KB）— 订阅查询钩子（useSubscriptionQuota）
+- `copilot.ts`（5.9KB）— Copilot 查询钩子（useCopilotQuota）
+- `failover.ts`（2.7KB）— 故障转移查询钩子（useProviderHealth、useResetCircuitBreaker）
+- `omo.ts`（12.1KB）— OMO 查询钩子（工厂模式）
+- `usage.ts`（6.0KB）— 用量查询钩子
 **copilot.ts**（`src/lib/query/copilot.ts`，64 行）：
 ```typescript
 // src/lib/query/copilot.ts:5
