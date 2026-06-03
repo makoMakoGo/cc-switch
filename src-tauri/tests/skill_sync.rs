@@ -120,6 +120,95 @@ fn import_from_apps_does_not_rewrite_selected_app_directory() {
 }
 
 #[test]
+fn scan_unmanaged_skips_hermes_bundled_skills() {
+    let _guard = test_mutex().lock().expect("acquire test mutex");
+    reset_test_fs();
+    let home = ensure_test_home();
+
+    let hermes_skills_dir = home.join(".hermes").join("skills");
+    write_skill(&hermes_skills_dir.join("bundled-plan"), "Bundled Plan");
+    write_skill(&hermes_skills_dir.join("user-skill"), "User Skill");
+    fs::write(
+        hermes_skills_dir.join(".bundled_manifest"),
+        "Bundled Plan:origin-hash\n",
+    )
+    .expect("write Hermes bundled manifest");
+
+    let state = create_test_state().expect("create test state");
+
+    let unmanaged = SkillService::scan_unmanaged(&state.db).expect("scan unmanaged skills");
+
+    assert!(
+        unmanaged
+            .iter()
+            .all(|skill| skill.directory != "bundled-plan"),
+        "Hermes bundled skills should not be offered for import"
+    );
+
+    let user_skill = unmanaged
+        .iter()
+        .find(|skill| skill.directory == "user-skill")
+        .expect("user-authored Hermes skill should remain importable");
+    assert!(
+        user_skill.found_in.iter().any(|app| app == "hermes"),
+        "user-authored Hermes skill should preserve its Hermes source"
+    );
+}
+
+#[test]
+fn import_from_apps_skips_hermes_bundled_skills() {
+    let _guard = test_mutex().lock().expect("acquire test mutex");
+    reset_test_fs();
+    let home = ensure_test_home();
+
+    let hermes_skills_dir = home.join(".hermes").join("skills");
+    write_skill(
+        &hermes_skills_dir.join("bundled-directory"),
+        "Bundled Display Name",
+    );
+    fs::write(
+        hermes_skills_dir.join(".bundled_manifest"),
+        "Bundled Display Name:origin-hash\n",
+    )
+    .expect("write Hermes bundled manifest");
+
+    let state = create_test_state().expect("create test state");
+
+    let imported = SkillService::import_from_apps(
+        &state.db,
+        vec![ImportSkillSelection {
+            directory: "bundled-directory".to_string(),
+            apps: SkillApps {
+                hermes: true,
+                ..Default::default()
+            },
+        }],
+    )
+    .expect("import skills");
+
+    assert!(
+        imported.is_empty(),
+        "Hermes bundled skills should not be imported into CC Switch"
+    );
+    assert!(
+        state
+            .db
+            .get_all_installed_skills()
+            .expect("get installed skills")
+            .is_empty(),
+        "Hermes bundled skills should not be saved in the skills database"
+    );
+    assert!(
+        !home
+            .join(".cc-switch")
+            .join("skills")
+            .join("bundled-directory")
+            .exists(),
+        "Hermes bundled skills should not be copied into SSOT"
+    );
+}
+
+#[test]
 fn sync_to_app_removes_disabled_and_orphaned_ssot_symlinks() {
     let _guard = test_mutex().lock().expect("acquire test mutex");
     reset_test_fs();
@@ -423,5 +512,42 @@ fn migration_snapshot_overrides_multi_source_directory_inference() {
     assert!(
         !migrated.apps.opencode,
         "migration should no longer infer OpenCode enablement from a duplicate directory alone"
+    );
+}
+
+#[test]
+fn migrate_skills_to_ssot_skips_hermes_bundled_skills() {
+    let _guard = test_mutex().lock().expect("acquire test mutex");
+    reset_test_fs();
+    let home = ensure_test_home();
+
+    let hermes_skills_dir = home.join(".hermes").join("skills");
+    write_skill(&hermes_skills_dir.join("bundled-plan"), "Bundled Plan");
+    write_skill(&hermes_skills_dir.join("user-skill"), "User Skill");
+    fs::write(
+        hermes_skills_dir.join(".bundled_manifest"),
+        "Bundled Plan:origin-hash\n",
+    )
+    .expect("write Hermes bundled manifest");
+
+    let state = create_test_state().expect("create test state");
+
+    let count = migrate_skills_to_ssot(&state.db).expect("migrate skills to ssot");
+    assert_eq!(count, 1, "expected only the user-authored skill to migrate");
+
+    let skills = state.db.get_all_installed_skills().expect("get skills");
+    assert!(
+        skills
+            .values()
+            .all(|skill| skill.directory != "bundled-plan"),
+        "Hermes bundled skills should not be migrated into CC Switch"
+    );
+    let migrated = skills
+        .values()
+        .find(|skill| skill.directory == "user-skill")
+        .expect("user-authored Hermes skill should migrate");
+    assert!(
+        migrated.apps.hermes,
+        "migrated user-authored Hermes skill should keep Hermes enabled"
     );
 }

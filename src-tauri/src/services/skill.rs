@@ -451,6 +451,46 @@ impl SkillService {
         Self
     }
 
+    fn normalize_skill_name_key(value: &str) -> String {
+        value.trim().to_lowercase()
+    }
+
+    fn read_hermes_bundled_skill_names(skills_dir: &Path) -> HashSet<String> {
+        let manifest_path = skills_dir.join(".bundled_manifest");
+        let Ok(content) = fs::read_to_string(&manifest_path) else {
+            return HashSet::new();
+        };
+
+        content
+            .lines()
+            .filter_map(|line| {
+                let trimmed = line.trim();
+                if trimmed.is_empty() {
+                    return None;
+                }
+                let name = trimmed
+                    .split_once(':')
+                    .map(|(name, _)| name)
+                    .unwrap_or(trimmed)
+                    .trim();
+                (!name.is_empty()).then(|| Self::normalize_skill_name_key(name))
+            })
+            .collect()
+    }
+
+    fn is_hermes_bundled_skill(
+        bundled_skill_names: &HashSet<String>,
+        directory: &str,
+        name: &str,
+    ) -> bool {
+        if bundled_skill_names.is_empty() {
+            return false;
+        }
+
+        bundled_skill_names.contains(&Self::normalize_skill_name_key(directory))
+            || bundled_skill_names.contains(&Self::normalize_skill_name_key(name))
+    }
+
     /// 构建 Skill 文档 URL（指向仓库中的 SKILL.md 文件）
     fn build_skill_doc_url(owner: &str, repo: &str, branch: &str, doc_path: &str) -> String {
         format!("https://github.com/{owner}/{repo}/blob/{branch}/{doc_path}")
@@ -1389,22 +1429,27 @@ impl SkillService {
             .collect();
 
         // 收集所有待扫描的目录及其来源标签
-        let mut scan_sources: Vec<(PathBuf, String)> = Vec::new();
+        let mut scan_sources: Vec<(PathBuf, String, HashSet<String>)> = Vec::new();
         for app in AppType::all() {
             if let Ok(d) = Self::get_app_skills_dir(&app) {
-                scan_sources.push((d, app.as_str().to_string()));
+                let hermes_bundled_names = if app == AppType::Hermes {
+                    Self::read_hermes_bundled_skill_names(&d)
+                } else {
+                    HashSet::new()
+                };
+                scan_sources.push((d, app.as_str().to_string(), hermes_bundled_names));
             }
         }
         if let Some(agents_dir) = get_agents_skills_dir() {
-            scan_sources.push((agents_dir, "agents".to_string()));
+            scan_sources.push((agents_dir, "agents".to_string(), HashSet::new()));
         }
         if let Ok(ssot_dir) = Self::get_ssot_dir() {
-            scan_sources.push((ssot_dir, "cc-switch".to_string()));
+            scan_sources.push((ssot_dir, "cc-switch".to_string(), HashSet::new()));
         }
 
         let mut unmanaged: HashMap<String, UnmanagedSkill> = HashMap::new();
 
-        for (scan_dir, label) in &scan_sources {
+        for (scan_dir, label, hermes_bundled_names) in &scan_sources {
             let entries = match fs::read_dir(scan_dir) {
                 Ok(e) => e,
                 Err(_) => continue,
@@ -1424,6 +1469,10 @@ impl SkillService {
                     continue;
                 }
                 let (name, description) = Self::read_skill_name_desc(&skill_md, &dir_name);
+                if Self::is_hermes_bundled_skill(hermes_bundled_names, &dir_name, &name) {
+                    log::debug!("Skip Hermes bundled skill '{dir_name}' during unmanaged scan");
+                    continue;
+                }
 
                 unmanaged
                     .entry(dir_name.clone())
@@ -1460,25 +1509,38 @@ impl SkillService {
         );
 
         // 收集所有候选搜索目录
-        let mut search_sources: Vec<(PathBuf, String)> = Vec::new();
+        let mut search_sources: Vec<(PathBuf, String, HashSet<String>)> = Vec::new();
         for app in AppType::all() {
             if let Ok(d) = Self::get_app_skills_dir(&app) {
-                search_sources.push((d, app.as_str().to_string()));
+                let hermes_bundled_names = if app == AppType::Hermes {
+                    Self::read_hermes_bundled_skill_names(&d)
+                } else {
+                    HashSet::new()
+                };
+                search_sources.push((d, app.as_str().to_string(), hermes_bundled_names));
             }
         }
         if let Some(agents_dir) = get_agents_skills_dir() {
-            search_sources.push((agents_dir, "agents".to_string()));
+            search_sources.push((agents_dir, "agents".to_string(), HashSet::new()));
         }
-        search_sources.push((ssot_dir.clone(), "cc-switch".to_string()));
+        search_sources.push((ssot_dir.clone(), "cc-switch".to_string(), HashSet::new()));
 
         for selection in imports {
             let dir_name = selection.directory;
             // 在所有候选目录中查找
             let mut source_path: Option<PathBuf> = None;
 
-            for (base, label) in &search_sources {
+            for (base, label, hermes_bundled_names) in &search_sources {
                 let skill_path = base.join(&dir_name);
                 if skill_path.exists() {
+                    let skill_md = skill_path.join("SKILL.md");
+                    if skill_md.exists() {
+                        let (name, _) = Self::read_skill_name_desc(&skill_md, &dir_name);
+                        if Self::is_hermes_bundled_skill(hermes_bundled_names, &dir_name, &name) {
+                            log::debug!("Skip Hermes bundled skill '{dir_name}' during import");
+                            continue;
+                        }
+                    }
                     if source_path.is_none() {
                         source_path = Some(skill_path);
                     }
@@ -2973,6 +3035,11 @@ pub fn migrate_skills_to_ssot(db: &Arc<Database>) -> Result<usize> {
             Ok(d) => d,
             Err(_) => continue,
         };
+        let hermes_bundled_names = if app == AppType::Hermes {
+            SkillService::read_hermes_bundled_skill_names(&app_dir)
+        } else {
+            HashSet::new()
+        };
 
         let entries = match fs::read_dir(&app_dir) {
             Ok(e) => e,
@@ -2990,6 +3057,11 @@ pub fn migrate_skills_to_ssot(db: &Arc<Database>) -> Result<usize> {
                 continue;
             }
             if !path.join("SKILL.md").exists() {
+                continue;
+            }
+            let (name, _) = SkillService::read_skill_name_desc(&path.join("SKILL.md"), &dir_name);
+            if SkillService::is_hermes_bundled_skill(&hermes_bundled_names, &dir_name, &name) {
+                log::debug!("Skip Hermes bundled skill '{dir_name}' during SSOT migration");
                 continue;
             }
             if has_snapshot && !discovered.contains_key(&dir_name) {
